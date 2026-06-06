@@ -1449,34 +1449,35 @@ button {
   font-size: 10px;
 }
 
-.home-stat-bars {
-  display: grid;
-  gap: 4px;
-  margin-top: 8px;
+.home-monster-mini {
+  align-self: end;
+  margin-top: auto;
 }
 
-.home-stat-row {
-  display: grid;
-  grid-template-columns: 42px 1fr 40px;
-  gap: 5px;
-  align-items: center;
-  min-height: 18px;
+.home-monster-mini .monster-art {
+  width: 66px;
+  height: 66px;
+  margin-top: 6px;
+  border-color: rgba(77, 220, 255, 0.45);
+  box-shadow: 0 0 18px rgba(39, 209, 255, 0.24);
 }
 
-.home-stat-row span {
-  color: #e8eef9;
-  font-size: 10px;
-  font-weight: 900;
+.home-screen .stats-panel {
+  padding: 9px 10px;
 }
 
-.home-stat-row .stat-bar {
-  height: 7px;
+.home-screen .stat-row {
+  grid-template-columns: 50px 1fr 48px;
+  min-height: 22px;
 }
 
-.home-stat-row strong {
-  color: #f8fbff;
-  text-align: right;
-  font-size: 10px;
+.home-screen .stat-row span,
+.home-screen .stat-row strong {
+  font-size: 11px;
+}
+
+.home-screen .stat-bar {
+  height: 8px;
 }
 
 .home-result-panel {
@@ -2140,21 +2141,21 @@ button {
   }
 
   .home-monster-card {
-    height: 292px;
+    height: 252px;
     min-height: 0;
-    max-height: 292px;
+    max-height: 252px;
     grid-template-columns: 48% 52%;
   }
 
   .home-monster-card .monster-stage {
-    height: 292px;
+    height: 252px;
     min-height: 0;
     overflow: hidden;
   }
 
   .home-monster-card .monster-art.large {
-    width: 100%;
-    height: 96%;
+    width: 105%;
+    height: 100%;
   }
 
   .home-monster-card .monster-stage::after {
@@ -2167,7 +2168,7 @@ button {
   }
 
   .home-monster-card .monster-info h2 {
-    font-size: 20px;
+    font-size: 21px;
   }
 
   .home-monster-card .stars {
@@ -2186,6 +2187,12 @@ button {
 
   .home-stat-bars {
     display: none;
+  }
+
+  .home-monster-mini .monster-art {
+    width: 54px;
+    height: 54px;
+    margin-top: 3px;
   }
 
   .home-result-panel {
@@ -2227,6 +2234,25 @@ button {
 
   .home-team-effect .team-effect-metrics {
     display: none;
+  }
+
+  .home-screen .stats-panel {
+    padding: 7px 9px;
+  }
+
+  .home-screen .stat-row {
+    grid-template-columns: 46px 1fr 44px;
+    min-height: 18px;
+    gap: 6px;
+  }
+
+  .home-screen .stat-row span,
+  .home-screen .stat-row strong {
+    font-size: 10px;
+  }
+
+  .home-screen .stat-bar {
+    height: 7px;
   }
 
   .bottom-nav {
@@ -2425,13 +2451,13 @@ button {
   }
 
   .home-monster-card {
-    height: 280px;
+    height: 246px;
     min-height: 0;
-    max-height: 280px;
+    max-height: 246px;
   }
 
   .home-monster-card .monster-stage {
-    height: 280px;
+    height: 246px;
     min-height: 0;
   }
 
@@ -2441,6 +2467,14 @@ button {
 
   .home-result-panel .result-tile {
     min-height: 28px;
+  }
+
+  .home-screen .stats-panel {
+    padding: 6px 8px;
+  }
+
+  .home-screen .stat-row {
+    min-height: 17px;
   }
 
   .bottom-nav button {

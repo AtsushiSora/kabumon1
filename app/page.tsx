@@ -249,25 +249,7 @@ export default function KabumonApp() {
             displayStats={displayStats}
             teamBonus={teamBonus}
             trainResult={trainResult}
-            onClaim={handleClaim}
-            dailyMessage={dailyMessage}
-            onDailyCheckin={handleDailyCheckin}
-            onEvent={() => setActiveTab("event")}
             onRefreshMarket={handleRefreshMarket}
-            missionMessage={missionMessage}
-            onClaimMission={(id) => {
-              const result = claimMissionReward(state, id);
-              setMissionMessage(result.message);
-              update(result.state);
-              if (result.ok) {
-                setResultToast({
-                  title: "ミッション達成",
-                  detail: result.message,
-                  tone: "green",
-                  metrics: ["報酬受取"]
-                });
-              }
-            }}
           />
         )}
 
@@ -471,13 +453,7 @@ function HomePanel({
   displayStats,
   teamBonus,
   trainResult,
-  onClaim,
-  dailyMessage,
-  onDailyCheckin,
-  onEvent,
-  onRefreshMarket,
-  missionMessage,
-  onClaimMission
+  onRefreshMarket
 }: {
   state: GameState;
   buddy: NonNullable<GameState["owned"][string]>;
@@ -485,25 +461,9 @@ function HomePanel({
   displayStats: MonsterStats;
   teamBonus: ReturnType<typeof getTeamBonus>;
   trainResult: TrainResult | null;
-  onClaim: () => void;
-  dailyMessage: string;
-  onDailyCheckin: () => void;
-  onEvent: () => void;
   onRefreshMarket: () => void;
-  missionMessage: string;
-  onClaimMission: (id: string) => void;
 }) {
   const expRequired = getRequiredExp(buddy.level);
-  const dailyStatus = getDailyCheckinStatus(state);
-  const eventStatus = getDailyEventStatus(state);
-  const readyMission = getMissions(state).find((mission) => mission.completed && !mission.claimed);
-  const homeStats: { key: keyof MonsterStats; label: string; max: number }[] = [
-    { key: "hp", label: "HP", max: 2200 },
-    { key: "attack", label: "攻撃", max: 1600 },
-    { key: "defense", label: "防御", max: 1400 },
-    { key: "speed", label: "素早さ", max: 220 },
-    { key: "luck", label: "運", max: 220 }
-  ];
 
   return (
     <div className="screen-content home-screen">
@@ -531,62 +491,6 @@ function HomePanel({
         </div>
       </section>
 
-      <div className="home-quick-grid">
-        <section className="daily-checkin home-daily-checkin pixel-panel">
-          <div className="daily-checkin-main">
-            <span className="daily-badge">{dailyStatus.available ? "本日" : "済"}</span>
-            <div>
-              <strong>ログイン</strong>
-              <p>
-                連続{dailyStatus.nextStreak}日目 / C+{dailyStatus.kabuCoins.toLocaleString("ja-JP")} / D+{dailyStatus.dividendCoins}
-              </p>
-              {dailyMessage && <small>{dailyMessage}</small>}
-            </div>
-          </div>
-          <button
-            className="mini-gold-button"
-            disabled={!dailyStatus.available}
-            onClick={onDailyCheckin}
-          >
-            {dailyStatus.available ? "受取" : "済"}
-          </button>
-        </section>
-
-        <section className="operation-panel home-operation-panel pixel-panel">
-          <div className={`operation-rank rank-${eventStatus.rank.toLowerCase()}`}>
-            <span>作戦</span>
-            <strong>{eventStatus.rank}</strong>
-          </div>
-          <div>
-            <strong>市場作戦</strong>
-            <p>
-              {eventStatus.score}/{eventStatus.target} / C+{eventStatus.kabuCoins.toLocaleString("ja-JP")}
-            </p>
-            <div className="operation-bar">
-              <span style={{ width: `${Math.min(100, (eventStatus.score / eventStatus.target) * 100)}%` }} />
-            </div>
-          </div>
-          <button className="mini-gold-button" onClick={onEvent}>
-            {eventStatus.available ? "作戦" : "確認"}
-          </button>
-        </section>
-      </div>
-
-      {(state.offlinePending || readyMission) && (
-        <section className="home-alert-strip pixel-panel">
-          {state.offlinePending && (
-            <button className="home-alert-button" onClick={onClaim}>
-              放置報酬 C+{state.offlinePending.kabuCoins.toLocaleString("ja-JP")} 受取
-            </button>
-          )}
-          {readyMission && (
-            <button className="home-alert-button" onClick={() => onClaimMission(readyMission.id)}>
-              ミッション報酬 受取
-            </button>
-          )}
-        </section>
-      )}
-
       <section className="monster-card home-monster-card pixel-panel">
         <div className="monster-stage">
           <MonsterArt monster={buddyMaster} large />
@@ -609,19 +513,8 @@ function HomePanel({
               {" "}{formatSigned(state.currentMarket.change)}%
             </strong>
           </p>
-          <div className="home-stat-bars">
-            {homeStats.map((row) => {
-              const value = displayStats[row.key];
-              return (
-                <div className="home-stat-row" key={row.key}>
-                  <span>{row.label}</span>
-                  <div className="stat-bar">
-                    <i style={{ width: `${Math.min(100, (value / row.max) * 100)}%` }} />
-                  </div>
-                  <strong>{value.toLocaleString("ja-JP")}</strong>
-                </div>
-              );
-            })}
+          <div className="home-monster-mini">
+            <MonsterArt monster={buddyMaster} />
           </div>
         </div>
       </section>
@@ -647,7 +540,7 @@ function HomePanel({
         </div>
       </section>
 
-      {missionMessage && <div className="message-box compact home-message">{missionMessage}</div>}
+      <StatsPanel stats={displayStats} />
     </div>
   );
 }
