@@ -1524,6 +1524,10 @@ button {
   background-size: 8px 8px, 8px 8px, auto, auto, auto;
 }
 
+.home-monster-card .monster-stage::after {
+  display: none;
+}
+
 .home-monster-card .monster-art.large img,
 .home-monster-mini .monster-art img {
   image-rendering: pixelated;
@@ -2588,10 +2592,6 @@ button {
     object-position: 50% 100%;
     transform: none;
     transform-origin: 50% 100%;
-  }
-
-  .home-monster-card .monster-stage::after {
-    bottom: 18px;
   }
 
   .home-monster-card .monster-info {
