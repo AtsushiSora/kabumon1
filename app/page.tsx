@@ -466,7 +466,13 @@ function HomePanel({
   const expRequired = getRequiredExp(buddy.level);
 
   return (
-    <div className="screen-content home-screen">
+    <div
+      className="screen-content home-screen"
+      style={{
+        "--home-stage-bg": `url(${withBasePath("/ui/pixel-stage-bg.png")})`,
+        "--home-hud-texture": `url(${withBasePath("/ui/home-pixel-hud.png")})`
+      } as CSSProperties}
+    >
       <section className="market-panel home-market-panel pixel-panel">
         <div className="market-graph">
           <span>↗</span>
@@ -493,7 +499,6 @@ function HomePanel({
 
       <section
         className="monster-card home-monster-card pixel-panel"
-        style={{ "--home-stage-bg": `url(${withBasePath("/ui/pixel-stage-bg.png")})` } as CSSProperties}
       >
         <div className="monster-stage">
           <MonsterArt monster={buddyMaster} large />
