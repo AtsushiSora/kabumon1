@@ -470,10 +470,15 @@ function HomePanel({
       className="screen-content home-screen"
       style={{
         "--home-stage-bg": `url(${withBasePath("/ui/pixel-stage-bg.png")})`,
-        "--home-hud-texture": `url(${withBasePath("/ui/home-pixel-hud.png")})`
+        "--home-hud-texture": `url(${withBasePath("/ui/home-pixel-hud.png")})`,
+        "--frame-corner-tl": `url(${withBasePath("/ui/frame-corner-tl.png")})`,
+        "--frame-corner-tr": `url(${withBasePath("/ui/frame-corner-tr.png")})`,
+        "--frame-corner-bl": `url(${withBasePath("/ui/frame-corner-bl.png")})`,
+        "--frame-corner-br": `url(${withBasePath("/ui/frame-corner-br.png")})`
       } as CSSProperties}
     >
       <section className="market-panel home-market-panel pixel-panel">
+        <FrameCorners />
         <div className="market-graph">
           <span>↗</span>
         </div>
@@ -500,6 +505,7 @@ function HomePanel({
       <section
         className="monster-card home-monster-card pixel-panel"
       >
+        <FrameCorners />
         <div className="monster-stage">
           <MonsterArt monster={buddyMaster} large />
         </div>
@@ -529,6 +535,7 @@ function HomePanel({
       </section>
 
       <section className="result-panel home-result-panel pixel-panel">
+        <FrameCorners />
         <div className="section-label">本日の成長結果</div>
         <ResultTile label="経験値" value={`+${trainResult?.exp ?? 18}`} />
         <ResultTile label="攻撃" value={`+${trainResult?.statChanges.attack ?? 3}`} />
@@ -537,6 +544,7 @@ function HomePanel({
       </section>
 
       <section className="team-effect home-team-effect pixel-panel">
+        <FrameCorners />
         <span>◇</span>
         <div>
           <strong>チーム効果: {teamBonus.name}</strong>
@@ -1046,6 +1054,7 @@ function StatsPanel({ stats }: { stats: MonsterStats }) {
 
   return (
     <section className="stats-panel pixel-panel">
+      <FrameCorners />
       {rows.map((row) => {
         const value = stats[row.key];
         return (
@@ -1059,6 +1068,15 @@ function StatsPanel({ stats }: { stats: MonsterStats }) {
         );
       })}
     </section>
+  );
+}
+
+function FrameCorners() {
+  return (
+    <>
+      <span className="frame-corner frame-corner-tr" aria-hidden="true" />
+      <span className="frame-corner frame-corner-bl" aria-hidden="true" />
+    </>
   );
 }
 
