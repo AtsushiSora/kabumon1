@@ -1,5 +1,5 @@
 :root {
-  --font-pixel: "Hiragino Sans", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  --font-pixel: "DotGothic16", "PixelMplus12", "PixelMplus10", "Misaki Gothic", "美咲ゴシック", "Osaka-Mono", "Osaka", "Hiragino Sans", "Yu Gothic", "Meiryo", monospace;
   --bg: #061126;
   --panel: rgba(7, 25, 57, 0.92);
   --panel-2: rgba(10, 36, 78, 0.92);
@@ -32,6 +32,10 @@ body {
     linear-gradient(180deg, #040816 0%, #061126 48%, #020712 100%);
   color: var(--text);
   font-family: var(--font-pixel);
+  font-synthesis-weight: none;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: none;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.62);
 }
 
 button {
@@ -143,7 +147,11 @@ button {
   font-size: 34px;
   line-height: 1;
   color: #ffd46c;
-  text-shadow: 0 3px 0 #70430c, 0 0 18px rgba(255, 197, 70, 0.38);
+  text-shadow:
+    2px 0 0 #70430c,
+    0 2px 0 #70430c,
+    2px 2px 0 #2a1602,
+    0 0 18px rgba(255, 197, 70, 0.38);
   white-space: nowrap;
 }
 
