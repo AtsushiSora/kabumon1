@@ -194,7 +194,7 @@ export const monsters: MonsterMaster[] = [
     },
     image: withBasePath("/monsters/medica-seraph.png"),
     icon: withBasePath("/monsters/medica-seraph-icon.png"),
-    assetReady: false
+    assetReady: true
   }
 ];
 
