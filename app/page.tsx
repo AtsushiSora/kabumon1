@@ -284,6 +284,7 @@ export default function KabumonApp() {
             state={state}
             buddy={buddy}
             buddyMaster={buddyMaster}
+            displayStats={displayStats}
             result={trainResult}
             onTrain={handleTrain}
           />
@@ -720,35 +721,85 @@ function TrainPanel({
   state,
   buddy,
   buddyMaster,
+  displayStats,
   result,
   onTrain
 }: {
   state: GameState;
   buddy: NonNullable<GameState["owned"][string]>;
   buddyMaster: MonsterMaster;
+  displayStats: MonsterStats;
   result: TrainResult | null;
   onTrain: () => void;
 }) {
+  const expRequired = getRequiredExp(buddy.level);
+  const canTrain = state.dividendCoins >= balance.trainCost;
+  const expPercent = Math.min(100, (buddy.exp / expRequired) * 100);
+
   return (
-    <div className="screen-content">
-      <section className="feature-panel pixel-panel">
-        <h2>{buddyMaster.name}を育成</h2>
-        <p>配当コイン{balance.trainCost}を使い、仮の市場エネルギーを反映します。</p>
-        <button className="gold-button full" onClick={onTrain}>市場エネルギー反映</button>
-        <div className="train-summary">
-          <MonsterArt monster={buddyMaster} />
-          <div>
-            <strong>Lv.{buddy.level} / {buddy.shares}株</strong>
-            <p>現在の配当コイン: {state.dividendCoins}</p>
-          </div>
+    <div className="screen-content train-screen">
+      <section className="train-hero pixel-panel">
+        <div className="train-stage">
+          <MonsterArt monster={buddyMaster} large />
         </div>
-        {result && (
-          <div className="message-box">
-            {result.market.indexName} {formatSigned(result.market.change)}% / 経験値 +{result.exp} / 配当 +{result.dividendCoins}
+        <div className="train-control">
+          <span className="train-label">育成対象</span>
+          <h2>{buddyMaster.name}</h2>
+          <p>{buddyMaster.attribute} / {buddy.shares}株</p>
+          <div className="level-row train-level-row">
+            <strong>Lv.{buddy.level}</strong>
+            <div className="exp-bar">
+              <span style={{ width: `${expPercent}%` }} />
+            </div>
+            <small>あと {Math.max(0, expRequired - buddy.exp)}</small>
           </div>
-        )}
+          <div className="train-resource-grid">
+            <span>必要 D{balance.trainCost}</span>
+            <span>所持 D{state.dividendCoins}</span>
+            <span className={canTrain ? "positive" : "negative"}>{canTrain ? "育成可" : "配当不足"}</span>
+          </div>
+          <button className="gold-button full train-main-button" onClick={onTrain} disabled={!canTrain}>
+            市場エネルギー反映
+          </button>
+        </div>
       </section>
-      <LogList state={state} />
+
+      <section className="train-market-panel pixel-panel">
+        <div>
+          <span>今日の市場</span>
+          <strong>{state.currentMarket.indexName}</strong>
+        </div>
+        <div>
+          <span>変動</span>
+          <strong className={state.currentMarket.change >= 0 ? "positive" : "negative"}>
+            {formatSigned(state.currentMarket.change)}%
+          </strong>
+        </div>
+        <div>
+          <span>テーマ</span>
+          <strong>{state.currentMarket.theme}</strong>
+        </div>
+      </section>
+
+      <section className="result-panel train-result-panel pixel-panel">
+        <div className="section-label">育成結果</div>
+        <ResultTile label="経験値" value={`+${result?.exp ?? 0}`} />
+        <ResultTile label="攻撃" value={`+${result?.statChanges.attack ?? 0}`} />
+        <ResultTile label="防御" value={`+${result?.statChanges.defense ?? 0}`} />
+        <ResultTile label="配当" value={`+${result?.dividendCoins ?? 0}`} />
+      </section>
+
+      {result && (
+        <section className="train-result-note pixel-panel">
+          <div>
+            <strong>{result.market.indexName} {formatSigned(result.market.change)}%</strong>
+            <p>市場エネルギーを反映しました。獲得EXP +{result.exp} / 配当 +{result.dividendCoins}</p>
+          </div>
+        </section>
+      )}
+
+      <StatsPanel stats={displayStats} />
+      <LogList state={state} compact />
     </div>
   );
 }
