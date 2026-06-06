@@ -256,6 +256,7 @@ export default function KabumonApp() {
               setActiveTab("train");
               handleTrain();
             }}
+            onEvent={() => setActiveTab("event")}
             onRefreshMarket={handleRefreshMarket}
             missionMessage={missionMessage}
             onClaimMission={(id) => {
@@ -471,6 +472,7 @@ function HomePanel({
   onDailyCheckin,
   onGacha,
   onTrain,
+  onEvent,
   onRefreshMarket,
   missionMessage,
   onClaimMission
@@ -486,12 +488,14 @@ function HomePanel({
   onDailyCheckin: () => void;
   onGacha: () => void;
   onTrain: () => void;
+  onEvent: () => void;
   onRefreshMarket: () => void;
   missionMessage: string;
   onClaimMission: (id: string) => void;
 }) {
   const expRequired = getRequiredExp(buddy.level);
   const dailyStatus = getDailyCheckinStatus(state);
+  const eventStatus = getDailyEventStatus(state);
 
   return (
     <div className="screen-content">
@@ -550,6 +554,25 @@ function HomePanel({
           onClick={onDailyCheckin}
         >
           {dailyStatus.available ? "受取" : "受取済"}
+        </button>
+      </section>
+
+      <section className="operation-panel pixel-panel">
+        <div className={`operation-rank rank-${eventStatus.rank.toLowerCase()}`}>
+          <span>作戦</span>
+          <strong>{eventStatus.rank}</strong>
+        </div>
+        <div>
+          <strong>今日の市場作戦</strong>
+          <p>
+            スコア {eventStatus.score} / 目標 {eventStatus.target} / 報酬 C+{eventStatus.kabuCoins.toLocaleString("ja-JP")}
+          </p>
+          <div className="operation-bar">
+            <span style={{ width: `${Math.min(100, (eventStatus.score / eventStatus.target) * 100)}%` }} />
+          </div>
+        </div>
+        <button className="mini-gold-button" onClick={onEvent}>
+          {eventStatus.available ? "作戦へ" : "確認"}
         </button>
       </section>
 
@@ -737,6 +760,7 @@ function EventPanel({
 }) {
   const status = getDailyEventStatus(state);
   const teamBonus = getTeamBonus(state);
+  const scorePercent = Math.min(100, (status.score / status.target) * 100);
 
   return (
     <div className="screen-content">
@@ -754,6 +778,9 @@ function EventPanel({
           <span>目標 <strong>{status.target}</strong></span>
           <span>チーム力 <strong>{status.teamPower}</strong></span>
           <span>市場補正 <strong>x{status.marketModifier.toFixed(2)}</strong></span>
+        </div>
+        <div className="event-progress">
+          <span style={{ width: `${scorePercent}%` }} />
         </div>
         <button className="gold-button full" disabled={!status.available} onClick={onRun}>
           {status.available ? "作戦開始" : "本日完了"}
