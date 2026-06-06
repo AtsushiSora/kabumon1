@@ -4,7 +4,7 @@
 
 v0.1完成度: 100%
 v0.2着手度: 100%
-v0.3着手度: 50%
+v0.3着手度: 55%
 
 理由:
 
@@ -58,6 +58,7 @@ v0.3着手度: 50%
 - GitHub Pages用の静的書き出し設定を追加
 - GitHub ActionsによるPagesデプロイ設定を追加
 - `/kabumon1` 配下で動く画像、manifest、service workerパスへ調整
+- GitHub Pages公開URLへのアプリ本体反映を確認
 
 ## 優先順位
 
@@ -304,5 +305,7 @@ v0.3に着手しました。
 - GitHub Pages用の `.github/workflows/pages.yml` を追加
 - GitHub Pages公開URL `https://atsushisora.github.io/kabumon1/` でアプリ本体を配信する準備を追加
 - 静的ホスティング向けにmanifest、画像、service worker、API fetchのパスをbasePath対応
+- commit `054250d` をpushし、GitHub ActionsのPagesデプロイ成功を確認
+- 公開URLがREADME表示からNext.jsアプリ本体へ切り替わったことを確認
 
-次に進めるなら、GitHub PagesへのpushとActions確認、実APIキーを入れた銘柄シンボル検証、モンスター追加、クラウド保存、バトル/イベント要素のいずれかに着手します。
+次に進めるなら、公開版のブラウザ実機確認、実APIキーを入れた銘柄シンボル検証、モンスター追加、クラウド保存、バトル/イベント要素のいずれかに着手します。

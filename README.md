@@ -21,7 +21,7 @@ http://localhost:3000
 
 v0.1: 100%
 v0.2: 100%
-v0.3: 50%
+v0.3: 55%
 
 完了済み:
 
@@ -82,6 +82,7 @@ v0.3: 50%
 - GitHub Pages用の静的書き出し設定
 - GitHub ActionsによるPagesデプロイ設定
 - `/kabumon1` 配下で動く画像、manifest、service workerパス対応
+- GitHub Pages公開URLへのアプリ本体反映確認
 
 残り:
 
@@ -98,6 +99,8 @@ https://atsushisora.github.io/kabumon1/
 ```
 
 `main` ブランチへpushすると、GitHub Actionsが `npm run build:pages` を実行して `out` をGitHub Pagesへデプロイします。
+
+2026-06-06時点で、公開URLがREADME表示からNext.jsアプリ本体へ切り替わるところまで確認済みです。
 
 GitHub Pagesは静的ホスティングのため、公開版の `/api/market` はビルド時のモック市場データとして動きます。本物の市場APIキー連携は、後でNetlifyなどサーバー実行できる環境に移す想定です。
 
