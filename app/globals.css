@@ -1330,12 +1330,11 @@ button {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.07;
+  opacity: 0.18;
   background:
     linear-gradient(rgba(62, 208, 255, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(62, 208, 255, 0.045) 1px, transparent 1px),
-    var(--home-hud-texture) center / 260px 260px repeat;
-  mix-blend-mode: screen;
+    linear-gradient(90deg, rgba(62, 208, 255, 0.045) 1px, transparent 1px);
+  background-size: 8px 8px, 8px 8px;
 }
 
 .home-screen > * {
@@ -1349,10 +1348,10 @@ button {
   gap: 8px;
   padding: 8px 10px;
   background:
-    linear-gradient(180deg, rgba(13, 42, 88, 0.96), rgba(4, 15, 38, 0.98)),
-    var(--home-hud-texture) 14% 18% / 300px 300px repeat,
-    linear-gradient(180deg, rgba(13, 42, 88, 0.94), rgba(4, 15, 38, 0.94));
-  background-blend-mode: normal, soft-light, normal;
+    linear-gradient(rgba(94, 216, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94, 216, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(13, 42, 88, 0.96), rgba(4, 15, 38, 0.98));
+  background-size: 8px 8px, 8px 8px, auto;
 }
 
 .home-market-panel .market-graph {
@@ -1361,8 +1360,9 @@ button {
   font-size: 32px;
   background:
     linear-gradient(180deg, rgba(38, 183, 255, 0.38), rgba(29, 91, 255, 0.08)),
-    var(--home-hud-texture) 34% 24% / 150px 150px repeat;
-  background-blend-mode: normal, screen;
+    linear-gradient(rgba(124, 227, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 227, 255, 0.06) 1px, transparent 1px);
+  background-size: auto, 6px 6px, 6px 6px;
   box-shadow:
     inset 0 0 0 1px rgba(2, 9, 24, 0.88),
     0 0 14px rgba(62, 208, 255, 0.2);
@@ -1492,14 +1492,13 @@ button {
   --stage-glow: rgba(39, 209, 255, 0.58);
   flex: 0 0 auto;
   grid-template-columns: 52% 48%;
-  min-height: clamp(236px, 32dvh, 300px);
+  height: clamp(220px, 27dvh, 280px);
+  min-height: clamp(220px, 27dvh, 280px);
+  max-height: clamp(220px, 27dvh, 280px);
   isolation: isolate;
   background:
-    linear-gradient(90deg, rgba(1, 6, 17, 0.04) 0%, rgba(2, 9, 24, 0.28) 44%, rgba(3, 12, 32, 0.9) 67%, rgba(4, 13, 34, 0.96) 100%),
-    var(--home-hud-texture) 48% 44% / 360px 360px repeat,
-    var(--home-stage-bg) center / cover no-repeat,
+    linear-gradient(90deg, rgba(1, 6, 17, 0.28) 0%, rgba(2, 9, 24, 0.5) 48%, rgba(3, 12, 32, 0.94) 65%, rgba(4, 13, 34, 0.98) 100%),
     linear-gradient(180deg, rgba(10, 33, 73, 0.98), rgba(3, 11, 28, 0.98));
-  background-blend-mode: normal, soft-light, normal, normal;
   box-shadow:
     inset 0 0 0 2px rgba(5, 13, 30, 0.9),
     inset 0 0 0 3px rgba(62, 208, 255, 0.18),
@@ -1513,13 +1512,16 @@ button {
 }
 
 .home-monster-card .monster-stage {
-  min-height: clamp(236px, 32dvh, 300px);
+  height: 100%;
+  min-height: clamp(220px, 27dvh, 280px);
+  overflow: hidden;
   background:
     linear-gradient(rgba(75, 213, 255, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(75, 213, 255, 0.06) 1px, transparent 1px),
     radial-gradient(ellipse at 50% 82%, rgba(60, 222, 255, 0.52), transparent 35%),
-    linear-gradient(180deg, rgba(4, 17, 41, 0), rgba(0, 4, 14, 0.16));
-  background-size: 8px 8px, 8px 8px, auto, auto;
+    linear-gradient(180deg, rgba(3, 12, 30, 0.06), rgba(0, 4, 14, 0.24)),
+    var(--home-stage-bg) center / cover no-repeat;
+  background-size: 8px 8px, 8px 8px, auto, auto, auto;
 }
 
 .home-monster-card .monster-art.large img,
@@ -1531,11 +1533,18 @@ button {
     drop-shadow(0 0 10px rgba(68, 217, 255, 0.45));
 }
 
+.home-monster-card .monster-art.large {
+  width: 112%;
+  height: 100%;
+}
+
 .home-monster-card .monster-art.large img {
-  width: 62%;
-  height: 62%;
-  transform: scale(1.58);
-  transform-origin: 50% 72%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 62%;
+  transform: scale(1.08);
+  transform-origin: 50% 62%;
 }
 
 .home-monster-mini .monster-art img {
@@ -1553,12 +1562,10 @@ button {
   padding: 12px 10px 10px 8px;
   border-left: 1px solid rgba(126, 201, 255, 0.25);
   background:
-    linear-gradient(90deg, rgba(3, 10, 25, 0.36), rgba(5, 18, 45, 0.84) 26%, rgba(3, 11, 30, 0.94)),
-    var(--home-hud-texture) 76% 42% / 300px 300px repeat,
+    linear-gradient(90deg, rgba(3, 10, 25, 0.54), rgba(5, 18, 45, 0.86) 26%, rgba(3, 11, 30, 0.96)),
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: auto, 300px 300px, 8px 8px, 8px 8px;
-  background-blend-mode: normal, soft-light, normal, normal;
+  background-size: auto, 8px 8px, 8px 8px;
 }
 
 .home-monster-card .monster-info h2 {
@@ -1642,10 +1649,11 @@ button {
 .home-screen .stats-panel {
   padding: 6px 9px;
   background:
+    linear-gradient(rgba(93, 215, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(93, 215, 255, 0.028) 1px, transparent 1px),
     linear-gradient(180deg, rgba(8, 25, 59, 0.96), rgba(3, 10, 25, 0.96)),
-    var(--home-hud-texture) 50% 78% / 340px 340px repeat,
     linear-gradient(90deg, rgba(83, 221, 114, 0.06), transparent 34%);
-  background-blend-mode: normal, soft-light, normal;
+  background-size: 8px 8px, 8px 8px, auto, auto;
 }
 
 .home-screen .stat-row {
@@ -1658,6 +1666,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  white-space: nowrap;
 }
 
 .home-screen .stat-row span::before {
@@ -1717,9 +1726,10 @@ button {
   gap: 5px;
   padding: 14px 7px 6px;
   background:
-    linear-gradient(180deg, rgba(11, 33, 74, 0.96), rgba(3, 11, 28, 0.96)),
-    var(--home-hud-texture) 50% 60% / 340px 340px repeat;
-  background-blend-mode: normal, soft-light;
+    linear-gradient(rgba(94, 216, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94, 216, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(11, 33, 74, 0.96), rgba(3, 11, 28, 0.96));
+  background-size: 8px 8px, 8px 8px, auto;
 }
 
 .home-result-panel .section-label {
@@ -1737,10 +1747,8 @@ button {
   border-radius: 4px;
   background:
     linear-gradient(180deg, rgba(9, 29, 66, 0.86), rgba(3, 10, 25, 0.9)),
-    var(--home-hud-texture) center / 280px 280px repeat,
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: auto, 280px 280px, 6px 6px;
-  background-blend-mode: normal, soft-light, normal;
+  background-size: auto, 6px 6px;
 }
 
 .home-result-panel .result-tile::before {
@@ -1784,9 +1792,10 @@ button {
   min-height: 40px;
   padding: 6px 9px;
   background:
-    linear-gradient(180deg, rgba(8, 30, 70, 0.96), rgba(3, 11, 28, 0.96)),
-    var(--home-hud-texture) 62% 62% / 320px 320px repeat;
-  background-blend-mode: normal, soft-light;
+    linear-gradient(rgba(94, 216, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94, 216, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(8, 30, 70, 0.96), rgba(3, 11, 28, 0.96));
+  background-size: 8px 8px, 8px 8px, auto;
 }
 
 .home-team-effect > span {
@@ -2571,10 +2580,12 @@ button {
   }
 
   .home-monster-card .monster-art.large img {
-    width: 60%;
-    height: 60%;
-    transform: scale(1.62);
-    transform-origin: 50% 74%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 62%;
+    transform: scale(1.08);
+    transform-origin: 50% 62%;
   }
 
   .home-monster-card .monster-stage::after {
