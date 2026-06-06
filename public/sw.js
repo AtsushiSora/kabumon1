@@ -1,13 +1,18 @@
 const CACHE_VERSION = "kabumon-cache-v1";
+const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
+const scopedPath = (path) => {
+  if (path === "/") return `${SCOPE_PATH}/` || "/";
+  return `${SCOPE_PATH}${path}`;
+};
 const APP_SHELL = [
-  "/",
-  "/offline.html",
-  "/manifest.webmanifest",
-  "/icons/kabumon-icon-192.png",
-  "/icons/kabumon-icon-512.png",
-  "/icons/kabumon-apple-touch.png",
-  "/monsters/toyodora-icon.png",
-  "/monsters/toyodora.png"
+  scopedPath("/"),
+  scopedPath("/offline.html"),
+  scopedPath("/manifest.webmanifest"),
+  scopedPath("/icons/kabumon-icon-192.png"),
+  scopedPath("/icons/kabumon-icon-512.png"),
+  scopedPath("/icons/kabumon-apple-touch.png"),
+  scopedPath("/monsters/toyodora-icon.png"),
+  scopedPath("/monsters/toyodora.png")
 ];
 
 self.addEventListener("install", (event) => {
@@ -38,10 +43,10 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put("/", copy));
+          caches.open(CACHE_VERSION).then((cache) => cache.put(scopedPath("/"), copy));
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match("/") || caches.match("/offline.html")))
+        .catch(() => caches.match(request).then((cached) => cached || caches.match(scopedPath("/")) || caches.match(scopedPath("/offline.html"))))
     );
     return;
   }
@@ -56,7 +61,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(() => caches.match("/offline.html"));
+        .catch(() => caches.match(scopedPath("/offline.html")));
     })
   );
 });

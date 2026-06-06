@@ -49,6 +49,16 @@ export type MarketEnergy = {
   indexName: string;
   change: number;
   theme: string;
+  source: MarketDataSource;
+  updatedAt: string;
+  note: string;
+};
+
+export type MarketDataSource = "game-simulated" | "external-api";
+
+export const marketSourceLabels: Record<MarketDataSource, string> = {
+  "game-simulated": "ゲーム内データ",
+  "external-api": "外部API"
 };
 
 export type OfflineReward = {
@@ -114,10 +124,25 @@ export type MarketQuote = {
 export const STORAGE_KEY = "kabumon:v0.1";
 export const SAVE_VERSION = 2;
 
+export const balance = {
+  gachaCost: 3000,
+  trainCost: 40,
+  offlineMaxHours: 12,
+  offlineBaseKabuCoins: 110,
+  offlineBaseDividendCoins: 22,
+  offlineBaseExp: 8,
+  dailyBaseKabuCoins: 500,
+  dailyBaseDividendCoins: 30,
+  dailyStreakKabuBonus: 120,
+  dailyStreakDividendBonus: 12,
+  logLimit: 30,
+  visibleLogLimit: 20
+};
+
 export const marketPrices: Record<Rarity, number> = {
   R: 3000,
-  SR: 7000,
-  SSR: 15000,
+  SR: 6500,
+  SSR: 14500,
   UR: 50000
 };
 
@@ -189,7 +214,7 @@ export function serializeState(state: GameState): string {
   return JSON.stringify({
     ...state,
     saveVersion: SAVE_VERSION,
-    logs: state.logs.slice(0, 30),
+    logs: state.logs.slice(0, balance.logLimit),
     claimedMissionIds: uniqueStrings(state.claimedMissionIds)
   });
 }
@@ -278,7 +303,10 @@ function normalizeMarketEnergy(rawMarket: MarketEnergy | undefined, now: Date): 
   return {
     indexName: typeof rawMarket.indexName === "string" ? rawMarket.indexName : fallback.indexName,
     change: normalizeFiniteNumber(rawMarket.change, fallback.change),
-    theme: typeof rawMarket.theme === "string" ? rawMarket.theme : fallback.theme
+    theme: typeof rawMarket.theme === "string" ? rawMarket.theme : fallback.theme,
+    source: rawMarket.source === "external-api" ? "external-api" : "game-simulated",
+    updatedAt: normalizeDateString(rawMarket.updatedAt, fallback.updatedAt),
+    note: typeof rawMarket.note === "string" ? rawMarket.note : fallback.note
   };
 }
 
@@ -297,13 +325,13 @@ function normalizeLogs(rawLogs: GrowthLog[] | undefined, fallback: GrowthLog[]):
       exp: normalizeFiniteNumber(log.exp, 0),
       marketChange: normalizeFiniteNumber(log.marketChange, 0)
     }))
-    .slice(0, 30);
+    .slice(0, balance.logLimit);
 }
 
 export function applyOfflineReward(state: GameState, now = new Date()): GameState {
   const last = new Date(state.lastLoginAt);
   const elapsedMs = Math.max(0, now.getTime() - last.getTime());
-  const hours = Math.min(12, elapsedMs / 1000 / 60 / 60);
+  const hours = Math.min(balance.offlineMaxHours, elapsedMs / 1000 / 60 / 60);
 
   if (hours < 0.05) {
     return { ...state, lastLoginAt: now.toISOString(), offlinePending: null };
@@ -339,9 +367,9 @@ export function calculateOfflineReward(state: GameState, hours: number): Offline
 
   return {
     hours: round(hours, 1),
-    kabuCoins: Math.floor(110 * hours * normalizedPower),
-    dividendCoins: Math.floor(22 * hours * normalizedPower * teamBonus.dividendMultiplier),
-    exp: Math.floor(8 * hours * normalizedPower * teamBonus.expMultiplier)
+    kabuCoins: Math.floor(balance.offlineBaseKabuCoins * hours * normalizedPower),
+    dividendCoins: Math.floor(balance.offlineBaseDividendCoins * hours * normalizedPower * teamBonus.dividendMultiplier),
+    exp: Math.floor(balance.offlineBaseExp * hours * normalizedPower * teamBonus.expMultiplier)
   };
 }
 
@@ -373,7 +401,7 @@ export function claimOfflineReward(state: GameState): GameState {
         state.currentMarket.change
       ),
       ...state.logs
-    ].slice(0, 20)
+    ].slice(0, balance.visibleLogLimit)
   };
 }
 
@@ -393,8 +421,8 @@ export function getDailyCheckinStatus(state: GameState, now = new Date()): Daily
     todayKey,
     currentStreak: state.loginStreak,
     nextStreak,
-    kabuCoins: 500 + streakBonus * 120,
-    dividendCoins: 30 + streakBonus * 12
+    kabuCoins: balance.dailyBaseKabuCoins + streakBonus * balance.dailyStreakKabuBonus,
+    dividendCoins: balance.dailyBaseDividendCoins + streakBonus * balance.dailyStreakDividendBonus
   };
 }
 
@@ -427,13 +455,13 @@ export function claimDailyCheckin(state: GameState, now = new Date()): { state: 
           state.currentMarket.change
         ),
         ...state.logs
-      ].slice(0, 20)
+      ].slice(0, balance.visibleLogLimit)
     }
   };
 }
 
 export function rollGacha(state: GameState): { state: GameState; monsterId: string; duplicate: boolean } {
-  const cost = 3000;
+  const cost = balance.gachaCost;
   if (state.kabuCoins < cost) {
     return { state, monsterId: "", duplicate: false };
   }
@@ -472,7 +500,7 @@ export function rollGacha(state: GameState): { state: GameState; monsterId: stri
           state.currentMarket.change
         ),
         ...state.logs
-      ].slice(0, 20)
+      ].slice(0, balance.visibleLogLimit)
     }
   };
 }
@@ -516,7 +544,7 @@ export function buyMonsterFromMarket(state: GameState, monsterId: string): { sta
       logs: [
         createLog("マーケット購入", message, -price, 0, 0, state.currentMarket.change),
         ...state.logs
-      ].slice(0, 20)
+      ].slice(0, balance.visibleLogLimit)
     }
   };
 }
@@ -557,7 +585,34 @@ export function sellMonsterUnit(state: GameState, monsterId: string): { state: G
       logs: [
         createLog("100株売却", message, sellPrice, 0, 0, state.currentMarket.change),
         ...state.logs
-      ].slice(0, 20)
+      ].slice(0, balance.visibleLogLimit)
+    }
+  };
+}
+
+export function refreshMarketEnergy(
+  state: GameState,
+  now = new Date(),
+  market = createMarketEnergy(now)
+): { state: GameState; message: string } {
+  const message = `${marketSourceLabels[market.source]}を更新しました。`;
+
+  return {
+    message,
+    state: {
+      ...state,
+      currentMarket: market,
+      logs: [
+        createLog(
+          "市場データ更新",
+          `${market.indexName} ${formatSigned(market.change)}% / ${market.theme}`,
+          0,
+          0,
+          0,
+          market.change
+        ),
+        ...state.logs
+      ].slice(0, balance.visibleLogLimit)
     }
   };
 }
@@ -695,14 +750,14 @@ export function claimMissionReward(state: GameState, missionId: string): { state
           state.currentMarket.change
         ),
         ...state.logs
-      ].slice(0, 20)
+      ].slice(0, balance.visibleLogLimit)
     }
   };
 }
 
 export function trainBuddy(state: GameState): { state: GameState; result: TrainResult | null } {
   const buddy = state.owned[state.buddyId];
-  if (!buddy || state.dividendCoins < 40) {
+  if (!buddy || state.dividendCoins < balance.trainCost) {
     return { state, result: null };
   }
 
@@ -715,7 +770,7 @@ export function trainBuddy(state: GameState): { state: GameState; result: TrainR
     result,
     state: {
       ...state,
-      dividendCoins: state.dividendCoins - 40 + result.dividendCoins,
+      dividendCoins: state.dividendCoins - balance.trainCost + result.dividendCoins,
       currentMarket: market,
       owned: {
         ...state.owned,
@@ -726,12 +781,12 @@ export function trainBuddy(state: GameState): { state: GameState; result: TrainR
           "市場エネルギー反映",
           `${market.indexName} ${formatSigned(market.change)}%で${monsterById.get(buddy.id)?.name ?? "株モン"}が成長しました。${teamBonus.active ? ` ${teamBonus.name}発動。` : ""}`,
           0,
-          result.dividendCoins - 40,
+          result.dividendCoins - balance.trainCost,
           result.exp,
           market.change
         ),
         ...state.logs
-      ].slice(0, 20)
+      ].slice(0, balance.visibleLogLimit)
     }
   };
 }
@@ -966,7 +1021,7 @@ function weightedMonster() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function createMarketEnergy(date: Date): MarketEnergy {
+export function createMarketEnergy(date: Date): MarketEnergy {
   const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
   const wave = Math.sin(seed * 12.9898) * 43758.5453;
   const normalized = wave - Math.floor(wave);
@@ -976,7 +1031,20 @@ function createMarketEnergy(date: Date): MarketEnergy {
   return {
     indexName: "マーケット225",
     change,
-    theme: themes[Math.floor(normalized * themes.length)] ?? "モビリティ"
+    theme: themes[Math.floor(normalized * themes.length)] ?? "モビリティ",
+    source: "game-simulated",
+    updatedAt: date.toISOString(),
+    note: "実API接続前のゲーム内シミュレーションです。"
+  };
+}
+
+export function createMockExternalMarketEnergy(date = new Date()): MarketEnergy {
+  const simulated = createMarketEnergy(date);
+  return {
+    ...simulated,
+    source: "external-api",
+    updatedAt: date.toISOString(),
+    note: "外部API接続前のモックレスポンスです。"
   };
 }
 

@@ -3,7 +3,8 @@
 ## 現在地
 
 v0.1完成度: 100%
-v0.2着手度: 95%
+v0.2着手度: 100%
+v0.3着手度: 50%
 
 理由:
 
@@ -40,6 +41,23 @@ v0.2着手度: 95%
 - 旧保存形式からの自動移行と保存値補正を追加
 - サービスワーカーを追加
 - オフライン用ページと最低限のアプリシェルキャッシュを追加
+- v0.2の主要バランス値を定数化
+- マーケット基準価格と主要コスト表示を最終調整
+- v0.3の最初の作業として市場データ連携の受け皿を追加
+- 市場データにソース、更新時刻、説明文を追加
+- ホームとマーケットに市場データ更新導線を追加
+- `/api/market` モックAPIルートを追加
+- クライアント側の市場データ更新をAPI経由へ変更
+- API失敗時はゲーム内シミュレーションへフォールバック
+- 市場データAPI候補を整理
+- `MARKET_API_PROVIDER` によるAPIプロバイダ分岐を追加
+- Twelve Data / Alpha Vantage の取得処理をサーバー側APIルートへ追加
+- APIキー未設定時は自動でゲーム内データへフォールバック
+- 市場データAPIのサーバー側短時間キャッシュを追加
+- `.env.example` を追加
+- GitHub Pages用の静的書き出し設定を追加
+- GitHub ActionsによるPagesデプロイ設定を追加
+- `/kabumon1` 配下で動く画像、manifest、service workerパスへ調整
 
 ## 優先順位
 
@@ -256,5 +274,35 @@ v0.2はミッションから着手しています。
 - public/offline.html追加
 - アプリ起動時のサービスワーカー登録追加
 - manifest、アイコン、ホーム画面、主要画像のキャッシュ設定追加
+- ガチャ費用、育成費用、放置上限、ログ保持数をbalance定数へ集約
+- SR/SSRのマーケット基準価格を少し下げて序盤の購入導線を改善
+- ホーム画面にv0.2バランス目安を追加
 
-次に進めるなら、v0.2としてバランス調整と最終確認に着手します。
+v0.2は完了です。
+
+v0.3に着手しました。
+
+完了済み:
+
+- MarketEnergyにsource、updatedAt、noteを追加
+- 既存セーブからの市場データ移行を補正
+- 市場データ更新関数を追加
+- ホーム画面とマーケット画面に市場データ更新ボタンを追加
+- 市場データソースと更新時刻の表示を追加
+- Next.js API Route `/api/market` を追加
+- 外部API相当のモックレスポンスを返すようにした
+- 市場更新ボタンからAPIを呼び出すようにした
+- Twelve Data、Alpha Vantage、Finnhubを候補として整理
+- 第一候補をTwelve Dataに設定
+- `/api/market` に `MARKET_API_PROVIDER` 分岐を追加
+- `mock`、`twelvedata`、`alphavantage` を選べるようにした
+- APIキーまたはシンボル未設定時はゲーム内データへ戻すようにした
+- 外部APIの変化率を `MarketEnergy` に正規化する処理を追加
+- `MARKET_API_CACHE_SECONDS` による短時間キャッシュを追加
+- `.env.example` を追加
+- `npm run build:pages` を追加
+- GitHub Pages用の `.github/workflows/pages.yml` を追加
+- GitHub Pages公開URL `https://atsushisora.github.io/kabumon1/` でアプリ本体を配信する準備を追加
+- 静的ホスティング向けにmanifest、画像、service worker、API fetchのパスをbasePath対応
+
+次に進めるなら、GitHub PagesへのpushとActions確認、実APIキーを入れた銘柄シンボル検証、モンスター追加、クラウド保存、バトル/イベント要素のいずれかに着手します。

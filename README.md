@@ -20,7 +20,8 @@ http://localhost:3000
 ## 現在の完成度
 
 v0.1: 100%
-v0.2: 95%
+v0.2: 100%
+v0.3: 50%
 
 完了済み:
 
@@ -62,11 +63,56 @@ v0.2: 95%
 - サービスワーカー登録
 - オフライン用ページ
 - 最低限のアプリシェルキャッシュ
+- v0.2バランス定数
+- ガチャ、育成、放置上限、ログ保持数の一元管理
+- マーケット基準価格の調整
+- ホーム画面のバランス目安表示
+- 市場データ連携の受け皿
+- 市場データのソース/更新時刻表示
+- 市場データ更新ボタン
+- `/api/market` モックAPIルート
+- 市場データ更新ボタンのAPI接続
+- API失敗時のゲーム内データフォールバック
+- 市場データAPI候補整理
+- `MARKET_API_PROVIDER` によるAPI分岐
+- Twelve Data / Alpha Vantage 用のサーバー側取得処理
+- APIキー未設定時の自動フォールバック
+- 市場データAPIのサーバー側短時間キャッシュ
+- `.env.example` 追加
+- GitHub Pages用の静的書き出し設定
+- GitHub ActionsによるPagesデプロイ設定
+- `/kabumon1` 配下で動く画像、manifest、service workerパス対応
 
 残り:
 
 - v0.1の最小試作は完了
-- v0.2ではバランス調整と最終確認を検討
+- v0.2は完了
+- v0.3では実APIキーでの銘柄検証、モンスター追加、クラウド保存、イベント/バトル要素を検討
+
+## 公開URL
+
+GitHub Pages:
+
+```text
+https://atsushisora.github.io/kabumon1/
+```
+
+`main` ブランチへpushすると、GitHub Actionsが `npm run build:pages` を実行して `out` をGitHub Pagesへデプロイします。
+
+GitHub Pagesは静的ホスティングのため、公開版の `/api/market` はビルド時のモック市場データとして動きます。本物の市場APIキー連携は、後でNetlifyなどサーバー実行できる環境に移す想定です。
+
+## 市場データ設定
+
+初期状態ではAPIキーなしで動くように、`.env.local` を作らなくてもモック市場データを使います。
+
+実APIを検証するときは `.env.example` を参考に、サーバー側の `.env.local` に以下を設定します。
+
+```bash
+MARKET_API_PROVIDER=twelvedata
+MARKET_API_SYMBOL=検証するシンボル
+MARKET_API_CACHE_SECONDS=300
+TWELVE_DATA_API_KEY=取得したAPIキー
+```
 
 ## 注意
 

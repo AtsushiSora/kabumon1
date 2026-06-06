@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  balance,
   buyMonsterFromMarket,
   claimDailyCheckin,
   claimMissionReward,
@@ -15,6 +16,8 @@ import {
   getRequiredExp,
   getTeamBonus,
   hydrateState,
+  marketSourceLabels,
+  refreshMarketEnergy,
   rollGacha,
   sellMonsterUnit,
   serializeState,
@@ -26,9 +29,11 @@ import {
   trainBuddy,
   type GrowthLog,
   type GameState,
+  type MarketEnergy,
   type TrainResult
 } from "@/lib/game";
 import { monsterById, monsters, type MonsterMaster, type MonsterStats } from "@/lib/monsters";
+import { withBasePath } from "@/lib/paths";
 
 type Tab = "home" | "gacha" | "train" | "team" | "dex" | "market";
 
@@ -72,7 +77,7 @@ export default function KabumonApp() {
         return;
       }
 
-      navigator.serviceWorker.register("/sw.js").catch(() => {
+      navigator.serviceWorker.register(withBasePath("/sw.js")).catch(() => {
         // PWA登録に失敗してもゲーム本体は通常どおり動かします。
       });
     }
@@ -168,7 +173,7 @@ export default function KabumonApp() {
         title: "育成できません",
         detail: "配当コインが足りません。",
         tone: "blue",
-        metrics: ["必要 40"]
+        metrics: [`必要 ${balance.trainCost}`]
       });
       return;
     }
@@ -183,6 +188,25 @@ export default function KabumonApp() {
         `EXP +${result.result.exp}`,
         `配当 +${result.result.dividendCoins}`,
         ...Object.entries(result.result.statChanges).map(([key, value]) => `${statLabels[key as keyof MonsterStats]} +${value}`)
+      ]
+    });
+  }
+
+  async function handleRefreshMarket() {
+    const market = await fetchMarketEnergy();
+    const result = market
+      ? refreshMarketEnergy(state!, new Date(), market)
+      : refreshMarketEnergy(state!);
+    setMarketMessage(result.message);
+    update(result.state);
+    setResultToast({
+      title: "市場データ更新",
+      detail: result.message,
+      tone: "blue",
+      metrics: [
+        result.state.currentMarket.indexName,
+        `${formatSigned(result.state.currentMarket.change)}%`,
+        result.state.currentMarket.theme
       ]
     });
   }
@@ -211,6 +235,7 @@ export default function KabumonApp() {
               setActiveTab("train");
               handleTrain();
             }}
+            onRefreshMarket={handleRefreshMarket}
             missionMessage={missionMessage}
             onClaimMission={(id) => {
               const result = claimMissionReward(state, id);
@@ -299,6 +324,7 @@ export default function KabumonApp() {
                 }
               }
             }}
+            onRefreshMarket={handleRefreshMarket}
             onReset={() => {
               if (window.confirm("セーブデータを初期状態に戻しますか？")) {
                 setGachaMessage("");
@@ -415,6 +441,7 @@ function HomePanel({
   onDailyCheckin,
   onGacha,
   onTrain,
+  onRefreshMarket,
   missionMessage,
   onClaimMission
 }: {
@@ -429,6 +456,7 @@ function HomePanel({
   onDailyCheckin: () => void;
   onGacha: () => void;
   onTrain: () => void;
+  onRefreshMarket: () => void;
   missionMessage: string;
   onClaimMission: (id: string) => void;
 }) {
@@ -454,6 +482,10 @@ function HomePanel({
         <div>
           <p>テーマ</p>
           <h2>{state.currentMarket.theme}</h2>
+        </div>
+        <div className="market-source-row">
+          <small>{marketSourceLabels[state.currentMarket.source]} / {formatLogTime(state.currentMarket.updatedAt)}</small>
+          <button className="market-refresh-button" onClick={onRefreshMarket}>更新</button>
         </div>
       </section>
 
@@ -614,7 +646,7 @@ function GachaPanel({
     <div className="screen-content">
       <section className="feature-panel pixel-panel">
         <h2>銘柄ガチャ</h2>
-        <p>カブコイン3,000で株モンを入手。被りは100株追加されます。</p>
+        <p>カブコイン{balance.gachaCost.toLocaleString("ja-JP")}で株モンを入手。被りは100株追加されます。</p>
         <button className="gold-button full" onClick={onGacha}>1回まわす</button>
         {message && <div className="message-box">{message}</div>}
       </section>
@@ -644,7 +676,7 @@ function TrainPanel({
     <div className="screen-content">
       <section className="feature-panel pixel-panel">
         <h2>{buddyMaster.name}を育成</h2>
-        <p>配当コイン40を使い、仮の市場エネルギーを反映します。</p>
+        <p>配当コイン{balance.trainCost}を使い、仮の市場エネルギーを反映します。</p>
         <button className="gold-button full" onClick={onTrain}>市場エネルギー反映</button>
         <div className="train-summary">
           <MonsterArt monster={buddyMaster} />
@@ -756,12 +788,14 @@ function MarketPanel({
   message,
   onBuy,
   onSell,
+  onRefreshMarket,
   onReset
 }: {
   state: GameState;
   message: string;
   onBuy: (id: string) => void;
   onSell: (id: string) => void;
+  onRefreshMarket: () => void;
   onReset: () => void;
 }) {
   return (
@@ -773,7 +807,9 @@ function MarketPanel({
           <span>{state.currentMarket.theme}</span>
           <strong>{formatSigned(state.currentMarket.change)}%</strong>
           <small>本日の価格補正</small>
+          <small>{marketSourceLabels[state.currentMarket.source]} {formatLogTime(state.currentMarket.updatedAt)}</small>
         </div>
+        <button className="mini-gold-button market-refresh-wide" onClick={onRefreshMarket}>市場データ更新</button>
         {message && <div className="message-box">{message}</div>}
       </section>
       <section className="market-list">
@@ -833,7 +869,15 @@ function DailyInfoPanel({ state }: { state: GameState }) {
       </div>
       <div>
         <strong>データ状態</strong>
-        <p>v0.2は保存形式 v{SAVE_VERSION} とPWAオフライン起動を検証中</p>
+        <p>v0.3は保存形式 v{SAVE_VERSION} と市場データ連携の受け皿を検証中</p>
+      </div>
+      <div>
+        <strong>市場データ</strong>
+        <p>{marketSourceLabels[state.currentMarket.source]} / {state.currentMarket.note}</p>
+      </div>
+      <div>
+        <strong>v0.2バランス</strong>
+        <p>ガチャ {balance.gachaCost.toLocaleString("ja-JP")}C / 育成 {balance.trainCost}D / 放置上限 {balance.offlineMaxHours}時間</p>
       </div>
     </section>
   );
@@ -1056,4 +1100,18 @@ function formatLogTime(date: string): string {
 
 function formatDelta(value: number): string {
   return `${value >= 0 ? "+" : ""}${value.toLocaleString("ja-JP")}`;
+}
+
+async function fetchMarketEnergy(): Promise<MarketEnergy | null> {
+  try {
+    const response = await fetch(withBasePath("/api/market"), {
+      cache: "no-store"
+    });
+    if (!response.ok) return null;
+
+    const data = await response.json() as { market?: MarketEnergy };
+    return data.market ?? null;
+  } catch {
+    return null;
+  }
 }

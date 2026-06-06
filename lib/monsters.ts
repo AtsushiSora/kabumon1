@@ -1,3 +1,5 @@
+import { withBasePath } from "./paths";
+
 export type Rarity = "R" | "SR" | "SSR" | "UR";
 
 export type DividendType = "低配当" | "中配当" | "高配当";
@@ -65,8 +67,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 70,
       growthPower: 85
     },
-    image: "/monsters/toyodora.png",
-    icon: "/monsters/toyodora-icon.png",
+    image: withBasePath("/monsters/toyodora.png"),
+    icon: withBasePath("/monsters/toyodora-icon.png"),
     assetReady: true
   },
   {
@@ -90,8 +92,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 35,
       growthPower: 110
     },
-    image: "/monsters/nintendora.png",
-    icon: "/monsters/nintendora-icon.png",
+    image: withBasePath("/monsters/nintendora.png"),
+    icon: withBasePath("/monsters/nintendora-icon.png"),
     assetReady: true
   },
   {
@@ -115,8 +117,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 40,
       growthPower: 95
     },
-    image: "/monsters/sonic-leo.png",
-    icon: "/monsters/sonic-leo-icon.png",
+    image: withBasePath("/monsters/sonic-leo.png"),
+    icon: withBasePath("/monsters/sonic-leo-icon.png"),
     assetReady: true
   },
   {
@@ -140,8 +142,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 140,
       growthPower: 65
     },
-    image: "/monsters/bank-golem.png",
-    icon: "/monsters/bank-golem-icon.png",
+    image: withBasePath("/monsters/bank-golem.png"),
+    icon: withBasePath("/monsters/bank-golem-icon.png"),
     assetReady: true
   },
   {
@@ -165,8 +167,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 25,
       growthPower: 105
     },
-    image: "/monsters/chip-thunder.png",
-    icon: "/monsters/chip-thunder-icon.png",
+    image: withBasePath("/monsters/chip-thunder.png"),
+    icon: withBasePath("/monsters/chip-thunder-icon.png"),
     assetReady: true
   }
 ];
