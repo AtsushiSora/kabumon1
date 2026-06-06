@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   balance,
   buyMonsterFromMarket,
@@ -491,7 +491,10 @@ function HomePanel({
         </div>
       </section>
 
-      <section className="monster-card home-monster-card pixel-panel">
+      <section
+        className="monster-card home-monster-card pixel-panel"
+        style={{ "--home-stage-bg": `url(${withBasePath("/ui/pixel-stage-bg.png")})` } as CSSProperties}
+      >
         <div className="monster-stage">
           <MonsterArt monster={buddyMaster} large />
         </div>
