@@ -1412,6 +1412,7 @@ button {
 }
 
 .home-monster-card {
+  flex: 0 0 auto;
   grid-template-columns: 52% 48%;
   min-height: clamp(292px, 43dvh, 350px);
 }
@@ -2139,19 +2140,21 @@ button {
   }
 
   .home-monster-card {
-    height: 268px;
+    height: 292px;
     min-height: 0;
-    max-height: 268px;
+    max-height: 292px;
     grid-template-columns: 48% 52%;
   }
 
   .home-monster-card .monster-stage {
-    height: 268px;
+    height: 292px;
     min-height: 0;
+    overflow: hidden;
   }
 
   .home-monster-card .monster-art.large {
-    height: 100%;
+    width: 100%;
+    height: 96%;
   }
 
   .home-monster-card .monster-stage::after {
@@ -2159,37 +2162,30 @@ button {
   }
 
   .home-monster-card .monster-info {
+    overflow: hidden;
     padding: 8px 8px 8px 6px;
   }
 
   .home-monster-card .monster-info h2 {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .home-monster-card .stars {
-    margin: 2px 0 4px;
+    margin: 1px 0 3px;
     font-size: 12px;
   }
 
   .home-monster-card .monster-info p {
     font-size: 9px;
+    line-height: 1.25;
   }
 
   .home-monster-card .level-row {
-    margin: 5px 0;
+    margin: 4px 0;
   }
 
   .home-stat-bars {
-    gap: 3px;
-    margin-top: 5px;
-  }
-
-  .home-stat-row {
-    min-height: 15px;
-  }
-
-  .home-stat-row .stat-bar {
-    height: 6px;
+    display: none;
   }
 
   .home-result-panel {
@@ -2429,13 +2425,13 @@ button {
   }
 
   .home-monster-card {
-    height: 246px;
+    height: 280px;
     min-height: 0;
-    max-height: 246px;
+    max-height: 280px;
   }
 
   .home-monster-card .monster-stage {
-    height: 246px;
+    height: 280px;
     min-height: 0;
   }
 
@@ -2443,12 +2439,8 @@ button {
     font-size: 19px;
   }
 
-  .home-stat-row {
-    grid-template-columns: 34px 1fr 34px;
-  }
-
   .home-result-panel .result-tile {
-    min-height: 30px;
+    min-height: 28px;
   }
 
   .bottom-nav button {
