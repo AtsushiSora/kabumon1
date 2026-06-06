@@ -46,6 +46,8 @@ type ResultToast = {
   tone: "gold" | "blue" | "green";
   monster?: MonsterMaster;
   metrics?: string[];
+  rank?: DailyEventResult["status"]["rank"];
+  score?: number;
 };
 
 const navItems: { id: Tab; label: string; icon: string }[] = [
@@ -205,6 +207,8 @@ export default function KabumonApp() {
       title: result.ok ? "市場作戦完了" : "市場作戦",
       detail: result.message,
       tone: result.ok ? "green" : "blue",
+      rank: result.status.rank,
+      score: result.status.score,
       metrics: [
         `ランク ${result.status.rank}`,
         `スコア ${result.status.score}`,
@@ -438,6 +442,13 @@ function ResultToastOverlay({
           <span>{toast.tone === "gold" ? "★" : toast.tone === "green" ? "✓" : "▲"}</span>
           <strong>{toast.title}</strong>
         </div>
+        {toast.rank && (
+          <div className={`result-rank-badge rank-${toast.rank.toLowerCase()}`}>
+            <span>作戦ランク</span>
+            <strong>{toast.rank}</strong>
+            {typeof toast.score === "number" && <small>スコア {toast.score}</small>}
+          </div>
+        )}
         {toast.monster && (
           <div className="result-monster">
             <MonsterArt monster={toast.monster} />
