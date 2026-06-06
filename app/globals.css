@@ -125,14 +125,13 @@ button {
 
 .top-header {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(124px, 1fr) minmax(92px, auto) auto auto;
   gap: 7px;
   align-items: center;
   margin-bottom: 8px;
 }
 
 .brand-mark {
-  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -174,9 +173,10 @@ button {
 }
 
 .trainer-chip {
-  grid-column: 1 / 2;
   min-width: 0;
   font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .avatar-pixel,
@@ -1323,7 +1323,7 @@ button {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.2;
+  opacity: 0.07;
   background:
     linear-gradient(rgba(62, 208, 255, 0.055) 1px, transparent 1px),
     linear-gradient(90deg, rgba(62, 208, 255, 0.045) 1px, transparent 1px),
@@ -1342,10 +1342,10 @@ button {
   gap: 8px;
   padding: 8px 10px;
   background:
-    linear-gradient(180deg, rgba(13, 42, 88, 0.88), rgba(4, 15, 38, 0.94)),
-    var(--home-hud-texture) 14% 18% / 210px 210px repeat,
+    linear-gradient(180deg, rgba(13, 42, 88, 0.96), rgba(4, 15, 38, 0.98)),
+    var(--home-hud-texture) 14% 18% / 300px 300px repeat,
     linear-gradient(180deg, rgba(13, 42, 88, 0.94), rgba(4, 15, 38, 0.94));
-  background-blend-mode: normal, screen, normal;
+  background-blend-mode: normal, soft-light, normal;
 }
 
 .home-market-panel .market-graph {
@@ -1366,8 +1366,26 @@ button {
 }
 
 .home-market-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 2px;
   font-size: 16px;
+}
+
+.theme-pixel-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 14px;
+  border: 1px solid rgba(125, 200, 255, 0.58);
+  border-radius: 3px;
+  color: #9fdfff;
+  background:
+    linear-gradient(180deg, rgba(40, 78, 118, 0.72), rgba(8, 24, 50, 0.82)),
+    linear-gradient(90deg, transparent 34%, rgba(125, 200, 255, 0.38) 34% 46%, transparent 46% 58%, rgba(125, 200, 255, 0.3) 58%);
+  font-size: 0;
+  box-shadow: inset 0 0 8px rgba(74, 205, 255, 0.14);
 }
 
 .home-market-panel strong {
@@ -1471,10 +1489,10 @@ button {
   isolation: isolate;
   background:
     linear-gradient(90deg, rgba(1, 6, 17, 0.04) 0%, rgba(2, 9, 24, 0.28) 44%, rgba(3, 12, 32, 0.9) 67%, rgba(4, 13, 34, 0.96) 100%),
-    var(--home-hud-texture) 48% 44% / 250px 250px repeat,
+    var(--home-hud-texture) 48% 44% / 360px 360px repeat,
     var(--home-stage-bg) center / cover no-repeat,
     linear-gradient(180deg, rgba(10, 33, 73, 0.98), rgba(3, 11, 28, 0.98));
-  background-blend-mode: normal, screen, normal, normal;
+  background-blend-mode: normal, soft-light, normal, normal;
   box-shadow:
     inset 0 0 0 2px rgba(5, 13, 30, 0.9),
     inset 0 0 0 3px rgba(62, 208, 255, 0.18),
@@ -1515,11 +1533,11 @@ button {
   border-left: 1px solid rgba(126, 201, 255, 0.25);
   background:
     linear-gradient(90deg, rgba(3, 10, 25, 0.36), rgba(5, 18, 45, 0.84) 26%, rgba(3, 11, 30, 0.94)),
-    var(--home-hud-texture) 76% 42% / 180px 180px repeat,
+    var(--home-hud-texture) 76% 42% / 300px 300px repeat,
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: auto, 180px 180px, 8px 8px, 8px 8px;
-  background-blend-mode: normal, screen, normal, normal;
+  background-size: auto, 300px 300px, 8px 8px, 8px 8px;
+  background-blend-mode: normal, soft-light, normal, normal;
 }
 
 .home-monster-card .monster-info h2 {
@@ -1540,6 +1558,39 @@ button {
   line-height: 1.36;
   color: #dbe7fb;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.78);
+}
+
+.home-monster-card .monster-line {
+  position: relative;
+  padding-left: 18px;
+}
+
+.home-monster-card .monster-line::before {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  display: inline-grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  color: #9fdfff;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.home-monster-card .stock-line::before {
+  content: "▥";
+}
+
+.home-monster-card .shares-line::before {
+  content: "▣";
+  color: #f0d7a2;
+}
+
+.home-monster-card .attr-line::before {
+  content: "⚙";
+  color: #aeb9c9;
 }
 
 .home-monster-card .level-row {
@@ -1570,9 +1621,9 @@ button {
   padding: 8px 10px;
   background:
     linear-gradient(180deg, rgba(8, 25, 59, 0.96), rgba(3, 10, 25, 0.96)),
-    var(--home-hud-texture) 50% 78% / 220px 220px repeat,
+    var(--home-hud-texture) 50% 78% / 340px 340px repeat,
     linear-gradient(90deg, rgba(83, 221, 114, 0.06), transparent 34%);
-  background-blend-mode: normal, screen, normal;
+  background-blend-mode: normal, soft-light, normal;
 }
 
 .home-screen .stat-row {
@@ -1645,8 +1696,8 @@ button {
   padding: 17px 7px 7px;
   background:
     linear-gradient(180deg, rgba(11, 33, 74, 0.96), rgba(3, 11, 28, 0.96)),
-    var(--home-hud-texture) 50% 60% / 210px 210px repeat;
-  background-blend-mode: normal, screen;
+    var(--home-hud-texture) 50% 60% / 340px 340px repeat;
+  background-blend-mode: normal, soft-light;
 }
 
 .home-result-panel .section-label {
@@ -1664,10 +1715,10 @@ button {
   border-radius: 4px;
   background:
     linear-gradient(180deg, rgba(9, 29, 66, 0.86), rgba(3, 10, 25, 0.9)),
-    var(--home-hud-texture) center / 140px 140px repeat,
+    var(--home-hud-texture) center / 280px 280px repeat,
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: auto, 140px 140px, 6px 6px;
-  background-blend-mode: normal, screen, normal;
+  background-size: auto, 280px 280px, 6px 6px;
+  background-blend-mode: normal, soft-light, normal;
 }
 
 .home-result-panel .result-tile::before {
@@ -1712,8 +1763,8 @@ button {
   padding: 8px 10px;
   background:
     linear-gradient(180deg, rgba(8, 30, 70, 0.96), rgba(3, 11, 28, 0.96)),
-    var(--home-hud-texture) 62% 62% / 190px 190px repeat;
-  background-blend-mode: normal, screen;
+    var(--home-hud-texture) 62% 62% / 320px 320px repeat;
+  background-blend-mode: normal, soft-light;
 }
 
 .home-team-effect > span {
@@ -2357,7 +2408,7 @@ button {
   }
 
   .top-header {
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: minmax(118px, 1fr) minmax(74px, auto) auto auto;
     gap: 5px;
     margin-bottom: 5px;
   }
@@ -2378,7 +2429,16 @@ button {
   }
 
   .trainer-chip {
-    display: none;
+    display: flex;
+    min-height: 31px;
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+
+  .trainer-chip span:last-child {
+    max-width: 56px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .currency-chip {
@@ -2390,6 +2450,12 @@ button {
   .currency-chip span {
     width: 20px;
     height: 20px;
+  }
+
+  .avatar-pixel {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
   }
 
   .home-screen {
@@ -2415,6 +2481,7 @@ button {
 
   .home-market-panel h2 {
     font-size: 13px;
+    gap: 4px;
   }
 
   .home-market-panel strong {
@@ -2504,6 +2571,16 @@ button {
     line-height: 1.2;
   }
 
+  .home-monster-card .monster-line {
+    padding-left: 14px;
+  }
+
+  .home-monster-card .monster-line::before {
+    width: 10px;
+    height: 10px;
+    font-size: 8px;
+  }
+
   .home-monster-card .level-row {
     margin: 4px 0;
   }
@@ -2571,7 +2648,7 @@ button {
 
   .home-screen .stat-row {
     grid-template-columns: 52px 1fr 42px;
-    min-height: 15px;
+    min-height: 14px;
     gap: 5px;
   }
 
@@ -2587,7 +2664,7 @@ button {
   }
 
   .home-screen .stat-bar {
-    height: 6px;
+    height: 5px;
   }
 
   .bottom-nav {

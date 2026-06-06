@@ -489,7 +489,7 @@ function HomePanel({
         <div className="divider" />
         <div>
           <p>テーマ</p>
-          <h2>{state.currentMarket.theme}</h2>
+          <h2><span className="theme-pixel-icon" aria-hidden="true">▰</span>{state.currentMarket.theme}</h2>
         </div>
         <div className="market-source-row">
           <small>{marketSourceLabels[state.currentMarket.source]} / {formatLogTime(state.currentMarket.updatedAt)}</small>
@@ -506,7 +506,7 @@ function HomePanel({
         <div className="monster-info">
           <h2>{buddyMaster.name}</h2>
           <div className="stars">★★★★★</div>
-          <p>銘柄: {buddyMaster.companyAlias}</p>
+          <p className="monster-line stock-line">銘柄: {buddyMaster.companyAlias}</p>
           <div className="level-row">
             <strong>Lv.{buddy.level}</strong>
             <div className="exp-bar">
@@ -514,7 +514,8 @@ function HomePanel({
             </div>
             <small>あと {Math.max(0, expRequired - buddy.exp)}</small>
           </div>
-          <p>持ち株: <strong>{buddy.shares}</strong> 株 / 属性: {buddyMaster.attribute}</p>
+          <p className="monster-line shares-line">持ち株: <strong>{buddy.shares}</strong> 株</p>
+          <p className="monster-line attr-line">属性: {buddyMaster.attribute}</p>
           <p>
             終値変化:
             <strong className={state.currentMarket.change >= 0 ? "positive" : "negative"}>
