@@ -634,7 +634,10 @@ function TrainPanel({
 
   return (
     <div className="screen-content train-screen">
-      <section className="train-hero pixel-panel">
+      <section
+        className="train-hero pixel-panel"
+        style={{ "--home-stage-bg": `url(${withBasePath("/ui/pixel-stage-bg.png")})` } as CSSProperties}
+      >
         <div className="train-stage">
           <MonsterArt monster={buddyMaster} large />
         </div>
