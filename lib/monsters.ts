@@ -195,6 +195,31 @@ export const monsters: MonsterMaster[] = [
     image: withBasePath("/monsters/medica-seraph.png"),
     icon: withBasePath("/monsters/medica-seraph-icon.png"),
     assetReady: true
+  },
+  {
+    id: "grid-wyvern",
+    name: "グリッドワイバーン",
+    ticker: "9501",
+    companyAlias: "電力インフラ企業A",
+    rarity: "SR",
+    attribute: "電力",
+    role: "インフラ安定型",
+    equipment: "スマートグリッド翼",
+    skill: "パワーリレー",
+    dividendType: "中配当",
+    tags: ["エネルギー", "インフラ", "安定", "配当"],
+    baseStats: {
+      hp: 1280,
+      attack: 690,
+      defense: 780,
+      speed: 125,
+      luck: 95,
+      dividendPower: 105,
+      growthPower: 72
+    },
+    image: withBasePath("/monsters/grid-wyvern.png"),
+    icon: withBasePath("/monsters/grid-wyvern-icon.png"),
+    assetReady: true
   }
 ];
 

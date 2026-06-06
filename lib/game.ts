@@ -955,6 +955,19 @@ export function getTeamBonus(state: GameState): TeamBonus {
     };
   }
 
+  if (tags.has("エネルギー") && tags.has("インフラ") && tags.has("安定")) {
+    return {
+      name: "インフラ安定網",
+      detail: "HP+8%、放置報酬+10%、配当+6%",
+      multiplier: 1.08,
+      statMultipliers: { hp: 1.08 },
+      offlineMultiplier: 1.1,
+      expMultiplier: 1,
+      dividendMultiplier: 1.06,
+      active: true
+    };
+  }
+
   return {
     name: "分散チーム",
     detail: "編成中の株モンが放置報酬を支えます",
@@ -1152,7 +1165,7 @@ export function createMarketEnergy(date: Date): MarketEnergy {
   const wave = Math.sin(seed * 12.9898) * 43758.5453;
   const normalized = wave - Math.floor(wave);
   const change = round(normalized * 7 - 3.2, 2);
-  const themes = ["モビリティ", "半導体", "金融防衛", "エンタメ", "安定配当"];
+  const themes = ["モビリティ", "半導体", "金融防衛", "エンタメ", "安定配当", "エネルギー"];
 
   return {
     indexName: "マーケット225",
@@ -1223,6 +1236,10 @@ function isThemeMatched(monster: MonsterMaster, theme: string): boolean {
 
   if (theme === "安定配当") {
     return monster.tags.some((tag) => tag === "配当" || tag === "安定");
+  }
+
+  if (theme === "エネルギー") {
+    return monster.tags.some((tag) => tag === "エネルギー" || tag === "インフラ");
   }
 
   return false;

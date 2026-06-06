@@ -882,7 +882,7 @@ function DexPanel({
     <div className="screen-content">
       <section className="feature-panel pixel-panel">
         <h2>株モン図鑑</h2>
-        <p>初期5体の所持状況を確認できます。</p>
+        <p>登録済み株モンの所持状況を確認できます。</p>
       </section>
       <section className="dex-list">
         {monsters.map((monster) => {
