@@ -39,6 +39,8 @@ export type GameState = {
   dailyCheckinDate: string | null;
   loginStreak: number;
   dailyCheckinCount: number;
+  dailyEventDate: string | null;
+  eventCount: number;
   currentMarket: MarketEnergy;
   logs: GrowthLog[];
   offlinePending: OfflineReward | null;
@@ -75,6 +77,26 @@ export type DailyCheckinStatus = {
   nextStreak: number;
   kabuCoins: number;
   dividendCoins: number;
+};
+
+export type DailyEventStatus = {
+  available: boolean;
+  todayKey: string;
+  score: number;
+  target: number;
+  rank: "S" | "A" | "B" | "C";
+  kabuCoins: number;
+  dividendCoins: number;
+  exp: number;
+  teamPower: number;
+  marketModifier: number;
+};
+
+export type DailyEventResult = {
+  state: GameState;
+  ok: boolean;
+  message: string;
+  status: DailyEventStatus;
 };
 
 export type TrainResult = {
@@ -122,7 +144,7 @@ export type MarketQuote = {
 };
 
 export const STORAGE_KEY = "kabumon:v0.1";
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export const balance = {
   gachaCost: 3000,
@@ -135,6 +157,7 @@ export const balance = {
   dailyBaseDividendCoins: 30,
   dailyStreakKabuBonus: 120,
   dailyStreakDividendBonus: 12,
+  eventTargetScore: 820,
   logLimit: 30,
   visibleLogLimit: 20
 };
@@ -163,6 +186,8 @@ export function createInitialState(now = new Date()): GameState {
     dailyCheckinDate: null,
     loginStreak: 0,
     dailyCheckinCount: 0,
+    dailyEventDate: null,
+    eventCount: 0,
     currentMarket: createMarketEnergy(now),
     claimedMissionIds: [],
     logs: [
@@ -244,6 +269,8 @@ function migrateState(parsed: Partial<GameState>, now: Date): GameState {
     dailyCheckinDate: typeof parsed.dailyCheckinDate === "string" ? parsed.dailyCheckinDate : null,
     loginStreak: normalizeNumber(parsed.loginStreak, 0, 0),
     dailyCheckinCount: normalizeNumber(parsed.dailyCheckinCount, 0, 0),
+    dailyEventDate: typeof parsed.dailyEventDate === "string" ? parsed.dailyEventDate : null,
+    eventCount: normalizeNumber(parsed.eventCount, 0, 0),
     currentMarket: normalizeMarketEnergy(parsed.currentMarket, now),
     logs: normalizeLogs(parsed.logs, base.logs),
     offlinePending: null,
@@ -452,6 +479,76 @@ export function claimDailyCheckin(state: GameState, now = new Date()): { state: 
           status.kabuCoins,
           status.dividendCoins,
           0,
+          state.currentMarket.change
+        ),
+        ...state.logs
+      ].slice(0, balance.visibleLogLimit)
+    }
+  };
+}
+
+export function getDailyEventStatus(state: GameState, now = new Date()): DailyEventStatus {
+  const todayKey = getLocalDateKey(now);
+  const teamPower = calculateDailyEventTeamPower(state);
+  const marketModifier = clamp(1 + state.currentMarket.change * 0.035, 0.82, 1.18);
+  const score = Math.floor(teamPower * marketModifier);
+  const rank = score >= 1250 ? "S" : score >= 920 ? "A" : score >= 650 ? "B" : "C";
+  const rewardMultiplier = rank === "S" ? 1.85 : rank === "A" ? 1.35 : rank === "B" ? 1 : 0.72;
+  const teamBonus = getTeamBonus(state);
+
+  return {
+    available: state.dailyEventDate !== todayKey,
+    todayKey,
+    score,
+    target: balance.eventTargetScore,
+    rank,
+    kabuCoins: roundToUnit(700 * rewardMultiplier + Math.max(0, score - balance.eventTargetScore) * 0.55, 10),
+    dividendCoins: Math.floor((45 * rewardMultiplier + state.team.length * 8) * teamBonus.dividendMultiplier),
+    exp: Math.floor((22 * rewardMultiplier + state.team.length * 6) * teamBonus.expMultiplier),
+    teamPower: Math.floor(teamPower),
+    marketModifier: round(marketModifier, 2)
+  };
+}
+
+export function runDailyEvent(state: GameState, now = new Date()): DailyEventResult {
+  const status = getDailyEventStatus(state, now);
+
+  if (!status.available) {
+    return {
+      state,
+      ok: false,
+      message: "本日の市場作戦は完了済みです。",
+      status
+    };
+  }
+
+  const nextOwned = { ...state.owned };
+  const expTargets = state.team.map((id) => nextOwned[id]).filter(Boolean);
+
+  for (const owned of expTargets) {
+    nextOwned[owned.id] = addExp(owned, Math.max(1, Math.floor(status.exp / Math.max(1, expTargets.length))));
+  }
+
+  const message = `市場作戦ランク${status.rank}。スコア${status.score}で報酬を獲得しました。`;
+
+  return {
+    ok: true,
+    message,
+    status,
+    state: {
+      ...state,
+      kabuCoins: state.kabuCoins + status.kabuCoins,
+      dividendCoins: state.dividendCoins + status.dividendCoins,
+      owned: nextOwned,
+      dailyEventDate: status.todayKey,
+      eventCount: state.eventCount + 1,
+      logs: [
+        createLog(
+          "市場作戦",
+          message,
+          status.kabuCoins,
+          status.dividendCoins,
+          status.exp,
           state.currentMarket.change
         ),
         ...state.logs
@@ -689,6 +786,14 @@ export function getMissions(state: GameState): Mission[] {
       progress: teamBonus.active ? 1 : 0,
       target: 1,
       reward: { kabuCoins: 1200, dividendCoins: 120 }
+    }),
+    createMission(state, {
+      id: "first-event",
+      title: "市場作戦に出る",
+      detail: "チームで市場作戦を1回完了する",
+      progress: state.eventCount,
+      target: 1,
+      reward: { kabuCoins: 900, dividendCoins: 90 }
     }),
     createMission(state, {
       id: "shares-500",
@@ -961,6 +1066,27 @@ function applyStatMultipliers(
     dividendPower: Math.floor(stats.dividendPower * (multipliers.dividendPower ?? 1)),
     growthPower: Math.floor(stats.growthPower * (multipliers.growthPower ?? 1))
   };
+}
+
+function calculateDailyEventTeamPower(state: GameState): number {
+  const teamBonus = getTeamBonus(state);
+  const activeTeam = state.team
+    .map((id) => state.owned[id])
+    .filter(Boolean);
+
+  if (activeTeam.length === 0) return 0;
+
+  return activeTeam.reduce((sum, owned) => {
+    const stats = getDisplayStats(owned, teamBonus);
+    const sharesUnits = Math.floor(owned.shares / 100);
+    return sum
+      + stats.attack * 0.42
+      + stats.defense * 0.32
+      + stats.speed * 1.25
+      + stats.luck * 0.85
+      + owned.level * 28
+      + sharesUnits * 36;
+  }, 0);
 }
 
 function addExp(owned: OwnedMonster, amount: number): OwnedMonster {

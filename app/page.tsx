@@ -10,6 +10,7 @@ import {
   createInitialState,
   formatSigned,
   getDailyCheckinStatus,
+  getDailyEventStatus,
   getDisplayStats,
   getMarketQuote,
   getMissions,
@@ -19,6 +20,7 @@ import {
   marketSourceLabels,
   refreshMarketEnergy,
   rollGacha,
+  runDailyEvent,
   sellMonsterUnit,
   serializeState,
   setBuddy,
@@ -29,13 +31,14 @@ import {
   trainBuddy,
   type GrowthLog,
   type GameState,
+  type DailyEventResult,
   type MarketEnergy,
   type TrainResult
 } from "@/lib/game";
 import { monsterById, monsters, type MonsterMaster, type MonsterStats } from "@/lib/monsters";
 import { withBasePath } from "@/lib/paths";
 
-type Tab = "home" | "gacha" | "train" | "team" | "dex" | "market";
+type Tab = "home" | "gacha" | "train" | "event" | "team" | "dex" | "market";
 
 type ResultToast = {
   title: string;
@@ -49,6 +52,7 @@ const navItems: { id: Tab; label: string; icon: string }[] = [
   { id: "home", label: "ホーム", icon: "⌂" },
   { id: "gacha", label: "ガチャ", icon: "◆" },
   { id: "train", label: "育成", icon: "▲" },
+  { id: "event", label: "作戦", icon: "✦" },
   { id: "team", label: "チーム", icon: "◇" },
   { id: "dex", label: "図鑑", icon: "▤" },
   { id: "market", label: "マーケット", icon: "↗" }
@@ -62,6 +66,7 @@ export default function KabumonApp() {
   const [missionMessage, setMissionMessage] = useState("");
   const [dailyMessage, setDailyMessage] = useState("");
   const [trainResult, setTrainResult] = useState<TrainResult | null>(null);
+  const [eventResult, setEventResult] = useState<DailyEventResult | null>(null);
   const [resultToast, setResultToast] = useState<ResultToast | null>(null);
 
   useEffect(() => {
@@ -192,6 +197,22 @@ export default function KabumonApp() {
     });
   }
 
+  function handleDailyEvent() {
+    const result = runDailyEvent(state!);
+    setEventResult(result);
+    update(result.state);
+    setResultToast({
+      title: result.ok ? "市場作戦完了" : "市場作戦",
+      detail: result.message,
+      tone: result.ok ? "green" : "blue",
+      metrics: [
+        `ランク ${result.status.rank}`,
+        `スコア ${result.status.score}`,
+        result.ok ? `カブコイン +${result.status.kabuCoins.toLocaleString("ja-JP")}` : "本日完了済み"
+      ]
+    });
+  }
+
   async function handleRefreshMarket() {
     const market = await fetchMarketEnergy();
     const result = market
@@ -271,6 +292,14 @@ export default function KabumonApp() {
           />
         )}
 
+        {activeTab === "event" && (
+          <EventPanel
+            state={state}
+            result={eventResult}
+            onRun={handleDailyEvent}
+          />
+        )}
+
         {activeTab === "team" && (
           <TeamPanel
             state={state}
@@ -332,6 +361,7 @@ export default function KabumonApp() {
                 setMissionMessage("");
                 setDailyMessage("");
                 setTrainResult(null);
+                setEventResult(null);
                 setResultToast(null);
                 update(createInitialState(new Date()));
                 setActiveTab("home");
@@ -603,7 +633,7 @@ function MissionPanel({
   message: string;
   onClaim: (id: string) => void;
 }) {
-  const missions = getMissions(state).slice(0, 6);
+  const missions = getMissions(state).slice(0, 7);
 
   return (
     <section className="mission-panel pixel-panel">
@@ -691,6 +721,75 @@ function TrainPanel({
           </div>
         )}
       </section>
+      <LogList state={state} />
+    </div>
+  );
+}
+
+function EventPanel({
+  state,
+  result,
+  onRun
+}: {
+  state: GameState;
+  result: DailyEventResult | null;
+  onRun: () => void;
+}) {
+  const status = getDailyEventStatus(state);
+  const teamBonus = getTeamBonus(state);
+
+  return (
+    <div className="screen-content">
+      <section className="feature-panel pixel-panel event-hero">
+        <div>
+          <h2>市場作戦</h2>
+          <p>チームの総合力で1日1回の作戦に出ます。放置報酬とは別に、カブコイン、配当、経験値を獲得できます。</p>
+        </div>
+        <div className={`event-rank rank-${status.rank.toLowerCase()}`}>
+          <span>RANK</span>
+          <strong>{status.rank}</strong>
+        </div>
+        <div className="event-score-grid">
+          <span>作戦スコア <strong>{status.score}</strong></span>
+          <span>目標 <strong>{status.target}</strong></span>
+          <span>チーム力 <strong>{status.teamPower}</strong></span>
+          <span>市場補正 <strong>x{status.marketModifier.toFixed(2)}</strong></span>
+        </div>
+        <button className="gold-button full" disabled={!status.available} onClick={onRun}>
+          {status.available ? "作戦開始" : "本日完了"}
+        </button>
+        <div className="event-reward-row">
+          <span>カブコイン +{status.kabuCoins.toLocaleString("ja-JP")}</span>
+          <span>配当 +{status.dividendCoins}</span>
+          <span>EXP +{status.exp}</span>
+        </div>
+        <div className="message-box compact">
+          現在: {teamBonus.name} / {teamBonus.detail}
+        </div>
+        {result && (
+          <div className="message-box">
+            {result.message}
+          </div>
+        )}
+      </section>
+
+      <section className="grid-panel">
+        {state.team.map((id) => {
+          const monster = monsterById.get(id);
+          const owned = state.owned[id];
+          if (!monster || !owned) return null;
+
+          return (
+            <article key={id} className="mini-card pixel-panel selected">
+              <MonsterArt monster={monster} />
+              <h3>{monster.name}</h3>
+              <p>Lv.{owned.level} / {owned.shares}株</p>
+              <strong>{monster.role}</strong>
+            </article>
+          );
+        })}
+      </section>
+
       <LogList state={state} />
     </div>
   );
