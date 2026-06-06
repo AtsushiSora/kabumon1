@@ -3,6 +3,7 @@ import {
   monsterById,
   monsters,
   type Rarity,
+  type MonsterMaster,
   type MonsterStats
 } from "./monsters";
 
@@ -27,6 +28,7 @@ export type GrowthLog = {
 };
 
 export type GameState = {
+  saveVersion: number;
   playerName: string;
   kabuCoins: number;
   dividendCoins: number;
@@ -34,6 +36,9 @@ export type GameState = {
   team: string[];
   buddyId: string;
   lastLoginAt: string;
+  dailyCheckinDate: string | null;
+  loginStreak: number;
+  dailyCheckinCount: number;
   currentMarket: MarketEnergy;
   logs: GrowthLog[];
   offlinePending: OfflineReward | null;
@@ -53,11 +58,31 @@ export type OfflineReward = {
   exp: number;
 };
 
+export type DailyCheckinStatus = {
+  available: boolean;
+  todayKey: string;
+  currentStreak: number;
+  nextStreak: number;
+  kabuCoins: number;
+  dividendCoins: number;
+};
+
 export type TrainResult = {
   market: MarketEnergy;
   exp: number;
   statChanges: Partial<MonsterStats>;
   dividendCoins: number;
+};
+
+export type TeamBonus = {
+  name: string;
+  detail: string;
+  multiplier: number;
+  statMultipliers: Partial<Record<keyof MonsterStats, number>>;
+  offlineMultiplier: number;
+  expMultiplier: number;
+  dividendMultiplier: number;
+  active: boolean;
 };
 
 export type MissionReward = {
@@ -76,7 +101,18 @@ export type Mission = {
   reward: MissionReward;
 };
 
+export type MarketQuote = {
+  basePrice: number;
+  buyPrice: number;
+  sellPrice: number;
+  marketMultiplier: number;
+  demandMultiplier: number;
+  themeMatched: boolean;
+  reason: string;
+};
+
 export const STORAGE_KEY = "kabumon:v0.1";
+export const SAVE_VERSION = 2;
 
 export const marketPrices: Record<Rarity, number> = {
   R: 3000,
@@ -89,6 +125,7 @@ export function createInitialState(now = new Date()): GameState {
   const starter = createOwnedMonster("toyodora", 100);
 
   return {
+    saveVersion: SAVE_VERSION,
     playerName: "トレーダーくん",
     kabuCoins: 12560,
     dividendCoins: 240,
@@ -98,6 +135,9 @@ export function createInitialState(now = new Date()): GameState {
     team: ["toyodora"],
     buddyId: "toyodora",
     lastLoginAt: now.toISOString(),
+    dailyCheckinDate: null,
+    loginStreak: 0,
+    dailyCheckinCount: 0,
     currentMarket: createMarketEnergy(now),
     claimedMissionIds: [],
     logs: [
@@ -139,23 +179,125 @@ export function hydrateState(raw: string | null, now = new Date()): GameState {
   }
 
   try {
-    const parsed = JSON.parse(raw) as GameState;
-    return applyOfflineReward(
-      {
-        ...createInitialState(now),
-        ...parsed,
-        owned: parsed.owned ?? {},
-        team: parsed.team?.length ? parsed.team : ["toyodora"],
-        buddyId: parsed.buddyId ?? parsed.team?.[0] ?? "toyodora",
-        logs: parsed.logs ?? [],
-        claimedMissionIds: parsed.claimedMissionIds ?? [],
-        currentMarket: parsed.currentMarket ?? createMarketEnergy(now)
-      },
-      now
-    );
+    return applyOfflineReward(migrateState(JSON.parse(raw) as Partial<GameState>, now), now);
   } catch {
     return applyOfflineReward(createInitialState(now), now);
   }
+}
+
+export function serializeState(state: GameState): string {
+  return JSON.stringify({
+    ...state,
+    saveVersion: SAVE_VERSION,
+    logs: state.logs.slice(0, 30),
+    claimedMissionIds: uniqueStrings(state.claimedMissionIds)
+  });
+}
+
+function migrateState(parsed: Partial<GameState>, now: Date): GameState {
+  const base = createInitialState(now);
+  const owned = normalizeOwned(parsed.owned);
+  const normalizedOwned = Object.keys(owned).length > 0 ? owned : base.owned;
+  const team = normalizeTeam(parsed.team, normalizedOwned);
+  const buddyId = parsed.buddyId && normalizedOwned[parsed.buddyId]
+    ? parsed.buddyId
+    : team[0] ?? "toyodora";
+
+  return {
+    ...base,
+    ...parsed,
+    saveVersion: SAVE_VERSION,
+    playerName: typeof parsed.playerName === "string" && parsed.playerName.trim()
+      ? parsed.playerName
+      : base.playerName,
+    kabuCoins: normalizeNumber(parsed.kabuCoins, base.kabuCoins, 0),
+    dividendCoins: normalizeNumber(parsed.dividendCoins, base.dividendCoins, 0),
+    owned: normalizedOwned,
+    team,
+    buddyId,
+    lastLoginAt: normalizeDateString(parsed.lastLoginAt, now.toISOString()),
+    dailyCheckinDate: typeof parsed.dailyCheckinDate === "string" ? parsed.dailyCheckinDate : null,
+    loginStreak: normalizeNumber(parsed.loginStreak, 0, 0),
+    dailyCheckinCount: normalizeNumber(parsed.dailyCheckinCount, 0, 0),
+    currentMarket: normalizeMarketEnergy(parsed.currentMarket, now),
+    logs: normalizeLogs(parsed.logs, base.logs),
+    offlinePending: null,
+    claimedMissionIds: uniqueStrings(parsed.claimedMissionIds)
+  };
+}
+
+function normalizeOwned(rawOwned: GameState["owned"] | undefined): GameState["owned"] {
+  if (!rawOwned || typeof rawOwned !== "object") return {};
+
+  return Object.fromEntries(
+    Object.entries(rawOwned)
+      .filter(([id]) => monsterById.has(id))
+      .map(([id, raw]) => {
+        const baseOwned = createOwnedMonster(id, normalizeNumber(raw.shares, 100, 100));
+        return [
+          id,
+          {
+            ...baseOwned,
+            ...raw,
+            id,
+            shares: normalizeNumber(raw.shares, baseOwned.shares, 100),
+            level: normalizeNumber(raw.level, baseOwned.level, 1),
+            exp: normalizeNumber(raw.exp, baseOwned.exp, 0),
+            stats: normalizeStats(raw.stats, baseOwned.stats),
+            locked: Boolean(raw.locked)
+          }
+        ];
+      })
+  );
+}
+
+function normalizeStats(rawStats: MonsterStats | undefined, fallback: MonsterStats): MonsterStats {
+  return {
+    hp: normalizeNumber(rawStats?.hp, fallback.hp, 1),
+    attack: normalizeNumber(rawStats?.attack, fallback.attack, 1),
+    defense: normalizeNumber(rawStats?.defense, fallback.defense, 1),
+    speed: normalizeNumber(rawStats?.speed, fallback.speed, 1),
+    luck: normalizeNumber(rawStats?.luck, fallback.luck, 1),
+    dividendPower: normalizeNumber(rawStats?.dividendPower, fallback.dividendPower, 0),
+    growthPower: normalizeNumber(rawStats?.growthPower, fallback.growthPower, 0)
+  };
+}
+
+function normalizeTeam(rawTeam: string[] | undefined, owned: GameState["owned"]): string[] {
+  const team = uniqueStrings(rawTeam)
+    .filter((id) => Boolean(owned[id]))
+    .slice(0, 3);
+
+  if (team.length > 0) return team;
+  return Object.keys(owned).slice(0, 1);
+}
+
+function normalizeMarketEnergy(rawMarket: MarketEnergy | undefined, now: Date): MarketEnergy {
+  if (!rawMarket) return createMarketEnergy(now);
+  const fallback = createMarketEnergy(now);
+  return {
+    indexName: typeof rawMarket.indexName === "string" ? rawMarket.indexName : fallback.indexName,
+    change: normalizeFiniteNumber(rawMarket.change, fallback.change),
+    theme: typeof rawMarket.theme === "string" ? rawMarket.theme : fallback.theme
+  };
+}
+
+function normalizeLogs(rawLogs: GrowthLog[] | undefined, fallback: GrowthLog[]): GrowthLog[] {
+  if (!Array.isArray(rawLogs)) return fallback;
+
+  return rawLogs
+    .filter((log) => log && typeof log.title === "string" && typeof log.detail === "string")
+    .map((log) => ({
+      id: typeof log.id === "string" ? log.id : cryptoId(),
+      date: normalizeDateString(log.date, new Date().toISOString()),
+      title: log.title,
+      detail: log.detail,
+      coins: normalizeFiniteNumber(log.coins, 0),
+      dividendCoins: normalizeFiniteNumber(log.dividendCoins, 0),
+      exp: normalizeFiniteNumber(log.exp, 0),
+      marketChange: normalizeFiniteNumber(log.marketChange, 0)
+    }))
+    .slice(0, 30);
 }
 
 export function applyOfflineReward(state: GameState, now = new Date()): GameState {
@@ -177,6 +319,7 @@ export function applyOfflineReward(state: GameState, now = new Date()): GameStat
 }
 
 export function calculateOfflineReward(state: GameState, hours: number): OfflineReward {
+  const teamBonus = getTeamBonus(state);
   const activeTeam = state.team
     .map((id) => state.owned[id])
     .filter(Boolean);
@@ -192,13 +335,13 @@ export function calculateOfflineReward(state: GameState, hours: number): Offline
     return sum + sharesBonus * levelBonus * dividendBonus;
   }, 0);
 
-  const normalizedPower = Math.max(1, teamPower);
+  const normalizedPower = Math.max(1, teamPower) * teamBonus.offlineMultiplier;
 
   return {
     hours: round(hours, 1),
     kabuCoins: Math.floor(110 * hours * normalizedPower),
-    dividendCoins: Math.floor(22 * hours * normalizedPower),
-    exp: Math.floor(8 * hours * normalizedPower)
+    dividendCoins: Math.floor(22 * hours * normalizedPower * teamBonus.dividendMultiplier),
+    exp: Math.floor(8 * hours * normalizedPower * teamBonus.expMultiplier)
   };
 }
 
@@ -231,6 +374,61 @@ export function claimOfflineReward(state: GameState): GameState {
       ),
       ...state.logs
     ].slice(0, 20)
+  };
+}
+
+export function getDailyCheckinStatus(state: GameState, now = new Date()): DailyCheckinStatus {
+  const todayKey = getLocalDateKey(now);
+  const yesterdayKey = getLocalDateKey(addDays(now, -1));
+  const available = state.dailyCheckinDate !== todayKey;
+  const nextStreak = !available
+    ? state.loginStreak
+    : state.dailyCheckinDate === yesterdayKey
+      ? state.loginStreak + 1
+      : 1;
+  const streakBonus = Math.min(6, Math.max(0, nextStreak - 1));
+
+  return {
+    available,
+    todayKey,
+    currentStreak: state.loginStreak,
+    nextStreak,
+    kabuCoins: 500 + streakBonus * 120,
+    dividendCoins: 30 + streakBonus * 12
+  };
+}
+
+export function claimDailyCheckin(state: GameState, now = new Date()): { state: GameState; ok: boolean; message: string } {
+  const status = getDailyCheckinStatus(state, now);
+
+  if (!status.available) {
+    return { state, ok: false, message: "本日のログインボーナスは受け取り済みです。" };
+  }
+
+  const message = `${status.nextStreak}日目のログインボーナスを受け取りました。`;
+
+  return {
+    ok: true,
+    message,
+    state: {
+      ...state,
+      kabuCoins: state.kabuCoins + status.kabuCoins,
+      dividendCoins: state.dividendCoins + status.dividendCoins,
+      dailyCheckinDate: status.todayKey,
+      loginStreak: status.nextStreak,
+      dailyCheckinCount: state.dailyCheckinCount + 1,
+      logs: [
+        createLog(
+          "ログインボーナス",
+          message,
+          status.kabuCoins,
+          status.dividendCoins,
+          0,
+          state.currentMarket.change
+        ),
+        ...state.logs
+      ].slice(0, 20)
+    }
   };
 }
 
@@ -285,7 +483,8 @@ export function buyMonsterFromMarket(state: GameState, monsterId: string): { sta
     return { state, ok: false, message: "対象の株モンが見つかりません。" };
   }
 
-  const price = marketPrices[monster.rarity];
+  const quote = getMarketQuote(state, monster.id);
+  const price = quote.buyPrice;
   if (state.kabuCoins < price) {
     return { state, ok: false, message: "カブコインが足りません。" };
   }
@@ -303,8 +502,8 @@ export function buyMonsterFromMarket(state: GameState, monsterId: string): { sta
       : state.team;
 
   const message = existing
-    ? `${monster.name}を100株追加購入しました。`
-    : `${monster.name}をマーケットで入手しました。`;
+    ? `${monster.name}を100株追加購入しました。${quote.reason}`
+    : `${monster.name}をマーケットで入手しました。${quote.reason}`;
 
   return {
     ok: true,
@@ -338,7 +537,7 @@ export function sellMonsterUnit(state: GameState, monsterId: string): { state: G
     return { state, ok: false, message: "最低100株は残す必要があります。" };
   }
 
-  const sellPrice = getUnitSellPrice(monster.rarity, owned.level);
+  const sellPrice = getMarketQuote(state, monster.id).sellPrice;
   const nextOwned = {
     ...state.owned,
     [monsterId]: {
@@ -385,8 +584,17 @@ export function getMissions(state: GameState): Mission[] {
   const trained = state.logs.some((log) => log.title === "市場エネルギー反映");
   const gachaUsed = state.logs.some((log) => log.title === "新規入手" || log.title === "持ち株追加");
   const offlineClaimed = state.logs.some((log) => log.title === "オフライン報酬");
+  const teamBonus = getTeamBonus(state);
 
   return [
+    createMission(state, {
+      id: "daily-checkin",
+      title: "ログインボーナス受取",
+      detail: "デイリー報酬を1回受け取る",
+      progress: state.dailyCheckinCount,
+      target: 1,
+      reward: { kabuCoins: 500, dividendCoins: 50 }
+    }),
     createMission(state, {
       id: "first-gacha",
       title: "ガチャを回す",
@@ -420,6 +628,14 @@ export function getMissions(state: GameState): Mission[] {
       reward: { kabuCoins: 0, dividendCoins: 120 }
     }),
     createMission(state, {
+      id: "team-bonus-active",
+      title: "チーム効果を発動",
+      detail: "特定タグの組み合わせでチーム効果を発動する",
+      progress: teamBonus.active ? 1 : 0,
+      target: 1,
+      reward: { kabuCoins: 1200, dividendCoins: 120 }
+    }),
+    createMission(state, {
       id: "shares-500",
       title: "持ち株500株",
       detail: "全株モンの合計持ち株を500株にする",
@@ -434,6 +650,14 @@ export function getMissions(state: GameState): Mission[] {
       progress: offlineClaimed ? 1 : 0,
       target: 1,
       reward: { kabuCoins: 800, dividendCoins: 60 }
+    }),
+    createMission(state, {
+      id: "streak-three",
+      title: "3日連続ログイン",
+      detail: "ログインボーナスを3日連続で受け取る",
+      progress: state.loginStreak,
+      target: 3,
+      reward: { kabuCoins: 2000, dividendCoins: 180 }
     })
   ];
 }
@@ -483,7 +707,8 @@ export function trainBuddy(state: GameState): { state: GameState; result: TrainR
   }
 
   const market = createMarketEnergy(new Date());
-  const result = calculateTraining(buddy, market);
+  const teamBonus = getTeamBonus(state);
+  const result = calculateTraining(buddy, market, teamBonus);
   const nextBuddy = applyTraining(buddy, result);
 
   return {
@@ -499,7 +724,7 @@ export function trainBuddy(state: GameState): { state: GameState; result: TrainR
       logs: [
         createLog(
           "市場エネルギー反映",
-          `${market.indexName} ${formatSigned(market.change)}%で${monsterById.get(buddy.id)?.name ?? "株モン"}が成長しました。`,
+          `${market.indexName} ${formatSigned(market.change)}%で${monsterById.get(buddy.id)?.name ?? "株モン"}が成長しました。${teamBonus.active ? ` ${teamBonus.name}発動。` : ""}`,
           0,
           result.dividendCoins - 40,
           result.exp,
@@ -526,7 +751,7 @@ export function toggleTeamMember(state: GameState, id: string): GameState {
   return { ...state, team: [...state.team, id] };
 }
 
-export function getTeamBonus(state: GameState): { name: string; detail: string; multiplier: number } {
+export function getTeamBonus(state: GameState): TeamBonus {
   const tags = new Set(
     state.team.flatMap((id) => monsterById.get(id)?.tags ?? [])
   );
@@ -534,37 +759,57 @@ export function getTeamBonus(state: GameState): { name: string; detail: string; 
   if (tags.has("自動車") && tags.has("半導体") && (tags.has("テック") || tags.has("モビリティ"))) {
     return {
       name: "モビリティ連携",
-      detail: "メカ属性の攻撃力が10%アップ",
-      multiplier: 1.1
+      detail: "攻撃+10%、育成経験値+8%、放置報酬+5%",
+      multiplier: 1.1,
+      statMultipliers: { attack: 1.1 },
+      offlineMultiplier: 1.05,
+      expMultiplier: 1.08,
+      dividendMultiplier: 1,
+      active: true
     };
   }
 
   if (tags.has("ゲーム") && tags.has("エンタメ") && tags.has("クリエイティブ")) {
     return {
       name: "エンタメ連合",
-      detail: "運とイベント発生率がアップ",
-      multiplier: 1.08
+      detail: "運+12%、育成経験値+10%、配当+3%",
+      multiplier: 1.08,
+      statMultipliers: { luck: 1.12 },
+      offlineMultiplier: 1,
+      expMultiplier: 1.1,
+      dividendMultiplier: 1.03,
+      active: true
     };
   }
 
   if (tags.has("金融") && tags.has("防御") && tags.has("配当")) {
     return {
       name: "金融防衛隊",
-      detail: "防御と配当コインがアップ",
-      multiplier: 1.08
+      detail: "防御+12%、放置報酬+8%、配当+12%",
+      multiplier: 1.08,
+      statMultipliers: { defense: 1.12 },
+      offlineMultiplier: 1.08,
+      expMultiplier: 1,
+      dividendMultiplier: 1.12,
+      active: true
     };
   }
 
   return {
     name: "分散チーム",
     detail: "編成中の株モンが放置報酬を支えます",
-    multiplier: 1
+    multiplier: 1,
+    statMultipliers: {},
+    offlineMultiplier: 1,
+    expMultiplier: 1,
+    dividendMultiplier: 1,
+    active: false
   };
 }
 
-export function getDisplayStats(owned: OwnedMonster): MonsterStats {
+export function getDisplayStats(owned: OwnedMonster, teamBonus?: TeamBonus): MonsterStats {
   const sharesBonus = getSharesBonus(owned.shares);
-  return {
+  const baseStats = {
     hp: Math.floor(owned.stats.hp * sharesBonus),
     attack: Math.floor(owned.stats.attack * sharesBonus),
     defense: Math.floor(owned.stats.defense * sharesBonus),
@@ -573,21 +818,27 @@ export function getDisplayStats(owned: OwnedMonster): MonsterStats {
     dividendPower: Math.floor(owned.stats.dividendPower * sharesBonus),
     growthPower: Math.floor(owned.stats.growthPower * sharesBonus)
   };
+
+  if (!teamBonus?.active) {
+    return baseStats;
+  }
+
+  return applyStatMultipliers(baseStats, teamBonus.statMultipliers);
 }
 
 export function formatSigned(value: number): string {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
 }
 
-function calculateTraining(owned: OwnedMonster, market: MarketEnergy): TrainResult {
+function calculateTraining(owned: OwnedMonster, market: MarketEnergy, teamBonus: TeamBonus): TrainResult {
   const master = monsterById.get(owned.id);
   const dividendBase = master ? baseDividendPerUnit[master.dividendType] : 15;
   const units = owned.shares / 100;
   const sharesBonus = getSharesBonus(owned.shares);
   const growthBonus = 1 + owned.stats.growthPower / 1000;
   const absChange = Math.abs(market.change);
-  const exp = Math.floor((18 + absChange * 8) * growthBonus * sharesBonus);
-  const dividendCoins = Math.floor(dividendBase * units * (1 + owned.stats.dividendPower / 1000));
+  const exp = Math.floor((18 + absChange * 8) * growthBonus * sharesBonus * teamBonus.expMultiplier);
+  const dividendCoins = Math.floor(dividendBase * units * (1 + owned.stats.dividendPower / 1000) * teamBonus.dividendMultiplier);
 
   if (market.change >= 3) {
     return {
@@ -642,6 +893,21 @@ function applyTraining(owned: OwnedMonster, result: TrainResult): OwnedMonster {
   return addExp({ ...owned, stats: nextStats }, result.exp);
 }
 
+function applyStatMultipliers(
+  stats: MonsterStats,
+  multipliers: Partial<Record<keyof MonsterStats, number>>
+): MonsterStats {
+  return {
+    hp: Math.floor(stats.hp * (multipliers.hp ?? 1)),
+    attack: Math.floor(stats.attack * (multipliers.attack ?? 1)),
+    defense: Math.floor(stats.defense * (multipliers.defense ?? 1)),
+    speed: Math.floor(stats.speed * (multipliers.speed ?? 1)),
+    luck: Math.floor(stats.luck * (multipliers.luck ?? 1)),
+    dividendPower: Math.floor(stats.dividendPower * (multipliers.dividendPower ?? 1)),
+    growthPower: Math.floor(stats.growthPower * (multipliers.growthPower ?? 1))
+  };
+}
+
 function addExp(owned: OwnedMonster, amount: number): OwnedMonster {
   let exp = owned.exp + amount;
   let level = owned.level;
@@ -670,7 +936,26 @@ export function getRequiredExp(level: number): number {
 }
 
 export function getUnitSellPrice(rarity: Rarity, level: number): number {
-  return Math.floor(marketPrices[rarity] * 0.6 + level * 50);
+  return roundToUnit(marketPrices[rarity] * 0.58 + level * 60, 50);
+}
+
+export function getMarketQuote(state: GameState, monsterId: string): MarketQuote {
+  const monster = monsterById.get(monsterId);
+
+  if (!monster) {
+    return {
+      basePrice: 0,
+      buyPrice: 0,
+      sellPrice: 0,
+      marketMultiplier: 1,
+      demandMultiplier: 1,
+      themeMatched: false,
+      reason: " 価格情報なし。"
+    };
+  }
+
+  const owned = state.owned[monster.id];
+  return calculateMarketQuote(monster, owned, state.currentMarket);
 }
 
 function weightedMonster() {
@@ -693,6 +978,73 @@ function createMarketEnergy(date: Date): MarketEnergy {
     change,
     theme: themes[Math.floor(normalized * themes.length)] ?? "モビリティ"
   };
+}
+
+function calculateMarketQuote(
+  monster: MonsterMaster,
+  owned: OwnedMonster | undefined,
+  market: MarketEnergy
+): MarketQuote {
+  const basePrice = marketPrices[monster.rarity];
+  const themeMatched = isThemeMatched(monster, market.theme);
+  const themeMultiplier = themeMatched ? 1.08 : 0.98;
+  const marketMultiplier = clamp(1 + market.change * 0.025, 0.88, 1.14);
+  const ownedUnits = owned ? Math.floor(owned.shares / 100) : 0;
+  const demandMultiplier = 1 + Math.min(0.18, ownedUnits * 0.018);
+  const buyPrice = roundToUnit(basePrice * themeMultiplier * marketMultiplier * demandMultiplier, 50);
+  const level = owned?.level ?? 1;
+  const sellPrice = roundToUnit(basePrice * 0.58 * themeMultiplier * marketMultiplier + level * 60, 50);
+  const direction = market.change >= 0 ? "上昇" : "下落";
+  const reason = themeMatched
+    ? ` ${market.theme}テーマ一致・市場${direction}を反映。`
+    : ` 市場${direction}とテーマ分散を反映。`;
+
+  return {
+    basePrice,
+    buyPrice,
+    sellPrice,
+    marketMultiplier: round(themeMultiplier * marketMultiplier, 2),
+    demandMultiplier: round(demandMultiplier, 2),
+    themeMatched,
+    reason
+  };
+}
+
+function isThemeMatched(monster: MonsterMaster, theme: string): boolean {
+  if (theme === "モビリティ") {
+    return monster.tags.some((tag) => tag === "自動車" || tag === "モビリティ");
+  }
+
+  if (theme === "半導体") {
+    return monster.tags.includes("半導体");
+  }
+
+  if (theme === "金融防衛") {
+    return monster.tags.some((tag) => tag === "金融" || tag === "防御");
+  }
+
+  if (theme === "エンタメ") {
+    return monster.tags.some((tag) => tag === "エンタメ" || tag === "ゲーム" || tag === "クリエイティブ");
+  }
+
+  if (theme === "安定配当") {
+    return monster.tags.some((tag) => tag === "配当" || tag === "安定");
+  }
+
+  return false;
+}
+
+function getLocalDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
 }
 
 function getSharesBonus(shares: number): number {
@@ -742,4 +1094,32 @@ function cryptoId(): string {
 function round(value: number, digits: number): number {
   const scale = 10 ** digits;
   return Math.round(value * scale) / scale;
+}
+
+function roundToUnit(value: number, unit: number): number {
+  return Math.max(unit, Math.round(value / unit) * unit);
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function normalizeNumber(value: number | undefined, fallback: number, min: number): number {
+  const normalized = normalizeFiniteNumber(value, fallback);
+  return Math.max(min, Math.floor(normalized));
+}
+
+function normalizeFiniteNumber(value: number | undefined, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeDateString(value: string | undefined, fallback: string): string {
+  if (!value) return fallback;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? fallback : date.toISOString();
+}
+
+function uniqueStrings(values: unknown): string[] {
+  if (!Array.isArray(values)) return [];
+  return Array.from(new Set(values.filter((value): value is string => typeof value === "string")));
 }

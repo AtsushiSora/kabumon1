@@ -3,30 +3,42 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   buyMonsterFromMarket,
+  claimDailyCheckin,
   claimMissionReward,
   claimOfflineReward,
   createInitialState,
   formatSigned,
+  getDailyCheckinStatus,
   getDisplayStats,
+  getMarketQuote,
   getMissions,
   getRequiredExp,
   getTeamBonus,
-  getUnitSellPrice,
   hydrateState,
-  marketPrices,
   rollGacha,
   sellMonsterUnit,
+  serializeState,
   setBuddy,
+  SAVE_VERSION,
   STORAGE_KEY,
   toggleTeamMember,
   toggleMonsterLock,
   trainBuddy,
+  type GrowthLog,
   type GameState,
   type TrainResult
 } from "@/lib/game";
 import { monsterById, monsters, type MonsterMaster, type MonsterStats } from "@/lib/monsters";
 
 type Tab = "home" | "gacha" | "train" | "team" | "dex" | "market";
+
+type ResultToast = {
+  title: string;
+  detail: string;
+  tone: "gold" | "blue" | "green";
+  monster?: MonsterMaster;
+  metrics?: string[];
+};
 
 const navItems: { id: Tab; label: string; icon: string }[] = [
   { id: "home", label: "ホーム", icon: "⌂" },
@@ -43,15 +55,32 @@ export default function KabumonApp() {
   const [gachaMessage, setGachaMessage] = useState("");
   const [marketMessage, setMarketMessage] = useState("");
   const [missionMessage, setMissionMessage] = useState("");
+  const [dailyMessage, setDailyMessage] = useState("");
   const [trainResult, setTrainResult] = useState<TrainResult | null>(null);
+  const [resultToast, setResultToast] = useState<ResultToast | null>(null);
 
   useEffect(() => {
     setState(hydrateState(window.localStorage.getItem(STORAGE_KEY)));
   }, []);
 
   useEffect(() => {
+    if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
+      if (process.env.NODE_ENV !== "production") {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => registration.unregister());
+        });
+        return;
+      }
+
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        // PWA登録に失敗してもゲーム本体は通常どおり動かします。
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     if (state) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      window.localStorage.setItem(STORAGE_KEY, serializeState(state));
     }
   }, [state]);
 
@@ -67,14 +96,45 @@ export default function KabumonApp() {
     );
   }
 
-  const displayStats = getDisplayStats(buddy);
+  const displayStats = getDisplayStats(buddy, teamBonus);
 
   function update(next: GameState) {
     setState(next);
   }
 
   function handleClaim() {
+    const reward = state!.offlinePending;
     update(claimOfflineReward(state!));
+    if (reward) {
+      setResultToast({
+        title: "オフライン報酬",
+        detail: `${reward.hours}時間分の報酬を受け取りました。`,
+        tone: "green",
+        metrics: [
+          `カブコイン +${reward.kabuCoins.toLocaleString("ja-JP")}`,
+          `配当 +${reward.dividendCoins}`,
+          `EXP +${reward.exp}`
+        ]
+      });
+    }
+  }
+
+  function handleDailyCheckin() {
+    const result = claimDailyCheckin(state!);
+    setDailyMessage(result.message);
+    update(result.state);
+    if (result.ok) {
+      const status = getDailyCheckinStatus(state!);
+      setResultToast({
+        title: "ログインボーナス",
+        detail: result.message,
+        tone: "gold",
+        metrics: [
+          `カブコイン +${status.kabuCoins.toLocaleString("ja-JP")}`,
+          `配当 +${status.dividendCoins}`
+        ]
+      });
+    }
   }
 
   function handleGacha() {
@@ -85,22 +145,46 @@ export default function KabumonApp() {
     }
 
     const monster = monsterById.get(result.monsterId);
-    setGachaMessage(
+    const message =
       result.duplicate
         ? `${monster?.name ?? "株モン"}が重なり、持ち株が100株増えました。`
-        : `${monster?.name ?? "株モン"}を新しく入手しました。`
-    );
+        : `${monster?.name ?? "株モン"}を新しく入手しました。`;
+    setGachaMessage(message);
     update(result.state);
+    setResultToast({
+      title: result.duplicate ? "持ち株追加" : "新規入手",
+      detail: message,
+      tone: "gold",
+      monster,
+      metrics: ["100株", "ガチャ結果"]
+    });
   }
 
   function handleTrain() {
     const result = trainBuddy(state!);
     if (!result.result) {
       setTrainResult(null);
+      setResultToast({
+        title: "育成できません",
+        detail: "配当コインが足りません。",
+        tone: "blue",
+        metrics: ["必要 40"]
+      });
       return;
     }
     setTrainResult(result.result);
     update(result.state);
+    setResultToast({
+      title: "育成結果",
+      detail: `${result.result.market.indexName} ${formatSigned(result.result.market.change)}% を反映しました。`,
+      tone: "blue",
+      monster: buddyMaster,
+      metrics: [
+        `EXP +${result.result.exp}`,
+        `配当 +${result.result.dividendCoins}`,
+        ...Object.entries(result.result.statChanges).map(([key, value]) => `${statLabels[key as keyof MonsterStats]} +${value}`)
+      ]
+    });
   }
 
   return (
@@ -117,6 +201,8 @@ export default function KabumonApp() {
             teamBonus={teamBonus}
             trainResult={trainResult}
             onClaim={handleClaim}
+            dailyMessage={dailyMessage}
+            onDailyCheckin={handleDailyCheckin}
             onGacha={() => {
               setActiveTab("gacha");
               handleGacha();
@@ -130,6 +216,14 @@ export default function KabumonApp() {
               const result = claimMissionReward(state, id);
               setMissionMessage(result.message);
               update(result.state);
+              if (result.ok) {
+                setResultToast({
+                  title: "ミッション達成",
+                  detail: result.message,
+                  tone: "green",
+                  metrics: ["報酬受取"]
+                });
+              }
             }}
           />
         )}
@@ -176,16 +270,33 @@ export default function KabumonApp() {
               const result = buyMonsterFromMarket(state, id);
               setMarketMessage(result.message);
               update(result.state);
+              if (result.ok) {
+                const monster = monsterById.get(id);
+                setResultToast({
+                  title: "マーケット購入",
+                  detail: result.message,
+                  tone: "gold",
+                  monster,
+                  metrics: ["100株", "購入完了"]
+                });
+              }
             }}
             onSell={(id) => {
               const monster = monsterById.get(id);
-              const owned = state.owned[id];
-              if (!monster || !owned) return;
-              const sellPrice = getUnitSellPrice(monster.rarity, owned.level);
+              if (!monster) return;
+              const sellPrice = getMarketQuote(state, id).sellPrice;
               if (window.confirm(`${monster.name}を100株売却しますか？\n獲得コイン: ${sellPrice.toLocaleString("ja-JP")}`)) {
                 const result = sellMonsterUnit(state, id);
                 setMarketMessage(result.message);
                 update(result.state);
+                if (result.ok) {
+                  setResultToast({
+                    title: "100株売却",
+                    detail: result.message,
+                    tone: "green",
+                    metrics: [`カブコイン +${sellPrice.toLocaleString("ja-JP")}`]
+                  });
+                }
               }
             }}
             onReset={() => {
@@ -193,7 +304,9 @@ export default function KabumonApp() {
                 setGachaMessage("");
                 setMarketMessage("");
                 setMissionMessage("");
+                setDailyMessage("");
                 setTrainResult(null);
+                setResultToast(null);
                 update(createInitialState(new Date()));
                 setActiveTab("home");
               }
@@ -202,10 +315,26 @@ export default function KabumonApp() {
         )}
 
         <BottomNav activeTab={activeTab} onChange={setActiveTab} />
+        {resultToast && (
+          <ResultToastOverlay
+            toast={resultToast}
+            onClose={() => setResultToast(null)}
+          />
+        )}
       </section>
     </main>
   );
 }
+
+const statLabels: Record<keyof MonsterStats, string> = {
+  hp: "HP",
+  attack: "攻撃",
+  defense: "防御",
+  speed: "素早さ",
+  luck: "運",
+  dividendPower: "配当力",
+  growthPower: "成長力"
+};
 
 function Header({ state }: { state: GameState }) {
   return (
@@ -234,6 +363,46 @@ function CurrencyChip({ icon, value }: { icon: string; value: number }) {
   );
 }
 
+function ResultToastOverlay({
+  toast,
+  onClose
+}: {
+  toast: ResultToast;
+  onClose: () => void;
+}) {
+  return (
+    <div className={`result-overlay result-${toast.tone}`} role="dialog" aria-modal="true">
+      <div className="result-burst" />
+      <section className="result-modal pixel-panel">
+        <button className="result-close" onClick={onClose} aria-label="結果を閉じる">
+          ×
+        </button>
+        <div className="result-title">
+          <span>{toast.tone === "gold" ? "★" : toast.tone === "green" ? "✓" : "▲"}</span>
+          <strong>{toast.title}</strong>
+        </div>
+        {toast.monster && (
+          <div className="result-monster">
+            <MonsterArt monster={toast.monster} />
+            <div>
+              <h3>{toast.monster.name}</h3>
+              <p>{toast.monster.rarity} / {toast.monster.attribute}</p>
+            </div>
+          </div>
+        )}
+        <p className="result-detail">{toast.detail}</p>
+        {toast.metrics && toast.metrics.length > 0 && (
+          <div className="result-metrics">
+            {toast.metrics.map((metric) => (
+              <span key={metric}>{metric}</span>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function HomePanel({
   state,
   buddy,
@@ -242,6 +411,8 @@ function HomePanel({
   teamBonus,
   trainResult,
   onClaim,
+  dailyMessage,
+  onDailyCheckin,
   onGacha,
   onTrain,
   missionMessage,
@@ -254,12 +425,15 @@ function HomePanel({
   teamBonus: ReturnType<typeof getTeamBonus>;
   trainResult: TrainResult | null;
   onClaim: () => void;
+  dailyMessage: string;
+  onDailyCheckin: () => void;
   onGacha: () => void;
   onTrain: () => void;
   missionMessage: string;
   onClaimMission: (id: string) => void;
 }) {
   const expRequired = getRequiredExp(buddy.level);
+  const dailyStatus = getDailyCheckinStatus(state);
 
   return (
     <div className="screen-content">
@@ -296,6 +470,26 @@ function HomePanel({
           </button>
         </section>
       )}
+
+      <section className="daily-checkin pixel-panel">
+        <div className="daily-checkin-main">
+          <span className="daily-badge">{dailyStatus.available ? "本日" : "済"}</span>
+          <div>
+            <strong>ログインボーナス</strong>
+            <p>
+              連続{dailyStatus.nextStreak}日目 / カブコイン +{dailyStatus.kabuCoins.toLocaleString("ja-JP")} / 配当 +{dailyStatus.dividendCoins}
+            </p>
+            {dailyMessage && <small>{dailyMessage}</small>}
+          </div>
+        </div>
+        <button
+          className="mini-gold-button"
+          disabled={!dailyStatus.available}
+          onClick={onDailyCheckin}
+        >
+          {dailyStatus.available ? "受取" : "受取済"}
+        </button>
+      </section>
 
       <section className="monster-card pixel-panel">
         <div className="monster-stage">
@@ -337,6 +531,11 @@ function HomePanel({
         <div>
           <strong>チーム効果: {teamBonus.name}</strong>
           <p>{teamBonus.detail}</p>
+          <div className="team-effect-metrics">
+            <i>放置 x{teamBonus.offlineMultiplier.toFixed(2)}</i>
+            <i>育成 x{teamBonus.expMultiplier.toFixed(2)}</i>
+            <i>配当 x{teamBonus.dividendMultiplier.toFixed(2)}</i>
+          </div>
         </div>
       </section>
 
@@ -347,6 +546,8 @@ function HomePanel({
         message={missionMessage}
         onClaim={onClaimMission}
       />
+
+      <DailyReportPanel state={state} />
 
       <StatsPanel stats={displayStats} />
 
@@ -370,7 +571,7 @@ function MissionPanel({
   message: string;
   onClaim: (id: string) => void;
 }) {
-  const missions = getMissions(state).slice(0, 4);
+  const missions = getMissions(state).slice(0, 6);
 
   return (
     <section className="mission-panel pixel-panel">
@@ -479,6 +680,11 @@ function TeamPanel({
         <h2>チーム編成</h2>
         <p>3体まで編成できます。編成中の株モンは放置報酬に影響します。</p>
         <div className="message-box">現在: {teamBonus.name} / {teamBonus.detail}</div>
+        <div className="team-bonus-grid">
+          <span>放置 x{teamBonus.offlineMultiplier.toFixed(2)}</span>
+          <span>育成 x{teamBonus.expMultiplier.toFixed(2)}</span>
+          <span>配当 x{teamBonus.dividendMultiplier.toFixed(2)}</span>
+        </div>
       </section>
       <section className="grid-panel">
         {monsters.map((monster) => {
@@ -562,16 +768,20 @@ function MarketPanel({
     <div className="screen-content">
       <section className="feature-panel pixel-panel">
         <h2>マーケット</h2>
-        <p>カブコインで株モンを100株単位で購入できます。価格はゲーム内の固定価格です。</p>
+        <p>カブコインで株モンを100株単位で購入できます。価格は市場テーマ、変動率、保有株数で変化します。</p>
+        <div className="market-price-note">
+          <span>{state.currentMarket.theme}</span>
+          <strong>{formatSigned(state.currentMarket.change)}%</strong>
+          <small>本日の価格補正</small>
+        </div>
         {message && <div className="message-box">{message}</div>}
       </section>
       <section className="market-list">
         {monsters.map((monster) => {
           const owned = state.owned[monster.id];
-          const price = marketPrices[monster.rarity];
-          const affordable = state.kabuCoins >= price;
+          const quote = getMarketQuote(state, monster.id);
+          const affordable = state.kabuCoins >= quote.buyPrice;
           const sellable = Boolean(owned && owned.shares > 100 && !owned.locked);
-          const sellPrice = owned ? getUnitSellPrice(monster.rarity, owned.level) : 0;
           return (
             <article key={monster.id} className="market-row pixel-panel">
               <MonsterArt monster={monster} />
@@ -579,10 +789,18 @@ function MarketPanel({
                 <h3>{monster.name}</h3>
                 <p>{monster.companyAlias} / {monster.rarity} / {monster.dividendType}</p>
                 <p>{owned ? `${owned.shares}株 所持中${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
-                {owned && <p>売却価格: {sellPrice.toLocaleString("ja-JP")}コイン / 100株</p>}
+                <div className="market-quote">
+                  <span className={quote.themeMatched ? "matched" : ""}>
+                    {quote.themeMatched ? "テーマ一致" : "分散価格"}
+                  </span>
+                  <span>市場 x{quote.marketMultiplier.toFixed(2)}</span>
+                  <span>保有 x{quote.demandMultiplier.toFixed(2)}</span>
+                </div>
+                {owned && <p>売却価格: {quote.sellPrice.toLocaleString("ja-JP")}コイン / 100株</p>}
               </div>
               <div className="market-buy">
-                <strong>{price.toLocaleString("ja-JP")}</strong>
+                <strong>{quote.buyPrice.toLocaleString("ja-JP")}</strong>
+                <small>基準 {quote.basePrice.toLocaleString("ja-JP")}</small>
                 <button disabled={!affordable} onClick={() => onBuy(monster.id)}>
                   購入
                 </button>
@@ -615,7 +833,36 @@ function DailyInfoPanel({ state }: { state: GameState }) {
       </div>
       <div>
         <strong>データ状態</strong>
-        <p>v0.1は仮の終値変化で市場エネルギーを生成中</p>
+        <p>v0.2は保存形式 v{SAVE_VERSION} とPWAオフライン起動を検証中</p>
+      </div>
+    </section>
+  );
+}
+
+function DailyReportPanel({ state }: { state: GameState }) {
+  const summary = getDailyLogSummary(state.logs);
+  const latestLogs = summary.logs.slice(0, 3);
+
+  return (
+    <section className="daily-report pixel-panel">
+      <div className="daily-report-header">
+        <div>
+          <strong>本日の運用レポート</strong>
+          <p>{summary.dateLabel} / {summary.actionCount}件の行動</p>
+        </div>
+        <span>{summary.trainCount}育成</span>
+      </div>
+      <div className="daily-report-grid">
+        <ReportTile label="カブコイン" value={formatDelta(summary.kabuCoins)} />
+        <ReportTile label="配当" value={formatDelta(summary.dividendCoins)} />
+        <ReportTile label="経験値" value={`+${summary.exp.toLocaleString("ja-JP")}`} />
+      </div>
+      <div className="daily-report-logs">
+        {latestLogs.length > 0 ? (
+          latestLogs.map((log) => <LogEntry key={log.id} log={log} />)
+        ) : (
+          <p className="empty-report">今日はまだ行動履歴がありません。</p>
+        )}
       </div>
     </section>
   );
@@ -698,13 +945,38 @@ function LogList({ state, compact = false }: { state: GameState; compact?: boole
   const logs = compact ? state.logs.slice(0, 2) : state.logs.slice(0, 8);
   return (
     <section className="log-list">
-      {logs.map((log) => (
-        <article key={log.id} className="log-row pixel-panel">
-          <strong>{log.title}</strong>
-          <p>{log.detail}</p>
-        </article>
-      ))}
+      {logs.map((log) => <LogEntry key={log.id} log={log} framed />)}
     </section>
+  );
+}
+
+function LogEntry({ log, framed = false }: { log: GrowthLog; framed?: boolean }) {
+  return (
+    <article className={`log-row ${framed ? "pixel-panel" : ""}`}>
+      <div>
+        <strong>{log.title}</strong>
+        <p>{log.detail}</p>
+      </div>
+      <div className="log-meta">
+        <span>{formatLogTime(log.date)}</span>
+        {(log.coins !== 0 || log.dividendCoins !== 0 || log.exp !== 0) && (
+          <small>
+            {log.coins !== 0 && <i>C {formatDelta(log.coins)}</i>}
+            {log.dividendCoins !== 0 && <i>D {formatDelta(log.dividendCoins)}</i>}
+            {log.exp !== 0 && <i>EXP +{log.exp.toLocaleString("ja-JP")}</i>}
+          </small>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function ReportTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="report-tile">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
@@ -750,4 +1022,38 @@ function getDailyKnowledge(theme: string): string {
   ];
   const index = Math.abs(theme.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0)) % items.length;
   return items[index];
+}
+
+function getDailyLogSummary(logs: GrowthLog[]) {
+  const now = new Date();
+  const todayLogs = logs.filter((log) => isSameLocalDay(new Date(log.date), now));
+
+  return {
+    dateLabel: `${now.getMonth() + 1}/${now.getDate()}`,
+    logs: todayLogs,
+    actionCount: todayLogs.length,
+    trainCount: todayLogs.filter((log) => log.title === "市場エネルギー反映").length,
+    kabuCoins: todayLogs.reduce((sum, log) => sum + log.coins, 0),
+    dividendCoins: todayLogs.reduce((sum, log) => sum + log.dividendCoins, 0),
+    exp: todayLogs.reduce((sum, log) => sum + log.exp, 0)
+  };
+}
+
+function isSameLocalDay(left: Date, right: Date): boolean {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
+function formatLogTime(date: string): string {
+  return new Date(date).toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function formatDelta(value: number): string {
+  return `${value >= 0 ? "+" : ""}${value.toLocaleString("ja-JP")}`;
 }
