@@ -1520,16 +1520,6 @@ button {
   margin: 0;
 }
 
-.home-primary-actions {
-  gap: 7px;
-}
-
-.home-primary-actions .blue-button,
-.home-primary-actions .gold-button {
-  min-height: 58px;
-  font-size: 25px;
-}
-
 .blue-button,
 .gold-button {
   min-height: 66px;
@@ -2001,14 +1991,14 @@ button {
   }
 
   .home-monster-card {
-    height: 220px;
+    height: 268px;
     min-height: 0;
-    max-height: 220px;
+    max-height: 268px;
     grid-template-columns: 48% 52%;
   }
 
   .home-monster-card .monster-stage {
-    height: 220px;
+    height: 268px;
     min-height: 0;
   }
 
@@ -2093,12 +2083,6 @@ button {
 
   .home-team-effect .team-effect-metrics {
     display: none;
-  }
-
-  .home-primary-actions .blue-button,
-  .home-primary-actions .gold-button {
-    min-height: 46px;
-    font-size: 21px;
   }
 
   .bottom-nav {
@@ -2237,20 +2221,6 @@ button {
     height: 34px;
   }
 
-  .home-monster-card {
-    min-height: 272px;
-  }
-
-  .home-monster-card .monster-stage {
-    min-height: 272px;
-  }
-
-  .home-primary-actions .blue-button,
-  .home-primary-actions .gold-button {
-    min-height: 50px;
-    font-size: 22px;
-  }
-
   .bottom-nav button {
     min-height: 62px;
     font-size: 9px;
@@ -2263,13 +2233,13 @@ button {
   }
 
   .home-monster-card {
-    height: 206px;
+    height: 246px;
     min-height: 0;
-    max-height: 206px;
+    max-height: 246px;
   }
 
   .home-monster-card .monster-stage {
-    height: 206px;
+    height: 246px;
     min-height: 0;
   }
 

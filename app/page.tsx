@@ -252,14 +252,6 @@ export default function KabumonApp() {
             onClaim={handleClaim}
             dailyMessage={dailyMessage}
             onDailyCheckin={handleDailyCheckin}
-            onGacha={() => {
-              setActiveTab("gacha");
-              handleGacha();
-            }}
-            onTrain={() => {
-              setActiveTab("train");
-              handleTrain();
-            }}
             onEvent={() => setActiveTab("event")}
             onRefreshMarket={handleRefreshMarket}
             missionMessage={missionMessage}
@@ -481,8 +473,6 @@ function HomePanel({
   onClaim,
   dailyMessage,
   onDailyCheckin,
-  onGacha,
-  onTrain,
   onEvent,
   onRefreshMarket,
   missionMessage,
@@ -497,8 +487,6 @@ function HomePanel({
   onClaim: () => void;
   dailyMessage: string;
   onDailyCheckin: () => void;
-  onGacha: () => void;
-  onTrain: () => void;
   onEvent: () => void;
   onRefreshMarket: () => void;
   missionMessage: string;
@@ -659,11 +647,6 @@ function HomePanel({
       </section>
 
       {missionMessage && <div className="message-box compact home-message">{missionMessage}</div>}
-
-      <div className="primary-actions home-primary-actions">
-        <button className="blue-button" onClick={onGacha}>ガチャ</button>
-        <button className="gold-button" onClick={onTrain}>育成する</button>
-      </div>
     </div>
   );
 }
