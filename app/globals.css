@@ -2331,20 +2331,20 @@ button {
   }
 
   .home-screen {
-    gap: 5px;
+    gap: 4px;
   }
 
   .home-market-panel {
-    min-height: 54px;
-    grid-template-columns: 42px 1fr 1px 0.65fr;
-    gap: 6px;
-    padding: 6px 8px;
+    min-height: 50px;
+    grid-template-columns: 38px 1fr 1px 0.65fr;
+    gap: 5px;
+    padding: 5px 7px;
   }
 
   .home-market-panel .market-graph {
-    width: 34px;
-    height: 34px;
-    font-size: 25px;
+    width: 31px;
+    height: 31px;
+    font-size: 23px;
   }
 
   .home-market-panel .market-source-row {
@@ -2352,11 +2352,11 @@ button {
   }
 
   .home-market-panel h2 {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .home-market-panel strong {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .home-quick-grid {
@@ -2402,34 +2402,34 @@ button {
   }
 
   .home-monster-card {
-    height: 252px;
+    height: 218px;
     min-height: 0;
-    max-height: 252px;
+    max-height: 218px;
     grid-template-columns: 48% 52%;
   }
 
   .home-monster-card .monster-stage {
-    height: 252px;
+    height: 218px;
     min-height: 0;
     overflow: hidden;
   }
 
   .home-monster-card .monster-art.large {
-    width: 105%;
-    height: 100%;
+    width: 104%;
+    height: 96%;
   }
 
   .home-monster-card .monster-stage::after {
-    bottom: 22px;
+    bottom: 18px;
   }
 
   .home-monster-card .monster-info {
     overflow: hidden;
-    padding: 8px 8px 8px 6px;
+    padding: 7px 8px 7px 6px;
   }
 
   .home-monster-card .monster-info h2 {
-    font-size: 21px;
+    font-size: 20px;
   }
 
   .home-monster-card .stars {
@@ -2438,8 +2438,8 @@ button {
   }
 
   .home-monster-card .monster-info p {
-    font-size: 9px;
-    line-height: 1.25;
+    font-size: 8.5px;
+    line-height: 1.2;
   }
 
   .home-monster-card .level-row {
@@ -2451,13 +2451,14 @@ button {
   }
 
   .home-monster-mini .monster-art {
-    width: 54px;
-    height: 54px;
-    margin-top: 3px;
+    width: 46px;
+    height: 46px;
+    margin-top: 2px;
   }
 
   .home-result-panel {
-    padding: 13px 6px 5px;
+    gap: 4px;
+    padding: 12px 5px 5px;
   }
 
   .home-result-panel .section-label {
@@ -2466,8 +2467,13 @@ button {
   }
 
   .home-result-panel .result-tile {
-    min-height: 34px;
-    padding: 3px 2px;
+    min-height: 32px;
+    padding: 2px;
+  }
+
+  .home-result-panel .result-tile::before {
+    min-height: 12px;
+    font-size: 9px;
   }
 
   .home-result-panel .result-tile span {
@@ -2475,22 +2481,22 @@ button {
   }
 
   .home-result-panel .result-tile strong {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .home-team-effect {
-    min-height: 38px;
-    padding: 6px 8px;
+    min-height: 31px;
+    padding: 4px 7px;
   }
 
   .home-team-effect > span {
-    width: 28px;
-    height: 28px;
-    font-size: 16px;
+    width: 23px;
+    height: 23px;
+    font-size: 13px;
   }
 
   .home-team-effect strong {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .home-team-effect .team-effect-metrics {
@@ -2498,22 +2504,28 @@ button {
   }
 
   .home-screen .stats-panel {
-    padding: 7px 9px;
+    padding: 5px 8px;
   }
 
   .home-screen .stat-row {
-    grid-template-columns: 46px 1fr 44px;
-    min-height: 18px;
-    gap: 6px;
+    grid-template-columns: 52px 1fr 42px;
+    min-height: 15px;
+    gap: 5px;
   }
 
   .home-screen .stat-row span,
   .home-screen .stat-row strong {
-    font-size: 10px;
+    font-size: 9px;
+  }
+
+  .home-screen .stat-row span::before {
+    width: 11px;
+    height: 11px;
+    font-size: 8px;
   }
 
   .home-screen .stat-bar {
-    height: 7px;
+    height: 6px;
   }
 
   .bottom-nav {
@@ -2712,22 +2724,22 @@ button {
   }
 
   .home-monster-card {
-    height: 246px;
+    height: 206px;
     min-height: 0;
-    max-height: 246px;
+    max-height: 206px;
   }
 
   .home-monster-card .monster-stage {
-    height: 246px;
+    height: 206px;
     min-height: 0;
   }
 
   .home-monster-card .monster-info h2 {
-    font-size: 19px;
+    font-size: 18px;
   }
 
   .home-result-panel .result-tile {
-    min-height: 28px;
+    min-height: 29px;
   }
 
   .home-screen .stats-panel {
@@ -2735,11 +2747,63 @@ button {
   }
 
   .home-screen .stat-row {
-    min-height: 17px;
+    min-height: 14px;
   }
 
   .bottom-nav button {
     min-height: 54px;
     font-size: 8px;
+  }
+}
+
+@media (max-height: 700px) {
+  .phone-frame {
+    padding-bottom: 72px;
+  }
+
+  .home-market-panel {
+    min-height: 47px;
+  }
+
+  .home-monster-card {
+    height: 198px;
+    max-height: 198px;
+  }
+
+  .home-monster-card .monster-stage {
+    height: 198px;
+  }
+
+  .home-monster-card .monster-info h2 {
+    font-size: 18px;
+  }
+
+  .home-monster-card .stars {
+    font-size: 11px;
+  }
+
+  .home-monster-mini .monster-art {
+    width: 40px;
+    height: 40px;
+  }
+
+  .home-result-panel .result-tile {
+    min-height: 28px;
+  }
+
+  .home-team-effect {
+    min-height: 28px;
+  }
+
+  .home-screen .stats-panel {
+    padding: 4px 7px;
+  }
+
+  .home-screen .stat-row {
+    min-height: 13px;
+  }
+
+  .bottom-nav button {
+    min-height: 50px;
   }
 }
