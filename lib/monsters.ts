@@ -170,6 +170,31 @@ export const monsters: MonsterMaster[] = [
     image: withBasePath("/monsters/chip-thunder.png"),
     icon: withBasePath("/monsters/chip-thunder-icon.png"),
     assetReady: true
+  },
+  {
+    id: "medica-seraph",
+    name: "メディカセラフ",
+    ticker: "4519",
+    companyAlias: "医療バイオ企業A",
+    rarity: "SR",
+    attribute: "癒やし",
+    role: "回復支援型",
+    equipment: "バイオリアクターの翼",
+    skill: "リカバリー配当",
+    dividendType: "中配当",
+    tags: ["医療", "バイオ", "安定", "支援"],
+    baseStats: {
+      hp: 1120,
+      attack: 560,
+      defense: 760,
+      speed: 115,
+      luck: 130,
+      dividendPower: 85,
+      growthPower: 78
+    },
+    image: withBasePath("/monsters/medica-seraph.png"),
+    icon: withBasePath("/monsters/medica-seraph-icon.png"),
+    assetReady: false
   }
 ];
 
