@@ -51,13 +51,13 @@ type ResultToast = {
 };
 
 const navItems: { id: Tab; label: string; icon: string }[] = [
-  { id: "home", label: "ホーム", icon: "⌂" },
-  { id: "gacha", label: "ガチャ", icon: "◆" },
-  { id: "train", label: "育成", icon: "▲" },
-  { id: "event", label: "作戦", icon: "✦" },
-  { id: "team", label: "チーム", icon: "◇" },
-  { id: "dex", label: "図鑑", icon: "▤" },
-  { id: "market", label: "マーケット", icon: "↗" }
+  { id: "home", label: "ホーム", icon: "home" },
+  { id: "gacha", label: "ガチャ", icon: "gacha" },
+  { id: "train", label: "育成", icon: "train" },
+  { id: "event", label: "作戦", icon: "event" },
+  { id: "team", label: "チーム", icon: "team" },
+  { id: "dex", label: "図鑑", icon: "dex" },
+  { id: "market", label: "マーケット", icon: "market" }
 ];
 
 export default function KabumonApp() {
@@ -238,7 +238,25 @@ export default function KabumonApp() {
 
   return (
     <main className="app-shell">
-      <section className="phone-frame">
+      <section
+        className="phone-frame"
+        style={{
+          "--ideal-market-icon": `url(${withBasePath("/ui/ideal-market-icon.png")})`,
+          "--ideal-chip-frame": `url(${withBasePath("/ui/ideal-chip-frame.png")})`,
+          "--ideal-nav-frame": `url(${withBasePath("/ui/ideal-nav-frame.png")})`,
+          "--ideal-nav-active-frame": `url(${withBasePath("/ui/ideal-nav-active-frame.png")})`,
+          "--nav-icon-home": `url(${withBasePath("/ui/nav-home.png")})`,
+          "--nav-icon-gacha": `url(${withBasePath("/ui/nav-gacha.png")})`,
+          "--nav-icon-train": `url(${withBasePath("/ui/nav-train.png")})`,
+          "--nav-icon-event": `url(${withBasePath("/ui/nav-event.png")})`,
+          "--nav-icon-team": `url(${withBasePath("/ui/nav-team.png")})`,
+          "--nav-icon-dex": `url(${withBasePath("/ui/nav-dex.png")})`,
+          "--nav-icon-market": `url(${withBasePath("/ui/nav-market.png")})`,
+          "--header-icon-coin": `url(${withBasePath("/ui/header-coin.png")})`,
+          "--header-icon-gem": `url(${withBasePath("/ui/header-gem.png")})`,
+          "--header-icon-avatar": `url(${withBasePath("/ui/header-avatar.png")})`
+        } as CSSProperties}
+      >
         <Header state={state} />
 
         {activeTab === "home" && (
@@ -380,19 +398,19 @@ function Header({ state }: { state: GameState }) {
         <h1>株モン</h1>
       </div>
       <div className="trainer-chip">
-        <span className="avatar-pixel">◆</span>
+        <span className="avatar-pixel" aria-hidden="true" />
         <span>{state.playerName}</span>
       </div>
-      <CurrencyChip icon="C" value={state.kabuCoins} />
-      <CurrencyChip icon="D" value={state.dividendCoins} />
+      <CurrencyChip kind="coin" value={state.kabuCoins} />
+      <CurrencyChip kind="gem" value={state.dividendCoins} />
     </header>
   );
 }
 
-function CurrencyChip({ icon, value }: { icon: string; value: number }) {
+function CurrencyChip({ kind, value }: { kind: "coin" | "gem"; value: number }) {
   return (
-    <div className="currency-chip">
-      <span>{icon}</span>
+    <div className={`currency-chip currency-${kind}`}>
+      <span aria-hidden="true" />
       <strong>{value.toLocaleString("ja-JP")}</strong>
       <b>+</b>
     </div>
@@ -474,7 +492,29 @@ function HomePanel({
         "--frame-corner-tl": `url(${withBasePath("/ui/frame-corner-tl.png")})`,
         "--frame-corner-tr": `url(${withBasePath("/ui/frame-corner-tr.png")})`,
         "--frame-corner-bl": `url(${withBasePath("/ui/frame-corner-bl.png")})`,
-        "--frame-corner-br": `url(${withBasePath("/ui/frame-corner-br.png")})`
+        "--frame-corner-br": `url(${withBasePath("/ui/frame-corner-br.png")})`,
+        "--frame-edge-side": `url(${withBasePath("/ui/frame-edge-vertical.png")})`,
+        "--frame-edge-horizontal": `url(${withBasePath("/ui/frame-edge-horizontal.png")})`,
+        "--ideal-market-frame": `url(${withBasePath("/ui/ideal-market-frame.png")})`,
+        "--ideal-monster-frame": `url(${withBasePath("/ui/ideal-monster-frame.png")})`,
+        "--ideal-result-frame": `url(${withBasePath("/ui/ideal-result-frame.png")})`,
+        "--ideal-team-frame": `url(${withBasePath("/ui/ideal-team-frame.png")})`,
+        "--ideal-stats-frame": `url(${withBasePath("/ui/ideal-stats-frame.png")})`,
+        "--ideal-market-graph": `url(${withBasePath("/ui/ideal-market-graph.png")})`,
+        "--ideal-inner-texture": `url(${withBasePath("/ui/ideal-inner-texture.png")})`,
+        "--stat-icon-hp": `url(${withBasePath("/ui/stat-clean-hp.png")})`,
+        "--stat-icon-attack": `url(${withBasePath("/ui/stat-clean-attack.png")})`,
+        "--stat-icon-defense": `url(${withBasePath("/ui/stat-clean-defense.png")})`,
+        "--stat-icon-speed": `url(${withBasePath("/ui/stat-clean-speed.png")})`,
+        "--stat-icon-luck": `url(${withBasePath("/ui/stat-clean-luck.png")})`,
+        "--result-icon-exp": `url(${withBasePath("/ui/result-icon-exp.png")})`,
+        "--result-icon-attack": `url(${withBasePath("/ui/stat-clean-attack.png")})`,
+        "--result-icon-defense": `url(${withBasePath("/ui/stat-clean-defense.png")})`,
+        "--result-icon-coin": `url(${withBasePath("/ui/result-icon-coin.png")})`,
+        "--info-icon-company": `url(${withBasePath("/ui/info-company.png")})`,
+        "--info-icon-shares": `url(${withBasePath("/ui/info-shares.png")})`,
+        "--info-icon-attr": `url(${withBasePath("/ui/info-attr.png")})`,
+        "--info-icon-trend": `url(${withBasePath("/ui/info-trend.png")})`
       } as CSSProperties}
     >
       <section className="market-panel home-market-panel pixel-panel">
@@ -522,7 +562,7 @@ function HomePanel({
           </div>
           <p className="monster-line shares-line">持ち株: <strong>{buddy.shares}</strong> 株</p>
           <p className="monster-line attr-line">属性: {buddyMaster.attribute}</p>
-          <p>
+          <p className="monster-line trend-line">
             終値変化:
             <strong className={state.currentMarket.change >= 0 ? "positive" : "negative"}>
               {" "}{formatSigned(state.currentMarket.change)}%
@@ -537,10 +577,10 @@ function HomePanel({
       <section className="result-panel home-result-panel pixel-panel">
         <FrameCorners />
         <div className="section-label">本日の成長結果</div>
-        <ResultTile label="経験値" value={`+${trainResult?.exp ?? 18}`} />
-        <ResultTile label="攻撃" value={`+${trainResult?.statChanges.attack ?? 3}`} />
-        <ResultTile label="防御" value={`+${trainResult?.statChanges.defense ?? 1}`} />
-        <ResultTile label="配当" value={`+${trainResult?.dividendCoins ?? 80}`} />
+        <ResultTile kind="exp" label="経験値" value={`+${trainResult?.exp ?? 18}`} />
+        <ResultTile kind="attack" label="攻撃" value={`+${trainResult?.statChanges.attack ?? 3}`} />
+        <ResultTile kind="defense" label="防御" value={`+${trainResult?.statChanges.defense ?? 1}`} />
+        <ResultTile kind="coin" label="配当" value={`+${trainResult?.dividendCoins ?? 80}`} />
       </section>
 
       <section className="team-effect home-team-effect pixel-panel">
@@ -1058,7 +1098,7 @@ function StatsPanel({ stats }: { stats: MonsterStats }) {
       {rows.map((row) => {
         const value = stats[row.key];
         return (
-          <div className="stat-row" key={row.key}>
+          <div className={`stat-row stat-${row.key}`} key={row.key}>
             <span>{row.label}</span>
             <div className="stat-bar">
               <i style={{ width: `${Math.min(100, (value / row.max) * 100)}%` }} />
@@ -1074,15 +1114,19 @@ function StatsPanel({ stats }: { stats: MonsterStats }) {
 function FrameCorners() {
   return (
     <>
+      <span className="frame-edge-top" aria-hidden="true" />
+      <span className="frame-edge-bottom" aria-hidden="true" />
+      <span className="frame-edge-side frame-edge-left" aria-hidden="true" />
+      <span className="frame-edge-side frame-edge-right" aria-hidden="true" />
       <span className="frame-corner frame-corner-tr" aria-hidden="true" />
       <span className="frame-corner frame-corner-bl" aria-hidden="true" />
     </>
   );
 }
 
-function ResultTile({ label, value }: { label: string; value: string }) {
+function ResultTile({ kind, label, value }: { kind?: string; label: string; value: string }) {
   return (
-    <div className="result-tile">
+    <div className={`result-tile ${kind ? `result-${kind}` : ""}`}>
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
@@ -1141,9 +1185,10 @@ function BottomNav({
         <button
           key={item.id}
           className={activeTab === item.id ? "active" : ""}
+          style={{ "--nav-icon": `var(--nav-icon-${item.icon})` } as CSSProperties}
           onClick={() => onChange(item.id)}
         >
-          <span>{item.icon}</span>
+          <span aria-hidden="true" />
           {item.label}
         </button>
       ))}
