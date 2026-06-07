@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
+  accrueOfflineReward,
   balance,
   buyMonsterFromMarket,
   calculateOfflineReward,
@@ -96,6 +97,24 @@ export default function KabumonApp() {
       window.localStorage.setItem(STORAGE_KEY, serializeState(state));
     }
   }, [state]);
+
+  useEffect(() => {
+    const accrue = () => {
+      setState((current) => current ? accrueOfflineReward(current, new Date()) : current);
+    };
+    const timer = window.setInterval(accrue, 60_000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        accrue();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   const buddy = state ? state.owned[state.buddyId] : null;
   const buddyMaster = buddy ? monsterById.get(buddy.id) : undefined;

@@ -356,12 +356,22 @@ function normalizeLogs(rawLogs: GrowthLog[] | undefined, fallback: GrowthLog[]):
 }
 
 export function applyOfflineReward(state: GameState, now = new Date()): GameState {
+  return accrueOfflineReward(state, now);
+}
+
+export function accrueOfflineReward(state: GameState, now = new Date()): GameState {
   const last = new Date(state.lastLoginAt);
   const elapsedMs = Math.max(0, now.getTime() - last.getTime());
-  const hours = Math.min(balance.offlineMaxHours, elapsedMs / 1000 / 60 / 60);
+  const pendingHours = state.offlinePending?.hours ?? 0;
+  const remainingHours = Math.max(0, balance.offlineMaxHours - pendingHours);
+  const hours = Math.min(remainingHours, elapsedMs / 1000 / 60 / 60);
 
-  if (hours < 0.05) {
-    return { ...state, lastLoginAt: now.toISOString(), offlinePending: null };
+  if (remainingHours <= 0) {
+    return { ...state, lastLoginAt: now.toISOString() };
+  }
+
+  if (hours < 0.05 && remainingHours >= 0.05) {
+    return state;
   }
 
   const reward = calculateOfflineReward(state, hours);
@@ -369,7 +379,18 @@ export function applyOfflineReward(state: GameState, now = new Date()): GameStat
   return {
     ...state,
     lastLoginAt: now.toISOString(),
-    offlinePending: reward
+    offlinePending: mergeOfflineRewards(state.offlinePending, reward)
+  };
+}
+
+function mergeOfflineRewards(current: OfflineReward | null, added: OfflineReward): OfflineReward {
+  if (!current) return added;
+
+  return {
+    hours: Math.min(balance.offlineMaxHours, round(current.hours + added.hours, 1)),
+    kabuCoins: current.kabuCoins + added.kabuCoins,
+    dividendCoins: current.dividendCoins + added.dividendCoins,
+    exp: current.exp + added.exp
   };
 }
 
