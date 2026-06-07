@@ -3127,6 +3127,48 @@ button {
     font-size: 7px;
   }
 
+  .home-screen.has-offline-reward .home-monster-card {
+    height: 196px;
+    max-height: 196px;
+  }
+
+  .home-screen.has-offline-reward .home-monster-card .monster-stage {
+    height: 196px;
+  }
+
+  .home-screen.has-offline-reward .home-monster-card .monster-info {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .home-screen.has-offline-reward .home-monster-card .monster-info h2 {
+    font-size: 18px;
+  }
+
+  .home-screen.has-offline-reward .home-monster-card .monster-line {
+    min-height: 14px;
+  }
+
+  .home-screen.has-offline-reward .home-result-panel {
+    padding-top: 11px;
+    padding-bottom: 4px;
+  }
+
+  .home-screen.has-offline-reward .home-result-panel .result-tile {
+    min-height: 38px;
+  }
+
+  .home-screen.has-offline-reward .home-result-panel .result-tile::before {
+    width: 18px;
+    height: 18px;
+  }
+
+  .home-screen.has-offline-reward .home-team-effect {
+    min-height: 28px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
   .home-screen .stats-panel {
     padding: 8px 9px 7px;
   }
@@ -3309,6 +3351,15 @@ button {
   .home-offline-claim {
     grid-template-columns: auto auto minmax(0, 1fr) 38px;
     gap: 3px;
+  }
+
+  .home-screen.has-offline-reward .home-monster-card {
+    height: 185px;
+    max-height: 185px;
+  }
+
+  .home-screen.has-offline-reward .home-monster-card .monster-stage {
+    height: 185px;
   }
 
   .home-quick-grid {

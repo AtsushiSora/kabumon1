@@ -514,7 +514,7 @@ function HomePanel({
 
   return (
     <div
-      className="screen-content home-screen"
+      className={`screen-content home-screen ${offlineReward ? "has-offline-reward" : ""}`}
       style={{
         "--home-stage-bg": `url(${withBasePath("/ui/pixel-stage-bg.png")})`,
         "--home-hud-texture": `url(${withBasePath("/ui/home-pixel-hud.png")})`,
