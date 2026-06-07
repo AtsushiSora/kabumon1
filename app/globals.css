@@ -1629,11 +1629,11 @@ button {
 .home-offline-claim {
   position: relative;
   display: grid;
-  grid-template-columns: auto auto 1fr 1fr 1fr auto;
+  grid-template-columns: auto auto minmax(0, 1fr) 44px;
   align-items: center;
   gap: 4px;
   min-height: 31px;
-  padding: 4px 7px;
+  padding: 4px 9px 4px 7px;
   color: #e9f8ff;
   background:
     linear-gradient(rgba(94, 216, 255, 0.04) 1px, transparent 1px),
@@ -1698,11 +1698,13 @@ button {
 
 .home-offline-claim i {
   color: #9eeeff;
+  text-align: center;
 }
 
 .home-offline-claim button {
+  width: 42px;
   min-height: 20px;
-  padding: 2px 8px;
+  padding: 2px 4px;
   border: 1px solid rgba(255, 215, 111, 0.72);
   border-radius: 4px;
   color: #fff7df;
@@ -2932,14 +2934,10 @@ button {
   }
 
   .home-offline-claim {
-    grid-template-columns: auto auto 1fr 1fr auto;
+    grid-template-columns: auto auto minmax(0, 1fr) 40px;
     gap: 3px;
     min-height: 27px;
-    padding: 3px 6px;
-  }
-
-  .home-offline-claim i:nth-of-type(3) {
-    display: none;
+    padding: 3px 8px 3px 6px;
   }
 
   .home-offline-claim span,
@@ -2949,8 +2947,9 @@ button {
   }
 
   .home-offline-claim button {
+    width: 38px;
     min-height: 18px;
-    padding: 2px 6px;
+    padding: 2px 3px;
     font-size: 9px;
   }
 
@@ -3308,12 +3307,8 @@ button {
   }
 
   .home-offline-claim {
-    grid-template-columns: auto auto 1fr 1fr auto;
+    grid-template-columns: auto auto minmax(0, 1fr) 38px;
     gap: 3px;
-  }
-
-  .home-offline-claim i:nth-of-type(3) {
-    display: none;
   }
 
   .home-quick-grid {

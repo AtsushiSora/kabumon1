@@ -581,9 +581,7 @@ function HomePanel({
           />
           <span>{offlineAtCap ? "放置MAX" : "放置報酬"}</span>
           <strong>{offlineAtCap ? `${balance.offlineMaxHours}h` : `${offlineReward.hours}h`}</strong>
-          <i>C+{offlineReward.kabuCoins.toLocaleString("ja-JP")}</i>
-          <i>D+{offlineReward.dividendCoins.toLocaleString("ja-JP")}</i>
-          <i>EXP+{offlineReward.exp.toLocaleString("ja-JP")}</i>
+          <i>C+{offlineReward.kabuCoins.toLocaleString("ja-JP")} / D+{offlineReward.dividendCoins.toLocaleString("ja-JP")}</i>
           <button onClick={onClaimOffline}>受取</button>
         </section>
       )}
