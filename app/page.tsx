@@ -507,6 +507,10 @@ function HomePanel({
   const expRequired = getRequiredExp(buddy.level);
   const idleHourlyReward = calculateOfflineReward(state, 1);
   const offlineReward = state.offlinePending;
+  const offlineProgress = offlineReward
+    ? Math.min(100, (offlineReward.hours / balance.offlineMaxHours) * 100)
+    : 0;
+  const offlineAtCap = offlineProgress >= 100;
 
   return (
     <div
@@ -568,15 +572,15 @@ function HomePanel({
       </section>
 
       {offlineReward && (
-        <section className="home-offline-claim pixel-panel">
+        <section className={`home-offline-claim pixel-panel ${offlineAtCap ? "offline-max" : ""}`}>
           <FrameCorners />
           <em
             className="offline-fill"
             aria-hidden="true"
-            style={{ width: `${Math.min(100, (offlineReward.hours / balance.offlineMaxHours) * 100)}%` }}
+            style={{ width: `${offlineProgress}%` }}
           />
-          <span>放置報酬</span>
-          <strong>{offlineReward.hours}h</strong>
+          <span>{offlineAtCap ? "放置MAX" : "放置報酬"}</span>
+          <strong>{offlineAtCap ? `${balance.offlineMaxHours}h` : `${offlineReward.hours}h`}</strong>
           <i>C+{offlineReward.kabuCoins.toLocaleString("ja-JP")}</i>
           <i>D+{offlineReward.dividendCoins.toLocaleString("ja-JP")}</i>
           <i>EXP+{offlineReward.exp.toLocaleString("ja-JP")}</i>
