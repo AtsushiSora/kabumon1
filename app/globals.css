@@ -1412,7 +1412,7 @@ button {
   background-image: var(--frame-corner-br);
 }
 
-.home-screen .pixel-panel > :not(.frame-corner):not(.frame-edge-top):not(.frame-edge-bottom):not(.frame-edge-side):not(.section-label) {
+.home-screen .pixel-panel > :not(.frame-corner):not(.frame-edge-top):not(.frame-edge-bottom):not(.frame-edge-side):not(.section-label):not(.offline-fill) {
   position: relative;
   z-index: 1;
 }
@@ -1627,6 +1627,7 @@ button {
 }
 
 .home-offline-claim {
+  position: relative;
   display: grid;
   grid-template-columns: auto auto 1fr 1fr 1fr auto;
   align-items: center;
@@ -1639,6 +1640,25 @@ button {
     linear-gradient(90deg, rgba(94, 216, 255, 0.03) 1px, transparent 1px),
     linear-gradient(180deg, rgba(12, 48, 88, 0.96), rgba(4, 14, 34, 0.96));
   background-size: 7px 7px, 7px 7px, auto;
+  overflow: hidden;
+}
+
+.home-offline-claim em {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  bottom: 5px;
+  z-index: 0;
+  display: block;
+  max-width: calc(100% - 10px);
+  border-radius: 3px;
+  background:
+    linear-gradient(180deg, rgba(136, 255, 180, 0.22), rgba(33, 150, 80, 0.2)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.13) 0 2px, transparent 2px 7px);
+  box-shadow:
+    inset 0 0 0 1px rgba(119, 255, 170, 0.18),
+    0 0 10px rgba(80, 231, 130, 0.18);
+  pointer-events: none;
 }
 
 .home-offline-claim span,

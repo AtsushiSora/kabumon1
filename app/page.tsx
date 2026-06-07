@@ -570,6 +570,11 @@ function HomePanel({
       {offlineReward && (
         <section className="home-offline-claim pixel-panel">
           <FrameCorners />
+          <em
+            className="offline-fill"
+            aria-hidden="true"
+            style={{ width: `${Math.min(100, (offlineReward.hours / balance.offlineMaxHours) * 100)}%` }}
+          />
           <span>放置報酬</span>
           <strong>{offlineReward.hours}h</strong>
           <i>C+{offlineReward.kabuCoins.toLocaleString("ja-JP")}</i>
