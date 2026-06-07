@@ -269,6 +269,7 @@ export default function KabumonApp() {
             teamBonus={teamBonus}
             trainResult={trainResult}
             onRefreshMarket={handleRefreshMarket}
+            onClaimOffline={handleClaim}
           />
         )}
 
@@ -472,7 +473,8 @@ function HomePanel({
   displayStats,
   teamBonus,
   trainResult,
-  onRefreshMarket
+  onRefreshMarket,
+  onClaimOffline
 }: {
   state: GameState;
   buddy: NonNullable<GameState["owned"][string]>;
@@ -481,9 +483,11 @@ function HomePanel({
   teamBonus: ReturnType<typeof getTeamBonus>;
   trainResult: TrainResult | null;
   onRefreshMarket: () => void;
+  onClaimOffline: () => void;
 }) {
   const expRequired = getRequiredExp(buddy.level);
   const idleHourlyReward = calculateOfflineReward(state, 1);
+  const offlineReward = state.offlinePending;
 
   return (
     <div
@@ -543,6 +547,18 @@ function HomePanel({
           <button className="market-refresh-button" onClick={onRefreshMarket}>更新</button>
         </div>
       </section>
+
+      {offlineReward && (
+        <section className="home-offline-claim pixel-panel">
+          <FrameCorners />
+          <span>放置報酬</span>
+          <strong>{offlineReward.hours}h</strong>
+          <i>C+{offlineReward.kabuCoins.toLocaleString("ja-JP")}</i>
+          <i>D+{offlineReward.dividendCoins.toLocaleString("ja-JP")}</i>
+          <i>EXP+{offlineReward.exp.toLocaleString("ja-JP")}</i>
+          <button onClick={onClaimOffline}>受取</button>
+        </section>
+      )}
 
       <section
         className="monster-card home-monster-card pixel-panel"
