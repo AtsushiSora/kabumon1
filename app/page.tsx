@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   balance,
   buyMonsterFromMarket,
+  calculateOfflineReward,
   claimDailyCheckin,
   claimMissionReward,
   claimOfflineReward,
@@ -482,6 +483,7 @@ function HomePanel({
   onRefreshMarket: () => void;
 }) {
   const expRequired = getRequiredExp(buddy.level);
+  const idleHourlyReward = calculateOfflineReward(state, 1);
 
   return (
     <div
@@ -590,9 +592,9 @@ function HomePanel({
           <strong>チーム効果: {teamBonus.name}</strong>
           <p>{teamBonus.detail}</p>
           <div className="team-effect-metrics">
-            <i>放置 x{teamBonus.offlineMultiplier.toFixed(2)}</i>
-            <i>育成 x{teamBonus.expMultiplier.toFixed(2)}</i>
-            <i>配当 x{teamBonus.dividendMultiplier.toFixed(2)}</i>
+            <i>C+{idleHourlyReward.kabuCoins.toLocaleString("ja-JP")}/h</i>
+            <i>D+{idleHourlyReward.dividendCoins.toLocaleString("ja-JP")}/h</i>
+            <i>EXP+{idleHourlyReward.exp.toLocaleString("ja-JP")}/h</i>
           </div>
         </div>
       </section>

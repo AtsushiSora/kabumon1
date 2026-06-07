@@ -2110,15 +2110,23 @@ button {
 }
 
 .home-team-effect .team-effect-metrics {
-  display: none;
-  gap: 4px;
-  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
 }
 
 .home-team-effect .team-effect-metrics i {
-  min-height: 19px;
-  padding: 2px 5px;
-  font-size: 9px;
+  min-height: 15px;
+  padding: 1px 5px;
+  border: 1px solid rgba(103, 213, 255, 0.28);
+  border-radius: 3px;
+  color: #9eeeff;
+  background: rgba(7, 19, 42, 0.72);
+  font-size: 8px;
+  font-style: normal;
+  line-height: 1.2;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
 }
 
 .home-message {
@@ -3000,7 +3008,15 @@ button {
   }
 
   .home-team-effect .team-effect-metrics {
-    display: none;
+    display: flex;
+    gap: 2px;
+    margin-top: 2px;
+  }
+
+  .home-team-effect .team-effect-metrics i {
+    min-height: 13px;
+    padding: 1px 3px;
+    font-size: 7px;
   }
 
   .home-screen .stats-panel {
