@@ -67,8 +67,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 70,
       growthPower: 85
     },
-    image: withBasePath("/monsters/toyodora.png"),
-    icon: withBasePath("/monsters/toyodora-icon.png"),
+    image: withBasePath("/monsters/toyodora-transparent.png"),
+    icon: withBasePath("/monsters/toyodora-icon-transparent.png"),
     assetReady: true
   },
   {
@@ -92,8 +92,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 35,
       growthPower: 110
     },
-    image: withBasePath("/monsters/nintendora.png"),
-    icon: withBasePath("/monsters/nintendora-icon.png"),
+    image: withBasePath("/monsters/nintendora-transparent.png"),
+    icon: withBasePath("/monsters/nintendora-icon-transparent.png"),
     assetReady: true
   },
   {
@@ -117,8 +117,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 40,
       growthPower: 95
     },
-    image: withBasePath("/monsters/sonic-leo.png"),
-    icon: withBasePath("/monsters/sonic-leo-icon.png"),
+    image: withBasePath("/monsters/sonic-leo-transparent.png"),
+    icon: withBasePath("/monsters/sonic-leo-icon-transparent.png"),
     assetReady: true
   },
   {
@@ -142,8 +142,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 140,
       growthPower: 65
     },
-    image: withBasePath("/monsters/bank-golem.png"),
-    icon: withBasePath("/monsters/bank-golem-icon.png"),
+    image: withBasePath("/monsters/bank-golem-transparent.png"),
+    icon: withBasePath("/monsters/bank-golem-icon-transparent.png"),
     assetReady: true
   },
   {
@@ -167,8 +167,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 25,
       growthPower: 105
     },
-    image: withBasePath("/monsters/chip-thunder.png"),
-    icon: withBasePath("/monsters/chip-thunder-icon.png"),
+    image: withBasePath("/monsters/chip-thunder-transparent.png"),
+    icon: withBasePath("/monsters/chip-thunder-icon-transparent.png"),
     assetReady: true
   },
   {
@@ -192,8 +192,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 85,
       growthPower: 78
     },
-    image: withBasePath("/monsters/medica-seraph.png"),
-    icon: withBasePath("/monsters/medica-seraph-icon.png"),
+    image: withBasePath("/monsters/medica-seraph-transparent.png"),
+    icon: withBasePath("/monsters/medica-seraph-icon-transparent.png"),
     assetReady: true
   },
   {
@@ -217,8 +217,8 @@ export const monsters: MonsterMaster[] = [
       dividendPower: 105,
       growthPower: 72
     },
-    image: withBasePath("/monsters/grid-wyvern.png"),
-    icon: withBasePath("/monsters/grid-wyvern-icon.png"),
+    image: withBasePath("/monsters/grid-wyvern-transparent.png"),
+    icon: withBasePath("/monsters/grid-wyvern-icon-transparent.png"),
     assetReady: true
   }
 ];
