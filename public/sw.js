@@ -1,4 +1,4 @@
-const CACHE_VERSION = "kabumon-cache-v1";
+const CACHE_VERSION = "kabumon-cache-v2";
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
 const scopedPath = (path) => {
   if (path === "/") return `${SCOPE_PATH}/` || "/";
@@ -11,8 +11,11 @@ const APP_SHELL = [
   scopedPath("/icons/kabumon-icon-192.png"),
   scopedPath("/icons/kabumon-icon-512.png"),
   scopedPath("/icons/kabumon-apple-touch.png"),
-  scopedPath("/monsters/toyodora-icon.png"),
-  scopedPath("/monsters/toyodora.png")
+  scopedPath("/monsters/toyodora-icon-transparent.png"),
+  scopedPath("/monsters/toyodora-transparent.png"),
+  scopedPath("/ui/ideal-nav-frame.png"),
+  scopedPath("/ui/ideal-nav-active-frame.png"),
+  scopedPath("/ui/ideal-market-icon.png")
 ];
 
 self.addEventListener("install", (event) => {
