@@ -136,16 +136,20 @@ export default function KabumonApp() {
 
   function handleClaim() {
     const reward = state!.offlinePending;
+    const teamExpShare = reward
+      ? Math.max(1, Math.floor(reward.exp / Math.max(1, state!.team.length)))
+      : 0;
     update(claimOfflineReward(state!));
     if (reward) {
       setResultToast({
         title: "オフライン報酬",
-        detail: `${reward.hours}時間分の報酬を受け取りました。`,
+        detail: `${reward.hours}時間分の報酬を受け取りました。編成中の株モンも成長しました。`,
         tone: "green",
         metrics: [
           `カブコイン +${reward.kabuCoins.toLocaleString("ja-JP")}`,
           `配当 +${reward.dividendCoins}`,
-          `EXP +${reward.exp}`
+          `チームEXP +${reward.exp}`,
+          `1体あたり +${teamExpShare}`
         ]
       });
     }
