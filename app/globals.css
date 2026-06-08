@@ -91,6 +91,10 @@ button {
   display: none;
 }
 
+.screen-content:not(.home-screen) > * {
+  flex-shrink: 0;
+}
+
 .pixel-panel {
   position: relative;
   border: 1px solid rgba(62, 208, 255, 0.78);

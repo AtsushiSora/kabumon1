@@ -99,6 +99,18 @@ export default function KabumonApp() {
   }, [state]);
 
   useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const screen = document.querySelector<HTMLElement>(".screen-content");
+      if (screen) {
+        screen.scrollTop = 0;
+        screen.scrollLeft = 0;
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab]);
+
+  useEffect(() => {
     const accrue = () => {
       setState((current) => current ? accrueOfflineReward(current, new Date()) : current);
     };
