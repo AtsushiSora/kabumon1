@@ -3218,17 +3218,17 @@ button {
 
   .bottom-nav {
     gap: 3px;
-    padding: 5px 6px 7px;
+    padding: 4px 6px 6px;
   }
 
   .bottom-nav button {
-    min-height: 50px;
+    min-height: 48px;
     font-size: 8px;
   }
 
   .bottom-nav button span {
-    width: 22px;
-    height: 22px;
+    width: 21px;
+    height: 21px;
   }
 
   .train-hero {
@@ -3459,9 +3459,9 @@ button {
   }
 }
 
-@media (max-height: 700px) {
+@media (max-height: 720px) {
   .phone-frame {
-    padding-bottom: 72px;
+    padding-bottom: 68px;
   }
 
   .home-market-panel {
@@ -3469,12 +3469,12 @@ button {
   }
 
   .home-monster-card {
-    height: 198px;
-    max-height: 198px;
+    height: 206px;
+    max-height: 206px;
   }
 
   .home-monster-card .monster-stage {
-    height: 198px;
+    height: 206px;
   }
 
   .home-monster-card .monster-info h2 {
@@ -3514,5 +3514,31 @@ button {
 
   .bottom-nav button {
     min-height: 48px;
+  }
+}
+
+@media (max-height: 660px) {
+  .home-monster-card {
+    height: 188px;
+    max-height: 188px;
+  }
+
+  .home-monster-card .monster-stage {
+    height: 188px;
+  }
+
+  .home-result-panel .result-tile {
+    min-height: 38px;
+  }
+
+  .home-team-effect {
+    min-height: 26px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  .home-screen .stats-panel {
+    padding-top: 6px;
+    padding-bottom: 6px;
   }
 }
