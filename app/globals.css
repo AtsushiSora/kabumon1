@@ -711,6 +711,26 @@ button {
   border: 1px solid rgba(78, 196, 255, 0.32);
 }
 
+.monster-art:not(.large)::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(99, 217, 255, 0.2);
+  pointer-events: none;
+}
+
+.monster-art:not(.large)::after {
+  content: "";
+  position: absolute;
+  bottom: 8px;
+  width: 68%;
+  height: 8px;
+  border: 1px solid rgba(77, 220, 255, 0.46);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(36, 204, 255, 0.4);
+  pointer-events: none;
+}
+
 .monster-art.large {
   width: 112%;
   height: 92%;
@@ -721,6 +741,8 @@ button {
 }
 
 .monster-art img {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -2392,7 +2414,7 @@ button {
 
 .mini-card {
   min-height: 158px;
-  padding: 11px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2408,6 +2430,23 @@ button {
     0 0 10px rgba(24, 137, 234, 0.18);
 }
 
+.mini-card .monster-art {
+  width: 80px;
+  height: 80px;
+  margin: 0 0 7px;
+  border-radius: 5px;
+  background:
+    radial-gradient(ellipse at 50% 78%, rgba(77, 220, 255, 0.34), transparent 46%),
+    radial-gradient(circle at 50% 36%, rgba(120, 216, 255, 0.18), transparent 55%),
+    linear-gradient(180deg, rgba(8, 31, 72, 0.94), rgba(2, 8, 22, 0.94));
+}
+
+.mini-card .monster-art img {
+  width: 88%;
+  height: 88%;
+  filter: drop-shadow(0 0 8px rgba(62, 208, 255, 0.28));
+}
+
 .mini-card.selected,
 .mini-card.owned {
   border-color: rgba(255, 207, 80, 0.85);
@@ -2419,9 +2458,18 @@ button {
 
 .mini-card h3,
 .dex-row h3 {
-  margin: 8px 0 4px;
+  margin: 0 0 4px;
   color: #fff6d6;
+  font-size: 15px;
+  line-height: 1.15;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.82);
+}
+
+.mini-card p,
+.dex-row p,
+.market-row p {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mini-card strong {
@@ -2635,8 +2683,28 @@ button {
   background-size: auto, 7px 7px, 7px 7px;
 }
 
+.dex-row .monster-art,
+.market-row .monster-art {
+  width: 64px;
+  height: 64px;
+  margin: 0;
+  border-radius: 5px;
+  background:
+    radial-gradient(ellipse at 50% 78%, rgba(77, 220, 255, 0.28), transparent 46%),
+    linear-gradient(180deg, rgba(8, 31, 72, 0.9), rgba(2, 8, 22, 0.92));
+}
+
+.dex-row .monster-art img,
+.market-row .monster-art img {
+  width: 90%;
+  height: 90%;
+}
+
 .market-row h3 {
   margin: 0 0 4px;
+  color: #fff6d6;
+  font-size: 15px;
+  line-height: 1.15;
 }
 
 .market-row p {
