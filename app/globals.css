@@ -2180,6 +2180,14 @@ button {
   background-size: 8px 8px, 8px 8px, auto;
 }
 
+.home-team-effect > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-items: center;
+}
+
 .home-team-effect > span {
   width: 28px;
   height: 28px;
@@ -2187,21 +2195,33 @@ button {
 }
 
 .home-team-effect strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 12px;
 }
 
 .home-team-effect p {
   display: block;
+  min-width: 0;
   margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 10px;
   line-height: 1.2;
 }
 
 .home-team-effect .team-effect-metrics {
+  grid-column: 2;
+  grid-row: 1 / span 2;
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 3px;
-  margin-top: 3px;
+  width: 136px;
+  margin-top: 0;
 }
 
 .home-team-effect .team-effect-metrics i {
@@ -2741,8 +2761,8 @@ button {
   width: min(100vw, 430px);
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  padding: 7px 8px 10px;
+  gap: 4px;
+  padding: 6px 8px 8px;
   background:
     linear-gradient(180deg, rgba(4, 11, 28, 0.12), rgba(4, 9, 22, 0.98) 18%),
     linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px);
@@ -2751,7 +2771,7 @@ button {
 }
 
 .bottom-nav button {
-  min-height: 70px;
+  min-height: 64px;
   position: relative;
   display: grid;
   place-items: center;
@@ -2803,8 +2823,8 @@ button {
 
 .bottom-nav button span {
   display: block;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   background: var(--nav-icon) center / contain no-repeat;
   image-rendering: pixelated;
   filter:
@@ -3118,12 +3138,13 @@ button {
   .home-team-effect .team-effect-metrics {
     display: flex;
     gap: 2px;
-    margin-top: 2px;
+    width: 118px;
+    margin-top: 0;
   }
 
   .home-team-effect .team-effect-metrics i {
     min-height: 13px;
-    padding: 1px 3px;
+    padding: 1px 2px;
     font-size: 7px;
   }
 
@@ -3170,12 +3191,13 @@ button {
   }
 
   .home-screen .stats-panel {
-    padding: 8px 9px 7px;
+    min-height: 128px;
+    padding: 7px 9px 6px;
   }
 
   .home-screen .stat-row {
     grid-template-columns: 84px 1fr 44px;
-    min-height: 18px;
+    min-height: 17px;
     gap: 5px;
   }
 
@@ -3185,13 +3207,13 @@ button {
   }
 
   .home-screen .stat-row span::before {
-    width: 20px;
-    height: 20px;
-    background-size: 17px 17px, auto;
+    width: 18px;
+    height: 18px;
+    background-size: 16px 16px, auto;
   }
 
   .home-screen .stat-bar {
-    height: 7px;
+    height: 6px;
   }
 
   .bottom-nav {
@@ -3200,13 +3222,13 @@ button {
   }
 
   .bottom-nav button {
-    min-height: 54px;
+    min-height: 50px;
     font-size: 8px;
   }
 
   .bottom-nav button span {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
   }
 
   .train-hero {
@@ -3378,7 +3400,7 @@ button {
   }
 
   .bottom-nav button {
-    min-height: 62px;
+    min-height: 52px;
     font-size: 9px;
   }
 }
@@ -3432,7 +3454,7 @@ button {
   }
 
   .bottom-nav button {
-    min-height: 54px;
+    min-height: 49px;
     font-size: 8px;
   }
 }
@@ -3491,6 +3513,6 @@ button {
   }
 
   .bottom-nav button {
-    min-height: 50px;
+    min-height: 48px;
   }
 }
