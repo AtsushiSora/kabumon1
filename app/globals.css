@@ -2671,7 +2671,7 @@ button {
 .dex-row,
 .market-row {
   display: grid;
-  grid-template-columns: 64px 1fr auto;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   padding: 10px;
@@ -2681,6 +2681,11 @@ button {
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
   background-size: auto, 7px 7px, 7px 7px;
+}
+
+.dex-row > div:not(.monster-art):not(.dex-actions),
+.market-row > div:not(.monster-art):not(.market-buy) {
+  min-width: 0;
 }
 
 .dex-row .monster-art,
@@ -2712,6 +2717,7 @@ button {
   color: var(--muted);
   font-size: 11px;
   line-height: 1.45;
+  white-space: nowrap;
 }
 
 .market-quote {
@@ -2737,6 +2743,7 @@ button {
 .market-buy {
   display: grid;
   gap: 6px;
+  width: 58px;
   justify-items: end;
 }
 
@@ -2752,7 +2759,8 @@ button {
 }
 
 .market-buy button {
-  min-width: 54px;
+  width: 54px;
+  min-width: 0;
   border: 1px solid rgba(255, 215, 111, 0.58);
   border-radius: 6px;
   padding: 7px 8px;
@@ -2770,6 +2778,10 @@ button {
   border-color: rgba(107, 207, 255, 0.42);
   color: #dff5ff;
   background: linear-gradient(180deg, #376f9f, #173653);
+}
+
+.dex-actions {
+  width: 56px;
 }
 
 .locked-row {
@@ -3474,6 +3486,60 @@ button {
   .bottom-nav button {
     min-height: 52px;
     font-size: 9px;
+  }
+
+  .dex-row,
+  .market-row {
+    grid-template-columns: 56px minmax(0, 1fr) 52px;
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .dex-row .monster-art,
+  .market-row .monster-art {
+    width: 56px;
+    height: 56px;
+  }
+
+  .dex-row h3,
+  .market-row h3 {
+    font-size: 13px;
+  }
+
+  .dex-row p,
+  .market-row p {
+    font-size: 9.5px;
+  }
+
+  .market-quote {
+    gap: 3px;
+    margin: 4px 0;
+  }
+
+  .market-quote span {
+    min-height: 18px;
+    padding: 1px 4px;
+    font-size: 8px;
+  }
+
+  .dex-actions,
+  .market-buy {
+    width: 52px;
+  }
+
+  .dex-row button,
+  .market-buy button {
+    width: 50px;
+    padding: 6px 5px;
+    font-size: 10px;
+  }
+
+  .market-buy strong {
+    font-size: 11px;
+  }
+
+  .market-buy small {
+    font-size: 8px;
   }
 }
 
