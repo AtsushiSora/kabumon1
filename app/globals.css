@@ -11,6 +11,7 @@
   --muted: #9fb2ce;
   --green: #70e36b;
   --red: #ff6f7b;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -61,7 +62,7 @@ button {
   width: min(100vw, 430px);
   height: 100dvh;
   min-height: 0;
-  padding: 10px 8px 104px;
+  padding: 10px 8px calc(104px + var(--safe-bottom));
   overflow: hidden;
   background:
     radial-gradient(circle at 24% 26%, rgba(0, 133, 255, 0.22), transparent 11rem),
@@ -2846,7 +2847,7 @@ button {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
-  padding: 6px 8px 8px;
+  padding: 6px 8px calc(8px + var(--safe-bottom));
   background:
     linear-gradient(180deg, rgba(4, 11, 28, 0.12), rgba(4, 9, 22, 0.98) 18%),
     linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px);
@@ -2953,7 +2954,7 @@ button {
 
 @media (max-height: 760px) {
   .phone-frame {
-    padding: 6px 6px 78px;
+    padding: 6px 6px calc(78px + var(--safe-bottom));
   }
 
   .top-header {
@@ -3302,7 +3303,7 @@ button {
 
   .bottom-nav {
     gap: 3px;
-    padding: 4px 6px 6px;
+    padding: 4px 6px calc(6px + var(--safe-bottom));
   }
 
   .bottom-nav button {
@@ -3599,7 +3600,7 @@ button {
 
 @media (max-height: 720px) {
   .phone-frame {
-    padding-bottom: 68px;
+    padding-bottom: calc(68px + var(--safe-bottom));
   }
 
   .home-market-panel {
