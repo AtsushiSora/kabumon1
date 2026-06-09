@@ -622,9 +622,9 @@ function HomePanel({
             <small>あと {Math.max(0, traderExpRequired - state.traderExp)}</small>
           </div>
           <p className="monster-line shares-line">持ち株: <strong>{buddy.shares}</strong> 株</p>
-          <p className="monster-line attr-line">攻撃力: {attackPower.toLocaleString("ja-JP")}</p>
-          <p className="monster-line attr-line">計算: {buddy.shares}株 × {buddyMaster.sharePrice.toLocaleString("ja-JP")}円</p>
-          <p className="monster-line attr-line">
+          <p className="monster-line attr-line power-line">攻撃力: {attackPower.toLocaleString("ja-JP")}</p>
+          <p className="monster-line attr-line calc-line">計算: {buddy.shares}株 × {buddyMaster.sharePrice.toLocaleString("ja-JP")}円</p>
+          <p className="monster-line attr-line effect-line">
             効果: {attackBreakdown.effectName}
             {attackBreakdown.dividendBonus > 0 && ` +${attackBreakdown.dividendBonus.toLocaleString("ja-JP")}`}
           </p>
@@ -976,9 +976,9 @@ function DexPanel({
               <MonsterArt monster={monster} />
               <div>
                 <h3>{owned ? monster.name : "????"}</h3>
-                <p>{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.rarity}</p>
-                <p>発行株数 {formatIssuedShares(monster.issuedShares)} / 効果: {monster.effect.name}</p>
-                <p>{owned ? `${owned.shares}株 攻撃力${getAttackPower(owned).toLocaleString("ja-JP")}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
+                <p className="stock-meta">{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.rarity}</p>
+                <p className="effect-meta">発行株数 {formatIssuedShares(monster.issuedShares)} / 効果: {monster.effect.name}</p>
+                <p className="owned-meta">{owned ? `${owned.shares}株 攻撃力${formatCompactAmount(getAttackPower(owned))}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
               </div>
               <div className="dex-actions">
                 <button disabled={!owned} onClick={() => onBuddy(monster.id)}>相棒</button>
@@ -1034,9 +1034,9 @@ function MarketPanel({
               <MonsterArt monster={monster} />
               <div>
                 <h3>{monster.name}</h3>
-                <p>{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.dividendType}</p>
-                <p>{monster.effect.name}: {monster.effect.description}</p>
-                <p>{owned ? `${owned.shares}株 攻撃力${getAttackPower(owned).toLocaleString("ja-JP")}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
+                <p className="stock-meta">{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.dividendType}</p>
+                <p className="effect-meta">{monster.effect.name}: {monster.effect.description}</p>
+                <p className="owned-meta">{owned ? `${owned.shares}株 攻撃力${formatCompactAmount(getAttackPower(owned))}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
                 <div className="market-quote">
                   <span className={quote.themeMatched ? "matched" : ""}>
                     {quote.themeMatched ? "テーマ一致" : "分散価格"}
@@ -1047,8 +1047,12 @@ function MarketPanel({
                 {owned && <p>売却価格: {quote.sellPrice.toLocaleString("ja-JP")}コイン / 100株</p>}
               </div>
               <div className="market-buy">
-                <strong>{quote.buyPrice.toLocaleString("ja-JP")}</strong>
-                <small>基準 {quote.basePrice.toLocaleString("ja-JP")}</small>
+                <strong title={`${quote.buyPrice.toLocaleString("ja-JP")}コイン`}>
+                  {formatCompactAmount(quote.buyPrice)}
+                </strong>
+                <small title={`基準 ${quote.basePrice.toLocaleString("ja-JP")}コイン`}>
+                  基準 {formatCompactAmount(quote.basePrice)}
+                </small>
                 <button disabled={!affordable} onClick={() => onBuy(monster.id)}>
                   購入
                 </button>
@@ -1138,11 +1142,25 @@ function MonsterMiniCard({
     <article className={`mini-card pixel-panel ${owned ? "owned" : ""}`}>
       <MonsterArt monster={monster} />
       <h3>{monster.name}</h3>
-      <p>{monster.rarity} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円</p>
-      {typeof dropRate === "number" && <p>排出率 {(dropRate * 100).toFixed(1)}%</p>}
-      <strong>{owned ? `攻撃力 ${getAttackPower(owned).toLocaleString("ja-JP")}` : "未所持"}</strong>
+      <p className="stock-meta">{monster.rarity} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円</p>
+      {typeof dropRate === "number" && <p className="drop-rate-meta">排出率 {(dropRate * 100).toFixed(1)}%</p>}
+      <strong>{owned ? `攻撃力 ${formatCompactAmount(getAttackPower(owned))}` : "未所持"}</strong>
     </article>
   );
+}
+
+function formatCompactAmount(value: number): string {
+  if (value >= 100_000_000) {
+    return `${trimFixed(value / 100_000_000)}億`;
+  }
+  if (value >= 10_000) {
+    return `${trimFixed(value / 10_000)}万`;
+  }
+  return value.toLocaleString("ja-JP");
+}
+
+function trimFixed(value: number): string {
+  return value.toFixed(1).replace(/\.0$/, "");
 }
 
 function formatIssuedShares(value: number): string {
