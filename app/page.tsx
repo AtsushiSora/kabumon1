@@ -1009,6 +1009,24 @@ function MarketPanel({
   onRefreshMarket: () => void;
   onReset: () => void;
 }) {
+  const marketRows = monsters
+    .map((monster) => {
+      const owned = state.owned[monster.id];
+      const quote = getMarketQuote(state, monster.id);
+      return {
+        monster,
+        owned,
+        quote,
+        affordable: state.kabuCoins >= quote.buyPrice,
+        sellable: Boolean(owned && owned.shares > 100 && !owned.locked),
+        priceTier: getPriceTier(quote.buyPrice)
+      };
+    })
+    .sort((a, b) => {
+      if (a.affordable !== b.affordable) return a.affordable ? -1 : 1;
+      return a.quote.buyPrice - b.quote.buyPrice;
+    });
+
   return (
     <div className="screen-content">
       <section className="feature-panel pixel-panel">
@@ -1024,11 +1042,7 @@ function MarketPanel({
         {message && <div className="message-box">{message}</div>}
       </section>
       <section className="market-list">
-        {monsters.map((monster) => {
-          const owned = state.owned[monster.id];
-          const quote = getMarketQuote(state, monster.id);
-          const affordable = state.kabuCoins >= quote.buyPrice;
-          const sellable = Boolean(owned && owned.shares > 100 && !owned.locked);
+        {marketRows.map(({ monster, owned, quote, affordable, sellable, priceTier }) => {
           return (
             <article key={monster.id} className="market-row pixel-panel">
               <MonsterArt monster={monster} />
@@ -1039,6 +1053,7 @@ function MarketPanel({
                   <span>{monster.effect.name}</span>
                   <span>発行 {formatIssuedShares(monster.issuedShares)}</span>
                   <span>{monster.dividendType}</span>
+                  <span className={priceTier.className}>{priceTier.label}</span>
                 </div>
                 <p className="owned-meta">{owned ? `${owned.shares}株 攻撃力${formatCompactAmount(getAttackPower(owned))}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
                 <div className="market-quote">
@@ -1155,6 +1170,19 @@ function MonsterMiniCard({
       <strong>{owned ? `攻撃力 ${formatCompactAmount(getAttackPower(owned))}` : "未所持"}</strong>
     </article>
   );
+}
+
+function getPriceTier(price: number): { label: string; className: string } {
+  if (price < 100_000) {
+    return { label: "入門価格", className: "price-tier-low" };
+  }
+  if (price < 500_000) {
+    return { label: "標準価格", className: "price-tier-mid" };
+  }
+  if (price < 1_000_000) {
+    return { label: "高額銘柄", className: "price-tier-high" };
+  }
+  return { label: "大型目標", className: "price-tier-premium" };
 }
 
 function formatCompactAmount(value: number): string {
