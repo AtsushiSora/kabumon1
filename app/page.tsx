@@ -1059,6 +1059,10 @@ function MarketPanel({
                 ? `${formatCompactAmount(targetRow.quote.buyPrice)}で100株購入できます`
                 : `あと${formatCompactAmount(targetShortage)}で100株購入できます`}
             </p>
+            <div className="market-target-stats">
+              <i>所持 {formatCompactAmount(state.kabuCoins)}</i>
+              <i>必要 {formatCompactAmount(targetRow.quote.buyPrice)}</i>
+            </div>
           </div>
           <div className="market-target-meter" aria-label="購入資金進捗">
             <span style={{ width: `${targetProgress}%` }} />

@@ -2449,6 +2449,27 @@ button {
   box-shadow: 0 0 12px rgba(104, 255, 124, 0.45);
 }
 
+.market-target-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.market-target-stats i {
+  display: inline-grid;
+  place-items: center;
+  min-height: 20px;
+  padding: 2px 6px;
+  border: 1px solid rgba(62, 208, 255, 0.25);
+  border-radius: 3px;
+  color: #dff4ff;
+  background: rgba(5, 26, 62, 0.62);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+}
+
 .market-price-note span,
 .market-price-note strong,
 .market-price-note small,
