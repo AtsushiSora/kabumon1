@@ -162,19 +162,19 @@ export type MarketQuote = {
 };
 
 export const STORAGE_KEY = "kabumon:v0.1";
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export const balance = {
-  gachaCost: 3000,
+  gachaCost: 50000,
   trainCost: 40,
   traderBaseExp: 18,
   offlineMaxHours: 12,
-  offlineBaseKabuCoins: 110,
+  offlineBaseKabuCoins: 180,
   offlineBaseDividendCoins: 22,
   offlineBaseExp: 8,
-  dailyBaseKabuCoins: 500,
+  dailyBaseKabuCoins: 5000,
   dailyBaseDividendCoins: 30,
-  dailyStreakKabuBonus: 120,
+  dailyStreakKabuBonus: 900,
   dailyStreakDividendBonus: 12,
   eventTargetScore: 820,
   logLimit: 30,
@@ -197,7 +197,7 @@ export function createInitialState(now = new Date()): GameState {
     traderLevel: 1,
     traderExp: 0,
     gachaTickets: 0,
-    kabuCoins: 12560,
+    kabuCoins: 80000,
     dividendCoins: 240,
     owned: {
       toyodora: starter
@@ -268,6 +268,8 @@ export function serializeState(state: GameState): string {
 
 function migrateState(parsed: Partial<GameState>, now: Date): GameState {
   const base = createInitialState(now);
+  const legacySaveVersion = normalizeNumber(parsed.saveVersion, 1, 1);
+  const marketRebalanceGrant = legacySaveVersion < 4 ? 60000 : 0;
   const owned = normalizeOwned(parsed.owned);
   const normalizedOwned = Object.keys(owned).length > 0 ? owned : base.owned;
   const team = normalizeTeam(parsed.team, normalizedOwned);
@@ -285,7 +287,7 @@ function migrateState(parsed: Partial<GameState>, now: Date): GameState {
     traderLevel: normalizeNumber(parsed.traderLevel, base.traderLevel, 1),
     traderExp: normalizeNumber(parsed.traderExp, base.traderExp, 0),
     gachaTickets: normalizeNumber(parsed.gachaTickets, base.gachaTickets, 0),
-    kabuCoins: normalizeNumber(parsed.kabuCoins, base.kabuCoins, 0),
+    kabuCoins: normalizeNumber(parsed.kabuCoins, base.kabuCoins, 0) + marketRebalanceGrant,
     dividendCoins: normalizeNumber(parsed.dividendCoins, base.dividendCoins, 0),
     owned: normalizedOwned,
     team,
@@ -531,7 +533,7 @@ export function getDailyEventStatus(state: GameState, now = new Date()): DailyEv
     score,
     target: balance.eventTargetScore,
     rank,
-    kabuCoins: roundToUnit(700 * rewardMultiplier + Math.max(0, score - balance.eventTargetScore) * 0.55, 10),
+    kabuCoins: roundToUnit(7000 * rewardMultiplier + Math.max(0, score - balance.eventTargetScore) * 5.5, 10),
     dividendCoins: Math.floor((45 * rewardMultiplier + state.team.length * 8) * teamBonus.dividendMultiplier),
     exp: Math.floor((22 * rewardMultiplier + state.team.length * 6) * teamBonus.expMultiplier),
     teamPower: Math.floor(teamPower),
@@ -771,7 +773,7 @@ export function getMissions(state: GameState): Mission[] {
       detail: "デイリー報酬を1回受け取る",
       progress: state.dailyCheckinCount,
       target: 1,
-      reward: { kabuCoins: 500, dividendCoins: 50 }
+      reward: { kabuCoins: 8000, dividendCoins: 50 }
     }),
     createMission(state, {
       id: "first-gacha",
@@ -779,7 +781,7 @@ export function getMissions(state: GameState): Mission[] {
       detail: "銘柄ガチャで株モンを入手する",
       progress: gachaUsed ? 1 : 0,
       target: 1,
-      reward: { kabuCoins: 500, dividendCoins: 0 }
+      reward: { kabuCoins: 8000, dividendCoins: 0 }
     }),
     createMission(state, {
       id: "first-train",
@@ -795,7 +797,7 @@ export function getMissions(state: GameState): Mission[] {
       detail: "図鑑に3体以上の株モンを登録する",
       progress: ownedCount,
       target: 3,
-      reward: { kabuCoins: 1500, dividendCoins: 0 }
+      reward: { kabuCoins: 24000, dividendCoins: 0 }
     }),
     createMission(state, {
       id: "team-three",
@@ -811,7 +813,7 @@ export function getMissions(state: GameState): Mission[] {
       detail: "特定タグの組み合わせでチーム効果を発動する",
       progress: teamBonus.active ? 1 : 0,
       target: 1,
-      reward: { kabuCoins: 1200, dividendCoins: 120 }
+      reward: { kabuCoins: 18000, dividendCoins: 120 }
     }),
     createMission(state, {
       id: "first-event",
@@ -819,7 +821,7 @@ export function getMissions(state: GameState): Mission[] {
       detail: "チームで市場作戦を1回完了する",
       progress: state.eventCount,
       target: 1,
-      reward: { kabuCoins: 900, dividendCoins: 90 }
+      reward: { kabuCoins: 12000, dividendCoins: 90 }
     }),
     createMission(state, {
       id: "shares-500",
@@ -827,7 +829,7 @@ export function getMissions(state: GameState): Mission[] {
       detail: "全株モンの合計持ち株を500株にする",
       progress: totalShares,
       target: 500,
-      reward: { kabuCoins: 2500, dividendCoins: 150 }
+      reward: { kabuCoins: 36000, dividendCoins: 150 }
     }),
     createMission(state, {
       id: "offline-claim",
@@ -835,7 +837,7 @@ export function getMissions(state: GameState): Mission[] {
       detail: "オフライン報酬を1回受け取る",
       progress: offlineClaimed ? 1 : 0,
       target: 1,
-      reward: { kabuCoins: 800, dividendCoins: 60 }
+      reward: { kabuCoins: 10000, dividendCoins: 60 }
     }),
     createMission(state, {
       id: "streak-three",
@@ -843,7 +845,7 @@ export function getMissions(state: GameState): Mission[] {
       detail: "ログインボーナスを3日連続で受け取る",
       progress: state.loginStreak,
       target: 3,
-      reward: { kabuCoins: 2000, dividendCoins: 180 }
+      reward: { kabuCoins: 30000, dividendCoins: 180 }
     })
   ];
 }
