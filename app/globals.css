@@ -2385,6 +2385,70 @@ button {
   margin-top: 10px;
 }
 
+.market-target {
+  --ideal-panel-frame: var(--ideal-slim-frame);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 10px;
+  align-items: center;
+  min-height: 70px;
+  padding: 12px 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(93, 215, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(93, 215, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(8, 29, 70, 0.96), rgba(3, 11, 28, 0.96));
+  background-size: 8px 8px, 8px 8px, auto;
+}
+
+.market-target > * {
+  position: relative;
+  z-index: 1;
+}
+
+.market-target span {
+  display: block;
+  color: #7fe8ff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.market-target strong {
+  display: block;
+  margin-top: 1px;
+  color: #fff6d6;
+  font-size: 18px;
+  line-height: 1.1;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.82);
+}
+
+.market-target p {
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-target-meter {
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(122, 203, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(2, 9, 24, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.66);
+}
+
+.market-target-meter span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #5eff83, #c7ff72);
+  box-shadow: 0 0 12px rgba(104, 255, 124, 0.45);
+}
+
 .market-price-note span,
 .market-price-note strong,
 .market-price-note small,
@@ -3583,6 +3647,21 @@ button {
   .bottom-nav button {
     min-height: 52px;
     font-size: 9px;
+  }
+
+  .market-target {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    min-height: 78px;
+    padding: 10px 12px;
+  }
+
+  .market-target strong {
+    font-size: 16px;
+  }
+
+  .market-target p {
+    font-size: 10px;
   }
 
   .dex-row,

@@ -1026,6 +1026,13 @@ function MarketPanel({
       if (a.affordable !== b.affordable) return a.affordable ? -1 : 1;
       return a.quote.buyPrice - b.quote.buyPrice;
     });
+  const targetRow = marketRows[0];
+  const targetProgress = targetRow
+    ? Math.min(100, (state.kabuCoins / Math.max(1, targetRow.quote.buyPrice)) * 100)
+    : 0;
+  const targetShortage = targetRow
+    ? Math.max(0, targetRow.quote.buyPrice - state.kabuCoins)
+    : 0;
 
   return (
     <div className="screen-content">
@@ -1041,6 +1048,23 @@ function MarketPanel({
         <button className="mini-gold-button market-refresh-wide" onClick={onRefreshMarket}>市場データ更新</button>
         {message && <div className="message-box">{message}</div>}
       </section>
+      {targetRow && (
+        <section className="market-target pixel-panel">
+          <FrameCorners />
+          <div>
+            <span>{targetRow.affordable ? "購入候補" : "次の目標"}</span>
+            <strong>{targetRow.monster.name}</strong>
+            <p>
+              {targetRow.affordable
+                ? `${formatCompactAmount(targetRow.quote.buyPrice)}で100株購入できます`
+                : `あと${formatCompactAmount(targetShortage)}で100株購入できます`}
+            </p>
+          </div>
+          <div className="market-target-meter" aria-label="購入資金進捗">
+            <span style={{ width: `${targetProgress}%` }} />
+          </div>
+        </section>
+      )}
       <section className="market-list">
         {marketRows.map(({ monster, owned, quote, affordable, sellable, priceTier }) => {
           return (
