@@ -109,6 +109,21 @@ export type TrainResult = {
   dividendCoins: number;
 };
 
+export type AttackPowerBreakdown = {
+  baseAttack: number;
+  dividendBonus: number;
+  totalAttack: number;
+  effectName: string;
+  effectDescription: string;
+  bonusRate: number;
+};
+
+export type GachaDropRate = {
+  monsterId: string;
+  weight: number;
+  rate: number;
+};
+
 export type TeamBonus = {
   name: string;
   detail: string;
@@ -1076,8 +1091,25 @@ export function getRequiredExp(level: number): number {
 }
 
 export function getAttackPower(owned: OwnedMonster): number {
+  return getAttackPowerBreakdown(owned).totalAttack;
+}
+
+export function getAttackPowerBreakdown(owned: OwnedMonster): AttackPowerBreakdown {
   const master = monsterById.get(owned.id);
-  return owned.shares * (master?.sharePrice ?? Math.max(1, Math.floor((owned.stats.attack || 10000) / 100)));
+  const sharePrice = master?.sharePrice ?? Math.max(1, Math.floor((owned.stats.attack || 10000) / 100));
+  const baseAttack = Math.floor(owned.shares * sharePrice);
+  const units = Math.max(1, Math.floor(owned.shares / 100));
+  const bonusRate = master?.effect.attackBonusPer100Shares ?? 0;
+  const dividendBonus = Math.floor(baseAttack * bonusRate * units);
+
+  return {
+    baseAttack,
+    dividendBonus,
+    totalAttack: baseAttack + dividendBonus,
+    effectName: master?.effect.name ?? "通常攻撃",
+    effectDescription: master?.effect.description ?? "株価と持ち株数に応じて攻撃力が決まります。",
+    bonusRate
+  };
 }
 
 export function getUnitSellPrice(rarity: Rarity, level: number): number {
@@ -1103,12 +1135,36 @@ export function getMarketQuote(state: GameState, monsterId: string): MarketQuote
   return calculateMarketQuote(monster, owned, state.currentMarket);
 }
 
+export function getGachaWeight(monster: MonsterMaster): number {
+  return Math.max(1, Math.sqrt(monster.issuedShares / 1_000_000));
+}
+
+export function getGachaDropRates(): GachaDropRate[] {
+  const weights = monsters.map((monster) => ({
+    monsterId: monster.id,
+    weight: getGachaWeight(monster)
+  }));
+  const totalWeight = weights.reduce((sum, entry) => sum + entry.weight, 0);
+
+  return weights.map((entry) => ({
+    ...entry,
+    rate: totalWeight > 0 ? entry.weight / totalWeight : 0
+  }));
+}
+
 function weightedMonster() {
-  const pool = monsters.flatMap((monster) => {
-    const count = monster.rarity === "SR" ? 7 : monster.rarity === "SSR" ? 3 : 1;
-    return Array.from({ length: count }, () => monster);
-  });
-  return pool[Math.floor(Math.random() * pool.length)];
+  const rates = getGachaDropRates();
+  const totalWeight = rates.reduce((sum, entry) => sum + entry.weight, 0);
+  let cursor = Math.random() * totalWeight;
+
+  for (const entry of rates) {
+    cursor -= entry.weight;
+    if (cursor <= 0) {
+      return monsterById.get(entry.monsterId) ?? monsters[0];
+    }
+  }
+
+  return monsters[monsters.length - 1];
 }
 
 export function createMarketEnergy(date: Date): MarketEnergy {

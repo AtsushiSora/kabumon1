@@ -2,7 +2,13 @@ import { withBasePath } from "./paths";
 
 export type Rarity = "R" | "SR" | "SSR" | "UR";
 
-export type DividendType = "低配当" | "中配当" | "高配当";
+export type DividendType = "無配当" | "低配当" | "中配当" | "高配当";
+
+export type MonsterEffect = {
+  name: string;
+  description: string;
+  attackBonusPer100Shares: number;
+};
 
 export type MonsterStats = {
   attack: number;
@@ -20,6 +26,8 @@ export type MonsterMaster = {
   skill: string;
   dividendType: DividendType;
   sharePrice: number;
+  issuedShares: number;
+  effect: MonsterEffect;
   tags: string[];
   baseStats: MonsterStats;
   image: string;
@@ -35,10 +43,34 @@ export const rarityWeights: Record<Rarity, number> = {
 };
 
 export const baseDividendPerUnit: Record<DividendType, number> = {
+  無配当: 0,
   低配当: 15,
   中配当: 40,
   高配当: 80
 };
+
+const effects = {
+  noDividend: {
+    name: "再建集中",
+    description: "配当効果なし。株価そのものが攻撃力になります。",
+    attackBonusPer100Shares: 0
+  },
+  lowDividend: {
+    name: "小配当ブースト",
+    description: "100株ごとに攻撃力+0.5%。",
+    attackBonusPer100Shares: 0.005
+  },
+  midDividend: {
+    name: "配当ブースト",
+    description: "100株ごとに攻撃力+1.5%。",
+    attackBonusPer100Shares: 0.015
+  },
+  highDividend: {
+    name: "高配当ブースト",
+    description: "100株ごとに攻撃力+3%。",
+    attackBonusPer100Shares: 0.03
+  }
+} satisfies Record<string, MonsterEffect>;
 
 export const monsters: MonsterMaster[] = [
   {
@@ -52,10 +84,12 @@ export const monsters: MonsterMaster[] = [
     equipment: "ハイブリッドエンジン",
     skill: "カイゼンブースト",
     dividendType: "中配当",
-    sharePrice: 100,
+    sharePrice: 2854,
+    issuedShares: 15_794_987_460,
+    effect: effects.midDividend,
     tags: ["自動車", "メカ", "モビリティ", "安定"],
     baseStats: {
-      attack: 10000
+      attack: 285400
     },
     image: withBasePath("/monsters/toyodora-transparent.png"),
     icon: withBasePath("/monsters/toyodora-icon-transparent.png"),
@@ -72,10 +106,12 @@ export const monsters: MonsterMaster[] = [
     equipment: "遊び心のコントローラー",
     skill: "ワクワク変化",
     dividendType: "低配当",
-    sharePrice: 70,
+    sharePrice: 7693,
+    issuedShares: 1_298_690_000,
+    effect: effects.lowDividend,
     tags: ["ゲーム", "エンタメ", "遊び", "運"],
     baseStats: {
-      attack: 7000
+      attack: 769300
     },
     image: withBasePath("/monsters/nintendora-transparent.png"),
     icon: withBasePath("/monsters/nintendora-icon-transparent.png"),
@@ -92,10 +128,12 @@ export const monsters: MonsterMaster[] = [
     equipment: "クリエイターゴーグル",
     skill: "イメージセンサー",
     dividendType: "低配当",
-    sharePrice: 150,
+    sharePrice: 3445,
+    issuedShares: 6_149_810_645,
+    effect: effects.lowDividend,
     tags: ["クリエイティブ", "エンタメ", "テック", "高速"],
     baseStats: {
-      attack: 15000
+      attack: 344500
     },
     image: withBasePath("/monsters/sonic-leo-transparent.png"),
     icon: withBasePath("/monsters/sonic-leo-icon-transparent.png"),
@@ -112,10 +150,12 @@ export const monsters: MonsterMaster[] = [
     equipment: "巨大金庫の盾",
     skill: "安定守護",
     dividendType: "高配当",
-    sharePrice: 85,
+    sharePrice: 3184,
+    issuedShares: 11_867_710_920,
+    effect: effects.highDividend,
     tags: ["金融", "防御", "配当", "安定"],
     baseStats: {
-      attack: 8500
+      attack: 318400
     },
     image: withBasePath("/monsters/bank-golem-transparent.png"),
     icon: withBasePath("/monsters/bank-golem-icon-transparent.png"),
@@ -132,10 +172,12 @@ export const monsters: MonsterMaster[] = [
     equipment: "精密レーザーコア",
     skill: "ボラティリティ放電",
     dividendType: "低配当",
-    sharePrice: 200,
+    sharePrice: 40710,
+    issuedShares: 94_286_400,
+    effect: effects.lowDividend,
     tags: ["半導体", "テック", "雷", "高変動"],
     baseStats: {
-      attack: 20000
+      attack: 4071000
     },
     image: withBasePath("/monsters/chip-thunder-transparent.png"),
     icon: withBasePath("/monsters/chip-thunder-icon-transparent.png"),
@@ -152,10 +194,12 @@ export const monsters: MonsterMaster[] = [
     equipment: "バイオリアクターの翼",
     skill: "リカバリー配当",
     dividendType: "中配当",
-    sharePrice: 90,
+    sharePrice: 7369,
+    issuedShares: 1_679_057_667,
+    effect: effects.midDividend,
     tags: ["医療", "バイオ", "安定", "支援"],
     baseStats: {
-      attack: 9000
+      attack: 736900
     },
     image: withBasePath("/monsters/medica-seraph-transparent.png"),
     icon: withBasePath("/monsters/medica-seraph-icon-transparent.png"),
@@ -171,11 +215,13 @@ export const monsters: MonsterMaster[] = [
     role: "インフラ安定型",
     equipment: "スマートグリッド翼",
     skill: "パワーリレー",
-    dividendType: "中配当",
-    sharePrice: 80,
+    dividendType: "無配当",
+    sharePrice: 541,
+    issuedShares: 1_607_017_531,
+    effect: effects.noDividend,
     tags: ["エネルギー", "インフラ", "安定", "配当"],
     baseStats: {
-      attack: 8000
+      attack: 54100
     },
     image: withBasePath("/monsters/grid-wyvern-transparent.png"),
     icon: withBasePath("/monsters/grid-wyvern-icon-transparent.png"),

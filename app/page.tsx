@@ -14,7 +14,9 @@ import {
   getDailyCheckinStatus,
   getDailyEventStatus,
   getAttackPower,
+  getAttackPowerBreakdown,
   getDisplayStats,
+  getGachaDropRates,
   getMarketQuote,
   getMissions,
   getRequiredExp,
@@ -519,6 +521,7 @@ function HomePanel({
   const traderExpRequired = getRequiredExp(state.traderLevel);
   const traderExpPercent = Math.min(100, (state.traderExp / traderExpRequired) * 100);
   const attackPower = getAttackPower(buddy);
+  const attackBreakdown = getAttackPowerBreakdown(buddy);
   const idleHourlyReward = calculateOfflineReward(state, 1);
   const offlineReward = state.offlinePending;
   const offlineProgress = offlineReward
@@ -620,7 +623,11 @@ function HomePanel({
           </div>
           <p className="monster-line shares-line">持ち株: <strong>{buddy.shares}</strong> 株</p>
           <p className="monster-line attr-line">攻撃力: {attackPower.toLocaleString("ja-JP")}</p>
-          <p className="monster-line attr-line">計算: {buddy.shares}株 × {buddyMaster.sharePrice}円</p>
+          <p className="monster-line attr-line">計算: {buddy.shares}株 × {buddyMaster.sharePrice.toLocaleString("ja-JP")}円</p>
+          <p className="monster-line attr-line">
+            効果: {attackBreakdown.effectName}
+            {attackBreakdown.dividendBonus > 0 && ` +${attackBreakdown.dividendBonus.toLocaleString("ja-JP")}`}
+          </p>
           <p className="monster-line trend-line">
             終値変化:
             <strong className={state.currentMarket.change >= 0 ? "positive" : "negative"}>
@@ -709,18 +716,21 @@ function GachaPanel({
   message: string;
   onGacha: () => void;
 }) {
+  const dropRates = getGachaDropRates();
+  const dropRateById = new Map(dropRates.map((entry) => [entry.monsterId, entry.rate]));
+
   return (
     <div className="screen-content">
       <section className="feature-panel pixel-panel">
         <h2>銘柄ガチャ</h2>
-        <p>ガチャチケットまたはカブコイン{balance.gachaCost.toLocaleString("ja-JP")}で株モンを入手。被りは100株追加されます。</p>
+        <p>ガチャチケットまたはカブコイン{balance.gachaCost.toLocaleString("ja-JP")}で株モンを入手。排出率は発行株数をもとに調整されます。</p>
         <div className="message-box compact">所持チケット: {state.gachaTickets}枚</div>
         <button className="gold-button full" onClick={onGacha}>1回まわす</button>
         {message && <div className="message-box">{message}</div>}
       </section>
       <section className="grid-panel">
         {monsters.map((monster) => (
-          <MonsterMiniCard key={monster.id} state={state} monster={monster} />
+          <MonsterMiniCard key={monster.id} state={state} monster={monster} dropRate={dropRateById.get(monster.id)} />
         ))}
       </section>
     </div>
@@ -967,6 +977,7 @@ function DexPanel({
               <div>
                 <h3>{owned ? monster.name : "????"}</h3>
                 <p>{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.rarity}</p>
+                <p>発行株数 {formatIssuedShares(monster.issuedShares)} / 効果: {monster.effect.name}</p>
                 <p>{owned ? `${owned.shares}株 攻撃力${getAttackPower(owned).toLocaleString("ja-JP")}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
               </div>
               <div className="dex-actions">
@@ -1002,7 +1013,7 @@ function MarketPanel({
     <div className="screen-content">
       <section className="feature-panel pixel-panel">
         <h2>マーケット</h2>
-        <p>カブコインで株モンを100株単位で購入できます。価格は市場テーマ、変動率、保有株数で変化します。</p>
+        <p>カブコインで株モンを100株単位で購入できます。基準価格は1株価格×100株です。</p>
         <div className="market-price-note">
           <span>{state.currentMarket.theme}</span>
           <strong>{formatSigned(state.currentMarket.change)}%</strong>
@@ -1024,6 +1035,7 @@ function MarketPanel({
               <div>
                 <h3>{monster.name}</h3>
                 <p>{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.dividendType}</p>
+                <p>{monster.effect.name}: {monster.effect.description}</p>
                 <p>{owned ? `${owned.shares}株 攻撃力${getAttackPower(owned).toLocaleString("ja-JP")}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
                 <div className="market-quote">
                   <span className={quote.themeMatched ? "matched" : ""}>
@@ -1112,16 +1124,35 @@ function DailyReportPanel({ state }: { state: GameState }) {
   );
 }
 
-function MonsterMiniCard({ state, monster }: { state: GameState; monster: MonsterMaster }) {
+function MonsterMiniCard({
+  state,
+  monster,
+  dropRate
+}: {
+  state: GameState;
+  monster: MonsterMaster;
+  dropRate?: number;
+}) {
   const owned = state.owned[monster.id];
   return (
     <article className={`mini-card pixel-panel ${owned ? "owned" : ""}`}>
       <MonsterArt monster={monster} />
       <h3>{monster.name}</h3>
       <p>{monster.rarity} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円</p>
+      {typeof dropRate === "number" && <p>排出率 {(dropRate * 100).toFixed(1)}%</p>}
       <strong>{owned ? `攻撃力 ${getAttackPower(owned).toLocaleString("ja-JP")}` : "未所持"}</strong>
     </article>
   );
+}
+
+function formatIssuedShares(value: number): string {
+  if (value >= 100_000_000) {
+    return `${(value / 100_000_000).toFixed(1)}億株`;
+  }
+  if (value >= 10_000) {
+    return `${Math.round(value / 10_000).toLocaleString("ja-JP")}万株`;
+  }
+  return `${value.toLocaleString("ja-JP")}株`;
 }
 
 function MonsterArt({ monster, large = false }: { monster: MonsterMaster; large?: boolean }) {
