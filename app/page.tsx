@@ -528,6 +528,23 @@ function HomePanel({
     ? Math.min(100, (offlineReward.hours / balance.offlineMaxHours) * 100)
     : 0;
   const offlineAtCap = offlineProgress >= 100;
+  const marketTarget = monsters
+    .map((monster) => {
+      const quote = getMarketQuote(state, monster.id);
+      return {
+        monster,
+        quote,
+        affordable: state.kabuCoins >= quote.buyPrice,
+        shortage: Math.max(0, quote.buyPrice - state.kabuCoins)
+      };
+    })
+    .sort((a, b) => {
+      if (a.affordable !== b.affordable) return a.affordable ? -1 : 1;
+      return a.quote.buyPrice - b.quote.buyPrice;
+    })[0];
+  const marketTargetProgress = marketTarget
+    ? Math.min(100, (state.kabuCoins / Math.max(1, marketTarget.quote.buyPrice)) * 100)
+    : 0;
 
   return (
     <div
@@ -663,7 +680,15 @@ function HomePanel({
         </div>
       </section>
 
-      <StatsPanel stats={displayStats} />
+      <HomeDashboardPanel
+        attack={displayStats.attack}
+        idleHourlyReward={idleHourlyReward}
+        targetName={marketTarget?.monster.name ?? "マーケット"}
+        targetPrice={marketTarget?.quote.buyPrice ?? 0}
+        targetShortage={marketTarget?.shortage ?? 0}
+        targetAffordable={Boolean(marketTarget?.affordable)}
+        targetProgress={marketTargetProgress}
+      />
     </div>
   );
 }
@@ -1282,6 +1307,54 @@ function StatsPanel({ stats }: { stats: MonsterStats }) {
           </div>
         );
       })}
+    </section>
+  );
+}
+
+function HomeDashboardPanel({
+  attack,
+  idleHourlyReward,
+  targetName,
+  targetPrice,
+  targetShortage,
+  targetAffordable,
+  targetProgress
+}: {
+  attack: number;
+  idleHourlyReward: { kabuCoins: number; dividendCoins: number; exp: number };
+  targetName: string;
+  targetPrice: number;
+  targetShortage: number;
+  targetAffordable: boolean;
+  targetProgress: number;
+}) {
+  return (
+    <section className="home-dashboard-panel pixel-panel">
+      <FrameCorners />
+      <div className="home-dashboard-main">
+        <span>攻撃力</span>
+        <strong>{formatCompactAmount(attack)}</strong>
+        <div className="home-power-bar">
+          <i style={{ width: `${Math.min(100, (attack / 500000) * 100)}%` }} />
+        </div>
+      </div>
+      <div className="home-dashboard-goal">
+        <span>{targetAffordable ? "購入候補" : "次の目標"}</span>
+        <strong>{targetName}</strong>
+        <p>
+          {targetAffordable
+            ? `${formatCompactAmount(targetPrice)}で購入可`
+            : `あと${formatCompactAmount(targetShortage)}`}
+        </p>
+        <div className="home-goal-bar">
+          <i style={{ width: `${targetProgress}%` }} />
+        </div>
+      </div>
+      <div className="home-dashboard-idle">
+        <span>放置効率</span>
+        <strong>C+{formatCompactAmount(idleHourlyReward.kabuCoins)}/h</strong>
+        <p>D+{formatCompactAmount(idleHourlyReward.dividendCoins)} / EXP+{formatCompactAmount(idleHourlyReward.exp)}</p>
+      </div>
     </section>
   );
 }

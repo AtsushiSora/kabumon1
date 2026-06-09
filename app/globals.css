@@ -1537,33 +1537,41 @@ button {
 
 .home-screen .stats-panel::before,
 .home-screen .stats-panel::after,
-.home-screen .stats-panel .frame-corner {
+.home-screen .stats-panel .frame-corner,
+.home-screen .home-dashboard-panel::before,
+.home-screen .home-dashboard-panel::after,
+.home-screen .home-dashboard-panel .frame-corner {
   width: 18px;
   height: 18px;
   opacity: 0.72;
 }
 
-.home-screen .stats-panel::before {
+.home-screen .stats-panel::before,
+.home-screen .home-dashboard-panel::before {
   top: 0;
   left: 0;
 }
 
-.home-screen .stats-panel::after {
+.home-screen .stats-panel::after,
+.home-screen .home-dashboard-panel::after {
   right: 0;
   bottom: 0;
 }
 
-.home-screen .stats-panel .frame-corner-tr {
+.home-screen .stats-panel .frame-corner-tr,
+.home-screen .home-dashboard-panel .frame-corner-tr {
   top: 0;
   right: 0;
 }
 
-.home-screen .stats-panel .frame-corner-bl {
+.home-screen .stats-panel .frame-corner-bl,
+.home-screen .home-dashboard-panel .frame-corner-bl {
   left: 0;
   bottom: 0;
 }
 
-.home-screen .stats-panel > .frame-edge-side {
+.home-screen .stats-panel > .frame-edge-side,
+.home-screen .home-dashboard-panel > .frame-edge-side {
   top: 13px;
   bottom: 13px;
   width: 15px;
@@ -1571,7 +1579,9 @@ button {
 }
 
 .home-screen .stats-panel > .frame-edge-top,
-.home-screen .stats-panel > .frame-edge-bottom {
+.home-screen .stats-panel > .frame-edge-bottom,
+.home-screen .home-dashboard-panel > .frame-edge-top,
+.home-screen .home-dashboard-panel > .frame-edge-bottom {
   left: 14px;
   right: 14px;
   height: 5px;
@@ -2032,6 +2042,106 @@ button {
     linear-gradient(180deg, rgba(8, 25, 59, 0.96), rgba(3, 10, 25, 0.96)),
     linear-gradient(90deg, rgba(83, 221, 114, 0.06), transparent 34%);
   background-size: 8px 8px, 8px 8px, auto, auto, auto, auto;
+}
+
+.home-dashboard-panel {
+  --ideal-panel-frame: var(--ideal-stats-frame);
+  position: relative;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  min-height: 138px;
+  padding: 10px 13px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(93, 215, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(93, 215, 255, 0.032) 1px, transparent 1px),
+    radial-gradient(ellipse at 18% 20%, rgba(45, 150, 255, 0.16), transparent 46%),
+    radial-gradient(ellipse at 92% 80%, rgba(62, 208, 255, 0.1), transparent 42%),
+    linear-gradient(180deg, rgba(8, 25, 59, 0.96), rgba(3, 10, 25, 0.96));
+  background-size: 8px 8px, 8px 8px, auto, auto, auto;
+}
+
+.home-dashboard-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-dashboard-main,
+.home-dashboard-goal,
+.home-dashboard-idle {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  column-gap: 8px;
+  align-content: center;
+  min-height: 0;
+  padding: 5px 7px;
+  border: 1px solid rgba(85, 198, 255, 0.18);
+  background:
+    linear-gradient(180deg, rgba(6, 25, 61, 0.52), rgba(2, 9, 24, 0.48)),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: auto, 5px 5px;
+}
+
+.home-dashboard-main span,
+.home-dashboard-goal span,
+.home-dashboard-idle span {
+  grid-row: span 2;
+  align-self: center;
+  color: #8feaff;
+  font-size: 10px;
+  font-weight: 900;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.82);
+}
+
+.home-dashboard-main strong,
+.home-dashboard-goal strong,
+.home-dashboard-idle strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #fff6d6;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.9);
+}
+
+.home-dashboard-goal p,
+.home-dashboard-idle p {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-power-bar,
+.home-goal-bar {
+  height: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(101, 159, 221, 0.44);
+  background:
+    repeating-linear-gradient(90deg, rgba(114, 195, 255, 0.08) 0 2px, transparent 2px 6px),
+    rgba(2, 8, 23, 0.92);
+}
+
+.home-power-bar i,
+.home-goal-bar i {
+  display: block;
+  height: 100%;
+}
+
+.home-power-bar i {
+  background: linear-gradient(90deg, #53dd72, #9bf173);
+}
+
+.home-goal-bar i {
+  background: linear-gradient(90deg, #51d9ff, #ffe071);
 }
 
 .home-screen .stat-row {
@@ -3461,6 +3571,31 @@ button {
     padding: 7px 9px 6px;
   }
 
+  .home-dashboard-panel {
+    min-height: 126px;
+    gap: 5px;
+    padding: 7px 9px 6px;
+  }
+
+  .home-dashboard-main,
+  .home-dashboard-goal,
+  .home-dashboard-idle {
+    grid-template-columns: 64px minmax(0, 1fr);
+    padding: 4px 6px;
+  }
+
+  .home-dashboard-main span,
+  .home-dashboard-goal span,
+  .home-dashboard-idle span {
+    font-size: 9px;
+  }
+
+  .home-dashboard-main strong,
+  .home-dashboard-goal strong,
+  .home-dashboard-idle strong {
+    font-size: 12px;
+  }
+
   .home-screen .stat-row {
     grid-template-columns: 84px 1fr 44px;
     min-height: 17px;
@@ -3784,6 +3919,11 @@ button {
     padding: 8px;
   }
 
+  .home-dashboard-panel {
+    min-height: 118px;
+    padding: 8px;
+  }
+
   .home-screen .stat-row {
     min-height: 17px;
   }
@@ -3843,6 +3983,11 @@ button {
     padding: 7px;
   }
 
+  .home-dashboard-panel {
+    min-height: 112px;
+    padding: 7px;
+  }
+
   .home-screen .stat-row {
     min-height: 16px;
   }
@@ -3873,6 +4018,13 @@ button {
   }
 
   .home-screen .stats-panel {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .home-dashboard-panel {
+    min-height: 104px;
+    gap: 4px;
     padding-top: 6px;
     padding-bottom: 6px;
   }
