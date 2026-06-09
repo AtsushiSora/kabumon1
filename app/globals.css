@@ -2489,13 +2489,48 @@ button {
 .dex-row .owned-meta,
 .market-row .stock-meta,
 .market-row .effect-meta,
-.market-row .owned-meta {
+.market-row .owned-meta,
+.market-row .sell-meta {
   max-width: 100%;
   white-space: nowrap;
 }
 
 .market-row .effect-meta {
   color: #bfeeff;
+}
+
+.market-effect-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 4px 0;
+  overflow: hidden;
+}
+
+.market-effect-strip span {
+  display: inline-grid;
+  place-items: center;
+  min-height: 18px;
+  max-width: 100%;
+  padding: 1px 5px;
+  border: 1px solid rgba(62, 208, 255, 0.24);
+  border-radius: 3px;
+  overflow: hidden;
+  color: #c9f3ff;
+  background:
+    linear-gradient(180deg, rgba(6, 31, 70, 0.74), rgba(2, 10, 26, 0.74)),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: auto, 5px 5px;
+  font-size: 9px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-effect-strip span:first-child {
+  color: #ffe7a8;
+  border-color: rgba(255, 215, 111, 0.36);
+  background: rgba(92, 58, 14, 0.46);
 }
 
 .mini-card strong {

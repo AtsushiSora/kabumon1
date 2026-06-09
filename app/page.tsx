@@ -1034,8 +1034,12 @@ function MarketPanel({
               <MonsterArt monster={monster} />
               <div>
                 <h3>{monster.name}</h3>
-                <p className="stock-meta">{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.dividendType}</p>
-                <p className="effect-meta">{monster.effect.name}: {monster.effect.description}</p>
+                <p className="stock-meta">{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円</p>
+                <div className="market-effect-strip" title={monster.effect.description}>
+                  <span>{monster.effect.name}</span>
+                  <span>発行 {formatIssuedShares(monster.issuedShares)}</span>
+                  <span>{monster.dividendType}</span>
+                </div>
                 <p className="owned-meta">{owned ? `${owned.shares}株 攻撃力${formatCompactAmount(getAttackPower(owned))}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
                 <div className="market-quote">
                   <span className={quote.themeMatched ? "matched" : ""}>
@@ -1044,7 +1048,11 @@ function MarketPanel({
                   <span>市場 x{quote.marketMultiplier.toFixed(2)}</span>
                   <span>保有 x{quote.demandMultiplier.toFixed(2)}</span>
                 </div>
-                {owned && <p>売却価格: {quote.sellPrice.toLocaleString("ja-JP")}コイン / 100株</p>}
+                {owned && (
+                  <p className="sell-meta" title={`売却価格 ${quote.sellPrice.toLocaleString("ja-JP")}コイン / 100株`}>
+                    売却 {formatCompactAmount(quote.sellPrice)} / 100株
+                  </p>
+                )}
               </div>
               <div className="market-buy">
                 <strong title={`${quote.buyPrice.toLocaleString("ja-JP")}コイン`}>
