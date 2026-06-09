@@ -170,7 +170,7 @@ export default function KabumonApp() {
         metrics: [
           `カブコイン +${reward.kabuCoins.toLocaleString("ja-JP")}`,
           `配当 +${reward.dividendCoins}`,
-          `トレーダーEXP +${reward.exp}`
+          `トレーダー経験値 +${reward.exp}`
         ]
       });
     }
@@ -237,7 +237,7 @@ export default function KabumonApp() {
       tone: "blue",
       monster: buddyMaster,
       metrics: [
-        result.result.traderExp > 0 ? `トレーダーEXP +${result.result.traderExp}` : `ガチャ券 +${result.result.gachaTickets}`,
+        result.result.traderExp > 0 ? `トレーダー経験値 +${result.result.traderExp}` : `ガチャ券 +${result.result.gachaTickets}`,
         `配当 +${result.result.dividendCoins}`
       ]
     });
@@ -528,23 +528,6 @@ function HomePanel({
     ? Math.min(100, (offlineReward.hours / balance.offlineMaxHours) * 100)
     : 0;
   const offlineAtCap = offlineProgress >= 100;
-  const marketTarget = monsters
-    .map((monster) => {
-      const quote = getMarketQuote(state, monster.id);
-      return {
-        monster,
-        quote,
-        affordable: state.kabuCoins >= quote.buyPrice,
-        shortage: Math.max(0, quote.buyPrice - state.kabuCoins)
-      };
-    })
-    .sort((a, b) => {
-      if (a.affordable !== b.affordable) return a.affordable ? -1 : 1;
-      return a.quote.buyPrice - b.quote.buyPrice;
-    })[0];
-  const marketTargetProgress = marketTarget
-    ? Math.min(100, (state.kabuCoins / Math.max(1, marketTarget.quote.buyPrice)) * 100)
-    : 0;
 
   return (
     <div
@@ -632,7 +615,7 @@ function HomePanel({
           <div className="stars">★★★★★</div>
           <p className="monster-line stock-line">銘柄: {buddyMaster.companyAlias}</p>
           <div className="level-row">
-            <strong>Trader Lv.{state.traderLevel}</strong>
+            <strong>トレーダー Lv.{state.traderLevel}</strong>
             <div className="exp-bar">
               <span style={{ width: `${traderExpPercent}%` }} />
             </div>
@@ -660,7 +643,7 @@ function HomePanel({
       <section className="result-panel home-result-panel pixel-panel">
         <FrameCorners />
         <div className="section-label">本日の成長結果</div>
-        <ResultTile kind="exp" label="Trader EXP" value={`+${trainResult?.traderExp ?? 0}`} />
+        <ResultTile kind="exp" label="トレーダー経験値" value={`+${trainResult?.traderExp ?? 0}`} />
         <ResultTile kind="attack" label="ガチャ券" value={`+${trainResult?.gachaTickets ?? 0}`} />
         <ResultTile kind="defense" label="攻撃力" value={attackPower.toLocaleString("ja-JP")} />
         <ResultTile kind="coin" label="配当" value={`+${trainResult?.dividendCoins ?? 80}`} />
@@ -682,12 +665,6 @@ function HomePanel({
 
       <HomeDashboardPanel
         attack={displayStats.attack}
-        idleHourlyReward={idleHourlyReward}
-        targetName={marketTarget?.monster.name ?? "マーケット"}
-        targetPrice={marketTarget?.quote.buyPrice ?? 0}
-        targetShortage={marketTarget?.shortage ?? 0}
-        targetAffordable={Boolean(marketTarget?.affordable)}
-        targetProgress={marketTargetProgress}
       />
     </div>
   );
@@ -832,7 +809,7 @@ function TrainPanel({
 
       <section className="result-panel train-result-panel pixel-panel">
         <div className="section-label">育成結果</div>
-        <ResultTile label="Trader EXP" value={`+${result?.traderExp ?? 0}`} />
+        <ResultTile label="トレーダー経験値" value={`+${result?.traderExp ?? 0}`} />
         <ResultTile label="ガチャ券" value={`+${result?.gachaTickets ?? 0}`} />
         <ResultTile label="攻撃力" value={attackPower.toLocaleString("ja-JP")} />
         <ResultTile label="配当" value={`+${result?.dividendCoins ?? 0}`} />
@@ -844,7 +821,7 @@ function TrainPanel({
             <strong>{result.market.indexName} {formatSigned(result.market.change)}%</strong>
             <p>
               {result.market.change >= 0
-                ? `上昇でトレーダーEXP +${result.traderExp}`
+                ? `上昇でトレーダー経験値 +${result.traderExp}`
                 : `下落でガチャチケット +${result.gachaTickets}`}
               {" "} / 配当 +{result.dividendCoins}
             </p>
@@ -876,7 +853,7 @@ function EventPanel({
       <section className="feature-panel pixel-panel event-hero">
         <div>
           <h2>市場作戦</h2>
-          <p>チームの総合力で1日1回の作戦に出ます。放置報酬とは別に、カブコイン、配当、トレーダーEXPを獲得できます。</p>
+          <p>チームの総合力で1日1回の作戦に出ます。放置報酬とは別に、カブコイン、配当、トレーダー経験値を獲得できます。</p>
         </div>
         <div className={`event-rank rank-${status.rank.toLowerCase()}`}>
           <span>RANK</span>
@@ -897,7 +874,7 @@ function EventPanel({
         <div className="event-reward-row">
           <span>カブコイン +{status.kabuCoins.toLocaleString("ja-JP")}</span>
           <span>配当 +{status.dividendCoins}</span>
-          <span>Trader EXP +{status.exp}</span>
+          <span>トレーダー経験値 +{status.exp}</span>
         </div>
         <div className="message-box compact">
           現在: {teamBonus.name} / {teamBonus.detail}
@@ -949,7 +926,7 @@ function TeamPanel({
         <div className="message-box">現在: {teamBonus.name} / {teamBonus.detail}</div>
         <div className="team-bonus-grid">
           <span>放置 x{teamBonus.offlineMultiplier.toFixed(2)}</span>
-          <span>Trader EXP x{teamBonus.expMultiplier.toFixed(2)}</span>
+          <span>トレーダー経験値 x{teamBonus.expMultiplier.toFixed(2)}</span>
           <span>配当 x{teamBonus.dividendMultiplier.toFixed(2)}</span>
         </div>
       </section>
@@ -1077,7 +1054,7 @@ function MarketPanel({
         <section className="market-target pixel-panel">
           <FrameCorners />
           <div>
-            <span>{targetRow.affordable ? "購入候補" : "次の目標"}</span>
+            <span>{targetRow.affordable ? "次の購入" : "次の目標"}</span>
             <strong>{targetRow.monster.name}</strong>
             <p>
               {targetRow.affordable
@@ -1191,7 +1168,7 @@ function DailyReportPanel({ state }: { state: GameState }) {
       <div className="daily-report-grid">
         <ReportTile label="カブコイン" value={formatDelta(summary.kabuCoins)} />
         <ReportTile label="配当" value={formatDelta(summary.dividendCoins)} />
-        <ReportTile label="Trader EXP" value={`+${summary.exp.toLocaleString("ja-JP")}`} />
+        <ReportTile label="トレーダー経験値" value={`+${summary.exp.toLocaleString("ja-JP")}`} />
       </div>
       <div className="daily-report-logs">
         {latestLogs.length > 0 ? (
@@ -1312,48 +1289,19 @@ function StatsPanel({ stats }: { stats: MonsterStats }) {
 }
 
 function HomeDashboardPanel({
-  attack,
-  idleHourlyReward,
-  targetName,
-  targetPrice,
-  targetShortage,
-  targetAffordable,
-  targetProgress
+  attack
 }: {
   attack: number;
-  idleHourlyReward: { kabuCoins: number; dividendCoins: number; exp: number };
-  targetName: string;
-  targetPrice: number;
-  targetShortage: number;
-  targetAffordable: boolean;
-  targetProgress: number;
 }) {
   return (
     <section className="home-dashboard-panel pixel-panel">
       <FrameCorners />
       <div className="home-dashboard-main">
         <span>攻撃力</span>
-        <strong>{formatCompactAmount(attack)}</strong>
+        <strong>{attack.toLocaleString("ja-JP")}</strong>
         <div className="home-power-bar">
           <i style={{ width: `${Math.min(100, (attack / 500000) * 100)}%` }} />
         </div>
-      </div>
-      <div className="home-dashboard-goal">
-        <span>{targetAffordable ? "購入候補" : "次の目標"}</span>
-        <strong>{targetName}</strong>
-        <p>
-          {targetAffordable
-            ? `${formatCompactAmount(targetPrice)}で購入可`
-            : `あと${formatCompactAmount(targetShortage)}`}
-        </p>
-        <div className="home-goal-bar">
-          <i style={{ width: `${targetProgress}%` }} />
-        </div>
-      </div>
-      <div className="home-dashboard-idle">
-        <span>放置効率</span>
-        <strong>C+{formatCompactAmount(idleHourlyReward.kabuCoins)}/h</strong>
-        <p>D+{formatCompactAmount(idleHourlyReward.dividendCoins)} / EXP+{formatCompactAmount(idleHourlyReward.exp)}</p>
       </div>
     </section>
   );

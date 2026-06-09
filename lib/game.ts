@@ -905,7 +905,7 @@ export function trainBuddy(state: GameState): { state: GameState; result: TrainR
     result.traderExp
   );
   const rewardDetail = market.change >= 0
-    ? `トレーダーEXP +${result.traderExp}`
+    ? `トレーダー経験値 +${result.traderExp}`
     : `ガチャチケット +${result.gachaTickets}`;
 
   return {
@@ -952,7 +952,7 @@ export function getTeamBonus(state: GameState): TeamBonus {
   if (tags.has("自動車") && tags.has("半導体") && (tags.has("テック") || tags.has("モビリティ"))) {
     return {
       name: "モビリティ連携",
-      detail: "攻撃力+10%、トレーダーEXP+8%、放置報酬+5%",
+      detail: "攻撃力+10%、トレーダー経験値+8%、放置報酬+5%",
       multiplier: 1.1,
       statMultipliers: { attack: 1.1 },
       offlineMultiplier: 1.05,
@@ -965,7 +965,7 @@ export function getTeamBonus(state: GameState): TeamBonus {
   if (tags.has("ゲーム") && tags.has("エンタメ") && tags.has("クリエイティブ")) {
     return {
       name: "エンタメ連合",
-      detail: "トレーダーEXP+10%、配当+3%",
+      detail: "トレーダー経験値+10%、配当+3%",
       multiplier: 1.08,
       statMultipliers: {},
       offlineMultiplier: 1,
