@@ -5,13 +5,7 @@ export type Rarity = "R" | "SR" | "SSR" | "UR";
 export type DividendType = "低配当" | "中配当" | "高配当";
 
 export type MonsterStats = {
-  hp: number;
   attack: number;
-  defense: number;
-  speed: number;
-  luck: number;
-  dividendPower: number;
-  growthPower: number;
 };
 
 export type MonsterMaster = {
@@ -25,6 +19,7 @@ export type MonsterMaster = {
   equipment: string;
   skill: string;
   dividendType: DividendType;
+  sharePrice: number;
   tags: string[];
   baseStats: MonsterStats;
   image: string;
@@ -57,15 +52,10 @@ export const monsters: MonsterMaster[] = [
     equipment: "ハイブリッドエンジン",
     skill: "カイゼンブースト",
     dividendType: "中配当",
+    sharePrice: 100,
     tags: ["自動車", "メカ", "モビリティ", "安定"],
     baseStats: {
-      hp: 1200,
-      attack: 760,
-      defense: 820,
-      speed: 130,
-      luck: 80,
-      dividendPower: 70,
-      growthPower: 85
+      attack: 10000
     },
     image: withBasePath("/monsters/toyodora-transparent.png"),
     icon: withBasePath("/monsters/toyodora-icon-transparent.png"),
@@ -82,15 +72,10 @@ export const monsters: MonsterMaster[] = [
     equipment: "遊び心のコントローラー",
     skill: "ワクワク変化",
     dividendType: "低配当",
+    sharePrice: 70,
     tags: ["ゲーム", "エンタメ", "遊び", "運"],
     baseStats: {
-      hp: 950,
-      attack: 700,
-      defense: 520,
-      speed: 160,
-      luck: 150,
-      dividendPower: 35,
-      growthPower: 110
+      attack: 7000
     },
     image: withBasePath("/monsters/nintendora-transparent.png"),
     icon: withBasePath("/monsters/nintendora-icon-transparent.png"),
@@ -107,15 +92,10 @@ export const monsters: MonsterMaster[] = [
     equipment: "クリエイターゴーグル",
     skill: "イメージセンサー",
     dividendType: "低配当",
+    sharePrice: 150,
     tags: ["クリエイティブ", "エンタメ", "テック", "高速"],
     baseStats: {
-      hp: 1000,
-      attack: 820,
-      defense: 600,
-      speed: 190,
-      luck: 120,
-      dividendPower: 40,
-      growthPower: 95
+      attack: 15000
     },
     image: withBasePath("/monsters/sonic-leo-transparent.png"),
     icon: withBasePath("/monsters/sonic-leo-icon-transparent.png"),
@@ -132,15 +112,10 @@ export const monsters: MonsterMaster[] = [
     equipment: "巨大金庫の盾",
     skill: "安定守護",
     dividendType: "高配当",
+    sharePrice: 85,
     tags: ["金融", "防御", "配当", "安定"],
     baseStats: {
-      hp: 1500,
-      attack: 520,
-      defense: 1000,
-      speed: 70,
-      luck: 90,
-      dividendPower: 140,
-      growthPower: 65
+      attack: 8500
     },
     image: withBasePath("/monsters/bank-golem-transparent.png"),
     icon: withBasePath("/monsters/bank-golem-icon-transparent.png"),
@@ -157,15 +132,10 @@ export const monsters: MonsterMaster[] = [
     equipment: "精密レーザーコア",
     skill: "ボラティリティ放電",
     dividendType: "低配当",
+    sharePrice: 200,
     tags: ["半導体", "テック", "雷", "高変動"],
     baseStats: {
-      hp: 850,
-      attack: 980,
-      defense: 480,
-      speed: 220,
-      luck: 110,
-      dividendPower: 25,
-      growthPower: 105
+      attack: 20000
     },
     image: withBasePath("/monsters/chip-thunder-transparent.png"),
     icon: withBasePath("/monsters/chip-thunder-icon-transparent.png"),
@@ -182,15 +152,10 @@ export const monsters: MonsterMaster[] = [
     equipment: "バイオリアクターの翼",
     skill: "リカバリー配当",
     dividendType: "中配当",
+    sharePrice: 90,
     tags: ["医療", "バイオ", "安定", "支援"],
     baseStats: {
-      hp: 1120,
-      attack: 560,
-      defense: 760,
-      speed: 115,
-      luck: 130,
-      dividendPower: 85,
-      growthPower: 78
+      attack: 9000
     },
     image: withBasePath("/monsters/medica-seraph-transparent.png"),
     icon: withBasePath("/monsters/medica-seraph-icon-transparent.png"),
@@ -207,15 +172,10 @@ export const monsters: MonsterMaster[] = [
     equipment: "スマートグリッド翼",
     skill: "パワーリレー",
     dividendType: "中配当",
+    sharePrice: 80,
     tags: ["エネルギー", "インフラ", "安定", "配当"],
     baseStats: {
-      hp: 1280,
-      attack: 690,
-      defense: 780,
-      speed: 125,
-      luck: 95,
-      dividendPower: 105,
-      growthPower: 72
+      attack: 8000
     },
     image: withBasePath("/monsters/grid-wyvern-transparent.png"),
     icon: withBasePath("/monsters/grid-wyvern-icon-transparent.png"),

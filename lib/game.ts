@@ -30,6 +30,9 @@ export type GrowthLog = {
 export type GameState = {
   saveVersion: number;
   playerName: string;
+  traderLevel: number;
+  traderExp: number;
+  gachaTickets: number;
   kabuCoins: number;
   dividendCoins: number;
   owned: Record<string, OwnedMonster>;
@@ -101,8 +104,8 @@ export type DailyEventResult = {
 
 export type TrainResult = {
   market: MarketEnergy;
-  exp: number;
-  statChanges: Partial<MonsterStats>;
+  traderExp: number;
+  gachaTickets: number;
   dividendCoins: number;
 };
 
@@ -149,6 +152,7 @@ export const SAVE_VERSION = 3;
 export const balance = {
   gachaCost: 3000,
   trainCost: 40,
+  traderBaseExp: 18,
   offlineMaxHours: 12,
   offlineBaseKabuCoins: 110,
   offlineBaseDividendCoins: 22,
@@ -175,6 +179,9 @@ export function createInitialState(now = new Date()): GameState {
   return {
     saveVersion: SAVE_VERSION,
     playerName: "トレーダーくん",
+    traderLevel: 1,
+    traderExp: 0,
+    gachaTickets: 0,
     kabuCoins: 12560,
     dividendCoins: 240,
     owned: {
@@ -260,6 +267,9 @@ function migrateState(parsed: Partial<GameState>, now: Date): GameState {
     playerName: typeof parsed.playerName === "string" && parsed.playerName.trim()
       ? parsed.playerName
       : base.playerName,
+    traderLevel: normalizeNumber(parsed.traderLevel, base.traderLevel, 1),
+    traderExp: normalizeNumber(parsed.traderExp, base.traderExp, 0),
+    gachaTickets: normalizeNumber(parsed.gachaTickets, base.gachaTickets, 0),
     kabuCoins: normalizeNumber(parsed.kabuCoins, base.kabuCoins, 0),
     dividendCoins: normalizeNumber(parsed.dividendCoins, base.dividendCoins, 0),
     owned: normalizedOwned,
@@ -305,13 +315,7 @@ function normalizeOwned(rawOwned: GameState["owned"] | undefined): GameState["ow
 
 function normalizeStats(rawStats: MonsterStats | undefined, fallback: MonsterStats): MonsterStats {
   return {
-    hp: normalizeNumber(rawStats?.hp, fallback.hp, 1),
-    attack: normalizeNumber(rawStats?.attack, fallback.attack, 1),
-    defense: normalizeNumber(rawStats?.defense, fallback.defense, 1),
-    speed: normalizeNumber(rawStats?.speed, fallback.speed, 1),
-    luck: normalizeNumber(rawStats?.luck, fallback.luck, 1),
-    dividendPower: normalizeNumber(rawStats?.dividendPower, fallback.dividendPower, 0),
-    growthPower: normalizeNumber(rawStats?.growthPower, fallback.growthPower, 0)
+    attack: normalizeNumber(rawStats?.attack, fallback.attack, 1)
   };
 }
 
@@ -404,11 +408,7 @@ export function calculateOfflineReward(state: GameState, hours: number): Offline
     const master = monsterById.get(owned.id);
     if (!master) return sum;
 
-    const sharesBonus = getSharesBonus(owned.shares);
-    const levelBonus = 1 + owned.level * 0.025;
-    const dividendBonus = 1 + master.baseStats.dividendPower / 500;
-
-    return sum + sharesBonus * levelBonus * dividendBonus;
+    return sum + getAttackPower(owned) / 10000;
   }, 0);
 
   const normalizedPower = Math.max(1, teamPower) * teamBonus.offlineMultiplier;
@@ -425,19 +425,12 @@ export function claimOfflineReward(state: GameState): GameState {
   if (!state.offlinePending) return state;
 
   const reward = state.offlinePending;
-  const nextOwned = { ...state.owned };
-
-  for (const id of state.team) {
-    const owned = nextOwned[id];
-    if (!owned) continue;
-    nextOwned[id] = addExp(owned, Math.max(1, Math.floor(reward.exp / Math.max(1, state.team.length))));
-  }
+  const trader = addTraderExp(state, reward.exp);
 
   return {
-    ...state,
-    kabuCoins: state.kabuCoins + reward.kabuCoins,
-    dividendCoins: state.dividendCoins + reward.dividendCoins,
-    owned: nextOwned,
+    ...trader,
+    kabuCoins: trader.kabuCoins + reward.kabuCoins,
+    dividendCoins: trader.dividendCoins + reward.dividendCoins,
     offlinePending: null,
     logs: [
       createLog(
@@ -543,12 +536,7 @@ export function runDailyEvent(state: GameState, now = new Date()): DailyEventRes
     };
   }
 
-  const nextOwned = { ...state.owned };
-  const expTargets = state.team.map((id) => nextOwned[id]).filter(Boolean);
-
-  for (const owned of expTargets) {
-    nextOwned[owned.id] = addExp(owned, Math.max(1, Math.floor(status.exp / Math.max(1, expTargets.length))));
-  }
+  const trader = addTraderExp(state, status.exp);
 
   const message = `市場作戦ランク${status.rank}。スコア${status.score}で報酬を獲得しました。`;
 
@@ -557,10 +545,9 @@ export function runDailyEvent(state: GameState, now = new Date()): DailyEventRes
     message,
     status,
     state: {
-      ...state,
-      kabuCoins: state.kabuCoins + status.kabuCoins,
-      dividendCoins: state.dividendCoins + status.dividendCoins,
-      owned: nextOwned,
+      ...trader,
+      kabuCoins: trader.kabuCoins + status.kabuCoins,
+      dividendCoins: trader.dividendCoins + status.dividendCoins,
       dailyEventDate: status.todayKey,
       eventCount: state.eventCount + 1,
       logs: [
@@ -578,10 +565,11 @@ export function runDailyEvent(state: GameState, now = new Date()): DailyEventRes
   };
 }
 
-export function rollGacha(state: GameState): { state: GameState; monsterId: string; duplicate: boolean } {
+export function rollGacha(state: GameState): { state: GameState; monsterId: string; duplicate: boolean; usedTicket: boolean } {
   const cost = balance.gachaCost;
-  if (state.kabuCoins < cost) {
-    return { state, monsterId: "", duplicate: false };
+  const usedTicket = state.gachaTickets > 0;
+  if (!usedTicket && state.kabuCoins < cost) {
+    return { state, monsterId: "", duplicate: false, usedTicket: false };
   }
 
   const monster = weightedMonster();
@@ -602,9 +590,11 @@ export function rollGacha(state: GameState): { state: GameState; monsterId: stri
   return {
     monsterId: monster.id,
     duplicate,
+    usedTicket,
     state: {
       ...state,
-      kabuCoins: state.kabuCoins - cost,
+      kabuCoins: usedTicket ? state.kabuCoins : state.kabuCoins - cost,
+      gachaTickets: usedTicket ? state.gachaTickets - 1 : state.gachaTickets,
       owned: nextOwned,
       team: nextTeam,
       buddyId: state.buddyId || monster.id,
@@ -612,7 +602,7 @@ export function rollGacha(state: GameState): { state: GameState; monsterId: stri
         createLog(
           duplicate ? "持ち株追加" : "新規入手",
           duplicate ? `${monster.name}の持ち株が100株増えました。` : `${monster.name}を図鑑に登録しました。`,
-          -cost,
+          usedTicket ? 0 : -cost,
           0,
           0,
           state.currentMarket.change
@@ -890,25 +880,30 @@ export function trainBuddy(state: GameState): { state: GameState; result: TrainR
   const market = createMarketEnergy(new Date());
   const teamBonus = getTeamBonus(state);
   const result = calculateTraining(buddy, market, teamBonus);
-  const nextBuddy = applyTraining(buddy, result);
+  const nextState = addTraderExp(
+    {
+      ...state,
+      gachaTickets: state.gachaTickets + result.gachaTickets
+    },
+    result.traderExp
+  );
+  const rewardDetail = market.change >= 0
+    ? `トレーダーEXP +${result.traderExp}`
+    : `ガチャチケット +${result.gachaTickets}`;
 
   return {
     result,
     state: {
-      ...state,
-      dividendCoins: state.dividendCoins - balance.trainCost + result.dividendCoins,
+      ...nextState,
+      dividendCoins: nextState.dividendCoins - balance.trainCost + result.dividendCoins,
       currentMarket: market,
-      owned: {
-        ...state.owned,
-        [buddy.id]: nextBuddy
-      },
       logs: [
         createLog(
           "市場エネルギー反映",
-          `${market.indexName} ${formatSigned(market.change)}%で${monsterById.get(buddy.id)?.name ?? "株モン"}が成長しました。${teamBonus.active ? ` ${teamBonus.name}発動。` : ""}`,
+          `${market.indexName} ${formatSigned(market.change)}%。${rewardDetail}。${teamBonus.active ? ` ${teamBonus.name}発動。` : ""}`,
           0,
           result.dividendCoins - balance.trainCost,
-          result.exp,
+          result.traderExp,
           market.change
         ),
         ...state.logs
@@ -940,7 +935,7 @@ export function getTeamBonus(state: GameState): TeamBonus {
   if (tags.has("自動車") && tags.has("半導体") && (tags.has("テック") || tags.has("モビリティ"))) {
     return {
       name: "モビリティ連携",
-      detail: "攻撃+10%、育成経験値+8%、放置報酬+5%",
+      detail: "攻撃力+10%、トレーダーEXP+8%、放置報酬+5%",
       multiplier: 1.1,
       statMultipliers: { attack: 1.1 },
       offlineMultiplier: 1.05,
@@ -953,9 +948,9 @@ export function getTeamBonus(state: GameState): TeamBonus {
   if (tags.has("ゲーム") && tags.has("エンタメ") && tags.has("クリエイティブ")) {
     return {
       name: "エンタメ連合",
-      detail: "運+12%、育成経験値+10%、配当+3%",
+      detail: "トレーダーEXP+10%、配当+3%",
       multiplier: 1.08,
-      statMultipliers: { luck: 1.12 },
+      statMultipliers: {},
       offlineMultiplier: 1,
       expMultiplier: 1.1,
       dividendMultiplier: 1.03,
@@ -966,9 +961,9 @@ export function getTeamBonus(state: GameState): TeamBonus {
   if (tags.has("金融") && tags.has("防御") && tags.has("配当")) {
     return {
       name: "金融防衛隊",
-      detail: "防御+12%、放置報酬+8%、配当+12%",
+      detail: "放置報酬+8%、配当+12%",
       multiplier: 1.08,
-      statMultipliers: { defense: 1.12 },
+      statMultipliers: {},
       offlineMultiplier: 1.08,
       expMultiplier: 1,
       dividendMultiplier: 1.12,
@@ -979,9 +974,9 @@ export function getTeamBonus(state: GameState): TeamBonus {
   if (tags.has("エネルギー") && tags.has("インフラ") && tags.has("安定")) {
     return {
       name: "インフラ安定網",
-      detail: "HP+8%、放置報酬+10%、配当+6%",
+      detail: "放置報酬+10%、配当+6%",
       multiplier: 1.08,
-      statMultipliers: { hp: 1.08 },
+      statMultipliers: {},
       offlineMultiplier: 1.1,
       expMultiplier: 1,
       dividendMultiplier: 1.06,
@@ -1002,15 +997,8 @@ export function getTeamBonus(state: GameState): TeamBonus {
 }
 
 export function getDisplayStats(owned: OwnedMonster, teamBonus?: TeamBonus): MonsterStats {
-  const sharesBonus = getSharesBonus(owned.shares);
   const baseStats = {
-    hp: Math.floor(owned.stats.hp * sharesBonus),
-    attack: Math.floor(owned.stats.attack * sharesBonus),
-    defense: Math.floor(owned.stats.defense * sharesBonus),
-    speed: Math.floor(owned.stats.speed * sharesBonus),
-    luck: Math.floor(owned.stats.luck * sharesBonus),
-    dividendPower: Math.floor(owned.stats.dividendPower * sharesBonus),
-    growthPower: Math.floor(owned.stats.growthPower * sharesBonus)
+    attack: getAttackPower(owned)
   };
 
   if (!teamBonus?.active) {
@@ -1028,63 +1016,19 @@ function calculateTraining(owned: OwnedMonster, market: MarketEnergy, teamBonus:
   const master = monsterById.get(owned.id);
   const dividendBase = master ? baseDividendPerUnit[master.dividendType] : 15;
   const units = owned.shares / 100;
-  const sharesBonus = getSharesBonus(owned.shares);
-  const growthBonus = 1 + owned.stats.growthPower / 1000;
   const absChange = Math.abs(market.change);
-  const exp = Math.floor((18 + absChange * 8) * growthBonus * sharesBonus * teamBonus.expMultiplier);
-  const dividendCoins = Math.floor(dividendBase * units * (1 + owned.stats.dividendPower / 1000) * teamBonus.dividendMultiplier);
-
-  if (market.change >= 3) {
-    return {
-      market,
-      exp,
-      dividendCoins,
-      statChanges: { attack: 6, speed: 2, growthPower: 1 }
-    };
-  }
-
-  if (market.change >= 1) {
-    return {
-      market,
-      exp,
-      dividendCoins,
-      statChanges: { attack: 3, growthPower: 1 }
-    };
-  }
-
-  if (market.change <= -3) {
-    return {
-      market,
-      exp,
-      dividendCoins,
-      statChanges: { hp: 16, defense: 5 }
-    };
-  }
-
-  if (market.change <= -1) {
-    return {
-      market,
-      exp,
-      dividendCoins,
-      statChanges: { hp: 8, defense: 3 }
-    };
-  }
+  const traderExp = market.change >= 0
+    ? Math.floor((balance.traderBaseExp + absChange * 10 + units * 3) * teamBonus.expMultiplier)
+    : 0;
+  const gachaTickets = market.change < 0 ? Math.max(1, Math.floor(absChange / 2) + 1) : 0;
+  const dividendCoins = Math.floor(dividendBase * units * teamBonus.dividendMultiplier);
 
   return {
     market,
-    exp,
-    dividendCoins,
-    statChanges: { luck: 2, dividendPower: 1 }
+    traderExp,
+    gachaTickets,
+    dividendCoins
   };
-}
-
-function applyTraining(owned: OwnedMonster, result: TrainResult): OwnedMonster {
-  const nextStats = { ...owned.stats };
-  for (const [key, value] of Object.entries(result.statChanges)) {
-    const statKey = key as keyof MonsterStats;
-    nextStats[statKey] += value ?? 0;
-  }
-  return addExp({ ...owned, stats: nextStats }, result.exp);
 }
 
 function applyStatMultipliers(
@@ -1092,13 +1036,7 @@ function applyStatMultipliers(
   multipliers: Partial<Record<keyof MonsterStats, number>>
 ): MonsterStats {
   return {
-    hp: Math.floor(stats.hp * (multipliers.hp ?? 1)),
-    attack: Math.floor(stats.attack * (multipliers.attack ?? 1)),
-    defense: Math.floor(stats.defense * (multipliers.defense ?? 1)),
-    speed: Math.floor(stats.speed * (multipliers.speed ?? 1)),
-    luck: Math.floor(stats.luck * (multipliers.luck ?? 1)),
-    dividendPower: Math.floor(stats.dividendPower * (multipliers.dividendPower ?? 1)),
-    growthPower: Math.floor(stats.growthPower * (multipliers.growthPower ?? 1))
+    attack: Math.floor(stats.attack * (multipliers.attack ?? 1))
   };
 }
 
@@ -1110,44 +1048,36 @@ function calculateDailyEventTeamPower(state: GameState): number {
 
   if (activeTeam.length === 0) return 0;
 
-  return activeTeam.reduce((sum, owned) => {
+  const teamAttack = activeTeam.reduce((sum, owned) => {
     const stats = getDisplayStats(owned, teamBonus);
-    const sharesUnits = Math.floor(owned.shares / 100);
-    return sum
-      + stats.attack * 0.42
-      + stats.defense * 0.32
-      + stats.speed * 1.25
-      + stats.luck * 0.85
-      + owned.level * 28
-      + sharesUnits * 36;
+    return sum + stats.attack / 12;
   }, 0);
+
+  return teamAttack + state.traderLevel * 32;
 }
 
-function addExp(owned: OwnedMonster, amount: number): OwnedMonster {
-  let exp = owned.exp + amount;
-  let level = owned.level;
-  let stats = { ...owned.stats };
-  let required = getRequiredExp(level);
+function addTraderExp(state: GameState, amount: number): GameState {
+  if (amount <= 0) return state;
+  let traderExp = state.traderExp + amount;
+  let traderLevel = state.traderLevel;
+  let required = getRequiredExp(traderLevel);
 
-  while (exp >= required) {
-    exp -= required;
-    level += 1;
-    stats = {
-      ...stats,
-      hp: stats.hp + 18,
-      attack: stats.attack + 6,
-      defense: stats.defense + 6,
-      speed: stats.speed + 1,
-      luck: stats.luck + 1
-    };
-    required = getRequiredExp(level);
+  while (traderExp >= required) {
+    traderExp -= required;
+    traderLevel += 1;
+    required = getRequiredExp(traderLevel);
   }
 
-  return { ...owned, exp, level, stats };
+  return { ...state, traderExp, traderLevel };
 }
 
 export function getRequiredExp(level: number): number {
   return 80 + level * 24;
+}
+
+export function getAttackPower(owned: OwnedMonster): number {
+  const master = monsterById.get(owned.id);
+  return owned.shares * (master?.sharePrice ?? Math.max(1, Math.floor((owned.stats.attack || 10000) / 100)));
 }
 
 export function getUnitSellPrice(rarity: Rarity, level: number): number {
@@ -1213,15 +1143,14 @@ function calculateMarketQuote(
   owned: OwnedMonster | undefined,
   market: MarketEnergy
 ): MarketQuote {
-  const basePrice = marketPrices[monster.rarity];
+  const basePrice = monster.sharePrice * 100;
   const themeMatched = isThemeMatched(monster, market.theme);
   const themeMultiplier = themeMatched ? 1.08 : 0.98;
   const marketMultiplier = clamp(1 + market.change * 0.025, 0.88, 1.14);
   const ownedUnits = owned ? Math.floor(owned.shares / 100) : 0;
   const demandMultiplier = 1 + Math.min(0.18, ownedUnits * 0.018);
   const buyPrice = roundToUnit(basePrice * themeMultiplier * marketMultiplier * demandMultiplier, 50);
-  const level = owned?.level ?? 1;
-  const sellPrice = roundToUnit(basePrice * 0.58 * themeMultiplier * marketMultiplier + level * 60, 50);
+  const sellPrice = roundToUnit(basePrice * 0.58 * themeMultiplier * marketMultiplier, 50);
   const direction = market.change >= 0 ? "上昇" : "下落";
   const reason = themeMatched
     ? ` ${market.theme}テーマ一致・市場${direction}を反映。`

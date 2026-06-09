@@ -13,6 +13,7 @@ import {
   formatSigned,
   getDailyCheckinStatus,
   getDailyEventStatus,
+  getAttackPower,
   getDisplayStats,
   getMarketQuote,
   getMissions,
@@ -74,7 +75,13 @@ export default function KabumonApp() {
   const [resultToast, setResultToast] = useState<ResultToast | null>(null);
 
   useEffect(() => {
-    setState(hydrateState(window.localStorage.getItem(STORAGE_KEY)));
+    let savedState: string | null = null;
+    try {
+      savedState = window.localStorage?.getItem(STORAGE_KEY) ?? null;
+    } catch {
+      savedState = null;
+    }
+    setState(hydrateState(savedState));
   }, []);
 
   useEffect(() => {
@@ -94,7 +101,11 @@ export default function KabumonApp() {
 
   useEffect(() => {
     if (state) {
-      window.localStorage.setItem(STORAGE_KEY, serializeState(state));
+      try {
+        window.localStorage?.setItem(STORAGE_KEY, serializeState(state));
+      } catch {
+        // 保存できない環境でも、ゲーム本体はメモリ上で動かします。
+      }
     }
   }, [state]);
 
@@ -148,20 +159,16 @@ export default function KabumonApp() {
 
   function handleClaim() {
     const reward = state!.offlinePending;
-    const teamExpShare = reward
-      ? Math.max(1, Math.floor(reward.exp / Math.max(1, state!.team.length)))
-      : 0;
     update(claimOfflineReward(state!));
     if (reward) {
       setResultToast({
         title: "オフライン報酬",
-        detail: `${reward.hours}時間分の報酬を受け取りました。編成中の株モンも成長しました。`,
+        detail: `${reward.hours}時間分の報酬を受け取りました。トレーダー経験値も増えました。`,
         tone: "green",
         metrics: [
           `カブコイン +${reward.kabuCoins.toLocaleString("ja-JP")}`,
           `配当 +${reward.dividendCoins}`,
-          `チームEXP +${reward.exp}`,
-          `1体あたり +${teamExpShare}`
+          `トレーダーEXP +${reward.exp}`
         ]
       });
     }
@@ -188,7 +195,7 @@ export default function KabumonApp() {
   function handleGacha() {
     const result = rollGacha(state!);
     if (!result.monsterId) {
-      setGachaMessage("カブコインが足りません。");
+      setGachaMessage("チケットまたはカブコインが足りません。");
       return;
     }
 
@@ -204,7 +211,7 @@ export default function KabumonApp() {
       detail: message,
       tone: "gold",
       monster,
-      metrics: ["100株", "ガチャ結果"]
+      metrics: ["100株", result.usedTicket ? "チケット消費" : "カブコイン消費"]
     });
   }
 
@@ -228,9 +235,8 @@ export default function KabumonApp() {
       tone: "blue",
       monster: buddyMaster,
       metrics: [
-        `EXP +${result.result.exp}`,
-        `配当 +${result.result.dividendCoins}`,
-        ...Object.entries(result.result.statChanges).map(([key, value]) => `${statLabels[key as keyof MonsterStats]} +${value}`)
+        result.result.traderExp > 0 ? `トレーダーEXP +${result.result.traderExp}` : `ガチャ券 +${result.result.gachaTickets}`,
+        `配当 +${result.result.dividendCoins}`
       ]
     });
   }
@@ -417,16 +423,6 @@ export default function KabumonApp() {
   );
 }
 
-const statLabels: Record<keyof MonsterStats, string> = {
-  hp: "HP",
-  attack: "攻撃",
-  defense: "防御",
-  speed: "素早さ",
-  luck: "運",
-  dividendPower: "配当力",
-  growthPower: "成長力"
-};
-
 function Header({ state }: { state: GameState }) {
   return (
     <header className="top-header">
@@ -436,7 +432,7 @@ function Header({ state }: { state: GameState }) {
       </div>
       <div className="trainer-chip">
         <span className="avatar-pixel" aria-hidden="true" />
-        <span>{state.playerName}</span>
+        <span>Lv.{state.traderLevel}</span>
       </div>
       <CurrencyChip kind="coin" value={state.kabuCoins} />
       <CurrencyChip kind="gem" value={state.dividendCoins} />
@@ -520,7 +516,9 @@ function HomePanel({
   onRefreshMarket: () => void;
   onClaimOffline: () => void;
 }) {
-  const expRequired = getRequiredExp(buddy.level);
+  const traderExpRequired = getRequiredExp(state.traderLevel);
+  const traderExpPercent = Math.min(100, (state.traderExp / traderExpRequired) * 100);
+  const attackPower = getAttackPower(buddy);
   const idleHourlyReward = calculateOfflineReward(state, 1);
   const offlineReward = state.offlinePending;
   const offlineProgress = offlineReward
@@ -614,14 +612,15 @@ function HomePanel({
           <div className="stars">★★★★★</div>
           <p className="monster-line stock-line">銘柄: {buddyMaster.companyAlias}</p>
           <div className="level-row">
-            <strong>Lv.{buddy.level}</strong>
+            <strong>Trader Lv.{state.traderLevel}</strong>
             <div className="exp-bar">
-              <span style={{ width: `${Math.min(100, (buddy.exp / expRequired) * 100)}%` }} />
+              <span style={{ width: `${traderExpPercent}%` }} />
             </div>
-            <small>あと {Math.max(0, expRequired - buddy.exp)}</small>
+            <small>あと {Math.max(0, traderExpRequired - state.traderExp)}</small>
           </div>
           <p className="monster-line shares-line">持ち株: <strong>{buddy.shares}</strong> 株</p>
-          <p className="monster-line attr-line">属性: {buddyMaster.attribute}</p>
+          <p className="monster-line attr-line">攻撃力: {attackPower.toLocaleString("ja-JP")}</p>
+          <p className="monster-line attr-line">計算: {buddy.shares}株 × {buddyMaster.sharePrice}円</p>
           <p className="monster-line trend-line">
             終値変化:
             <strong className={state.currentMarket.change >= 0 ? "positive" : "negative"}>
@@ -637,9 +636,9 @@ function HomePanel({
       <section className="result-panel home-result-panel pixel-panel">
         <FrameCorners />
         <div className="section-label">本日の成長結果</div>
-        <ResultTile kind="exp" label="経験値" value={`+${trainResult?.exp ?? 18}`} />
-        <ResultTile kind="attack" label="攻撃" value={`+${trainResult?.statChanges.attack ?? 3}`} />
-        <ResultTile kind="defense" label="防御" value={`+${trainResult?.statChanges.defense ?? 1}`} />
+        <ResultTile kind="exp" label="Trader EXP" value={`+${trainResult?.traderExp ?? 0}`} />
+        <ResultTile kind="attack" label="ガチャ券" value={`+${trainResult?.gachaTickets ?? 0}`} />
+        <ResultTile kind="defense" label="攻撃力" value={attackPower.toLocaleString("ja-JP")} />
         <ResultTile kind="coin" label="配当" value={`+${trainResult?.dividendCoins ?? 80}`} />
       </section>
 
@@ -714,7 +713,8 @@ function GachaPanel({
     <div className="screen-content">
       <section className="feature-panel pixel-panel">
         <h2>銘柄ガチャ</h2>
-        <p>カブコイン{balance.gachaCost.toLocaleString("ja-JP")}で株モンを入手。被りは100株追加されます。</p>
+        <p>ガチャチケットまたはカブコイン{balance.gachaCost.toLocaleString("ja-JP")}で株モンを入手。被りは100株追加されます。</p>
+        <div className="message-box compact">所持チケット: {state.gachaTickets}枚</div>
         <button className="gold-button full" onClick={onGacha}>1回まわす</button>
         {message && <div className="message-box">{message}</div>}
       </section>
@@ -742,9 +742,10 @@ function TrainPanel({
   result: TrainResult | null;
   onTrain: () => void;
 }) {
-  const expRequired = getRequiredExp(buddy.level);
+  const expRequired = getRequiredExp(state.traderLevel);
   const canTrain = state.dividendCoins >= balance.trainCost;
-  const expPercent = Math.min(100, (buddy.exp / expRequired) * 100);
+  const expPercent = Math.min(100, (state.traderExp / expRequired) * 100);
+  const attackPower = getAttackPower(buddy);
 
   return (
     <div className="screen-content train-screen">
@@ -756,15 +757,15 @@ function TrainPanel({
           <MonsterArt monster={buddyMaster} large />
         </div>
         <div className="train-control">
-          <span className="train-label">育成対象</span>
-          <h2>{buddyMaster.name}</h2>
-          <p>{buddyMaster.attribute} / {buddy.shares}株</p>
+          <span className="train-label">トレーダー育成</span>
+          <h2>{state.playerName}</h2>
+          <p>{buddyMaster.name} / 攻撃力 {attackPower.toLocaleString("ja-JP")}</p>
           <div className="level-row train-level-row">
-            <strong>Lv.{buddy.level}</strong>
+            <strong>Lv.{state.traderLevel}</strong>
             <div className="exp-bar">
               <span style={{ width: `${expPercent}%` }} />
             </div>
-            <small>あと {Math.max(0, expRequired - buddy.exp)}</small>
+            <small>あと {Math.max(0, expRequired - state.traderExp)}</small>
           </div>
           <div className="train-resource-grid">
             <span>必要 D{balance.trainCost}</span>
@@ -796,9 +797,9 @@ function TrainPanel({
 
       <section className="result-panel train-result-panel pixel-panel">
         <div className="section-label">育成結果</div>
-        <ResultTile label="経験値" value={`+${result?.exp ?? 0}`} />
-        <ResultTile label="攻撃" value={`+${result?.statChanges.attack ?? 0}`} />
-        <ResultTile label="防御" value={`+${result?.statChanges.defense ?? 0}`} />
+        <ResultTile label="Trader EXP" value={`+${result?.traderExp ?? 0}`} />
+        <ResultTile label="ガチャ券" value={`+${result?.gachaTickets ?? 0}`} />
+        <ResultTile label="攻撃力" value={attackPower.toLocaleString("ja-JP")} />
         <ResultTile label="配当" value={`+${result?.dividendCoins ?? 0}`} />
       </section>
 
@@ -806,7 +807,12 @@ function TrainPanel({
         <section className="train-result-note pixel-panel">
           <div>
             <strong>{result.market.indexName} {formatSigned(result.market.change)}%</strong>
-            <p>市場エネルギーを反映しました。獲得EXP +{result.exp} / 配当 +{result.dividendCoins}</p>
+            <p>
+              {result.market.change >= 0
+                ? `上昇でトレーダーEXP +${result.traderExp}`
+                : `下落でガチャチケット +${result.gachaTickets}`}
+              {" "} / 配当 +{result.dividendCoins}
+            </p>
           </div>
         </section>
       )}
@@ -835,7 +841,7 @@ function EventPanel({
       <section className="feature-panel pixel-panel event-hero">
         <div>
           <h2>市場作戦</h2>
-          <p>チームの総合力で1日1回の作戦に出ます。放置報酬とは別に、カブコイン、配当、経験値を獲得できます。</p>
+          <p>チームの総合力で1日1回の作戦に出ます。放置報酬とは別に、カブコイン、配当、トレーダーEXPを獲得できます。</p>
         </div>
         <div className={`event-rank rank-${status.rank.toLowerCase()}`}>
           <span>RANK</span>
@@ -856,7 +862,7 @@ function EventPanel({
         <div className="event-reward-row">
           <span>カブコイン +{status.kabuCoins.toLocaleString("ja-JP")}</span>
           <span>配当 +{status.dividendCoins}</span>
-          <span>EXP +{status.exp}</span>
+          <span>Trader EXP +{status.exp}</span>
         </div>
         <div className="message-box compact">
           現在: {teamBonus.name} / {teamBonus.detail}
@@ -878,7 +884,7 @@ function EventPanel({
             <article key={id} className="mini-card pixel-panel selected">
               <MonsterArt monster={monster} />
               <h3>{monster.name}</h3>
-              <p>Lv.{owned.level} / {owned.shares}株</p>
+              <p>{owned.shares}株 / 攻撃力 {getAttackPower(owned).toLocaleString("ja-JP")}</p>
               <strong>{monster.role}</strong>
             </article>
           );
@@ -908,7 +914,7 @@ function TeamPanel({
         <div className="message-box">現在: {teamBonus.name} / {teamBonus.detail}</div>
         <div className="team-bonus-grid">
           <span>放置 x{teamBonus.offlineMultiplier.toFixed(2)}</span>
-          <span>育成 x{teamBonus.expMultiplier.toFixed(2)}</span>
+          <span>Trader EXP x{teamBonus.expMultiplier.toFixed(2)}</span>
           <span>配当 x{teamBonus.dividendMultiplier.toFixed(2)}</span>
         </div>
       </section>
@@ -920,7 +926,7 @@ function TeamPanel({
             <article key={monster.id} className={`mini-card pixel-panel ${inTeam ? "selected" : ""}`}>
               <MonsterArt monster={monster} />
               <h3>{monster.name}</h3>
-              <p>{owned ? `${owned.shares}株 / Lv.${owned.level}` : "未所持"}</p>
+              <p>{owned ? `${owned.shares}株 / 攻撃力 ${getAttackPower(owned).toLocaleString("ja-JP")}` : "未所持"}</p>
               <div className="mini-actions">
                 <button disabled={!owned} onClick={() => onToggle(monster.id)}>
                   {inTeam ? "外す" : "編成"}
@@ -960,8 +966,8 @@ function DexPanel({
               <MonsterArt monster={monster} />
               <div>
                 <h3>{owned ? monster.name : "????"}</h3>
-                <p>{monster.companyAlias} / {monster.ticker} / {monster.rarity}</p>
-                <p>{owned ? `${owned.shares}株 Lv.${owned.level}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
+                <p>{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.rarity}</p>
+                <p>{owned ? `${owned.shares}株 攻撃力${getAttackPower(owned).toLocaleString("ja-JP")}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
               </div>
               <div className="dex-actions">
                 <button disabled={!owned} onClick={() => onBuddy(monster.id)}>相棒</button>
@@ -1017,8 +1023,8 @@ function MarketPanel({
               <MonsterArt monster={monster} />
               <div>
                 <h3>{monster.name}</h3>
-                <p>{monster.companyAlias} / {monster.rarity} / {monster.dividendType}</p>
-                <p>{owned ? `${owned.shares}株 所持中${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
+                <p>{monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.dividendType}</p>
+                <p>{owned ? `${owned.shares}株 攻撃力${getAttackPower(owned).toLocaleString("ja-JP")}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
                 <div className="market-quote">
                   <span className={quote.themeMatched ? "matched" : ""}>
                     {quote.themeMatched ? "テーマ一致" : "分散価格"}
@@ -1093,7 +1099,7 @@ function DailyReportPanel({ state }: { state: GameState }) {
       <div className="daily-report-grid">
         <ReportTile label="カブコイン" value={formatDelta(summary.kabuCoins)} />
         <ReportTile label="配当" value={formatDelta(summary.dividendCoins)} />
-        <ReportTile label="経験値" value={`+${summary.exp.toLocaleString("ja-JP")}`} />
+        <ReportTile label="Trader EXP" value={`+${summary.exp.toLocaleString("ja-JP")}`} />
       </div>
       <div className="daily-report-logs">
         {latestLogs.length > 0 ? (
@@ -1112,8 +1118,8 @@ function MonsterMiniCard({ state, monster }: { state: GameState; monster: Monste
     <article className={`mini-card pixel-panel ${owned ? "owned" : ""}`}>
       <MonsterArt monster={monster} />
       <h3>{monster.name}</h3>
-      <p>{monster.rarity} / {monster.attribute}</p>
-      <strong>{owned ? `${owned.shares}株` : "未所持"}</strong>
+      <p>{monster.rarity} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円</p>
+      <strong>{owned ? `攻撃力 ${getAttackPower(owned).toLocaleString("ja-JP")}` : "未所持"}</strong>
     </article>
   );
 }
@@ -1145,11 +1151,7 @@ function MonsterArt({ monster, large = false }: { monster: MonsterMaster; large?
 
 function StatsPanel({ stats }: { stats: MonsterStats }) {
   const rows: { key: keyof MonsterStats; label: string; max: number }[] = [
-    { key: "hp", label: "HP", max: 2200 },
-    { key: "attack", label: "攻撃", max: 1600 },
-    { key: "defense", label: "防御", max: 1600 },
-    { key: "speed", label: "素早さ", max: 260 },
-    { key: "luck", label: "運", max: 220 }
+    { key: "attack", label: "攻撃力", max: 50000 }
   ];
 
   return (
@@ -1271,7 +1273,7 @@ function getDailyKnowledge(theme: string): string {
     "単元株は、株を売買するときのまとまった単位です。株モンでは100株を1単元として扱います。",
     "配当は企業が利益の一部を株主に還元する仕組みです。株モンでは配当コインとして表現します。",
     "業種を見ると、企業がどんな分野で事業をしているかをつかみやすくなります。",
-    "株価が下がる日でも、株モンでは防御やHPが育つことがあります。"
+    "株価が下がる日でも、株モンでは次のガチャにつながるチケットを得られます。"
   ];
   const index = Math.abs(theme.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0)) % items.length;
   return items[index];

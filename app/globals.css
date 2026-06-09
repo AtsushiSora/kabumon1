@@ -2011,8 +2011,8 @@ button {
   --ideal-panel-frame: var(--ideal-stats-frame);
   flex: 1 1 auto;
   display: grid;
-  align-content: center;
-  min-height: 134px;
+  align-content: start;
+  min-height: 78px;
   row-gap: 5px;
   padding: 10px 13px 10px;
   background:
@@ -3276,7 +3276,7 @@ button {
   }
 
   .home-screen .stats-panel {
-    min-height: 128px;
+    min-height: 70px;
     padding: 7px 9px 6px;
   }
 
