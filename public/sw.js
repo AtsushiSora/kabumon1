@@ -1,4 +1,4 @@
-const CACHE_VERSION = "kabumon-cache-v2";
+const CACHE_VERSION = "kabumon-cache-v3";
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
 const scopedPath = (path) => {
   if (path === "/") return `${SCOPE_PATH}/` || "/";
