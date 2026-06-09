@@ -92,6 +92,8 @@ export type DailyEventStatus = {
   dividendCoins: number;
   exp: number;
   teamPower: number;
+  enemyAttack: number;
+  won: boolean;
   marketModifier: number;
 };
 
@@ -133,6 +135,13 @@ export type TeamBonus = {
   expMultiplier: number;
   dividendMultiplier: number;
   active: boolean;
+};
+
+export type TeamAttackSummary = {
+  memberCount: number;
+  baseAttack: number;
+  multiplier: number;
+  totalAttack: number;
 };
 
 export type MissionReward = {
@@ -520,12 +529,15 @@ export function claimDailyCheckin(state: GameState, now = new Date()): { state: 
 
 export function getDailyEventStatus(state: GameState, now = new Date()): DailyEventStatus {
   const todayKey = getLocalDateKey(now);
-  const teamPower = calculateDailyEventTeamPower(state);
+  const teamAttack = getTeamAttackSummary(state);
   const marketModifier = clamp(1 + state.currentMarket.change * 0.035, 0.82, 1.18);
-  const score = Math.floor(teamPower * marketModifier);
+  const score = Math.floor((teamAttack.totalAttack / 350) * marketModifier);
   const rank = score >= 1250 ? "S" : score >= 920 ? "A" : score >= 650 ? "B" : "C";
   const rewardMultiplier = rank === "S" ? 1.85 : rank === "A" ? 1.35 : rank === "B" ? 1 : 0.72;
   const teamBonus = getTeamBonus(state);
+  const enemyAttack = roundToUnit(240000 + state.traderLevel * 4000 + Math.max(0, -state.currentMarket.change) * 5000, 1000);
+  const won = teamAttack.totalAttack >= enemyAttack;
+  const battleRewardMultiplier = won ? 1 : 0.45;
 
   return {
     available: state.dailyEventDate !== todayKey,
@@ -533,10 +545,12 @@ export function getDailyEventStatus(state: GameState, now = new Date()): DailyEv
     score,
     target: balance.eventTargetScore,
     rank,
-    kabuCoins: roundToUnit(7000 * rewardMultiplier + Math.max(0, score - balance.eventTargetScore) * 5.5, 10),
-    dividendCoins: Math.floor((45 * rewardMultiplier + state.team.length * 8) * teamBonus.dividendMultiplier),
-    exp: Math.floor((22 * rewardMultiplier + state.team.length * 6) * teamBonus.expMultiplier),
-    teamPower: Math.floor(teamPower),
+    kabuCoins: roundToUnit((7000 * rewardMultiplier + Math.max(0, score - balance.eventTargetScore) * 5.5) * battleRewardMultiplier, 10),
+    dividendCoins: Math.floor((45 * rewardMultiplier + state.team.length * 8) * teamBonus.dividendMultiplier * battleRewardMultiplier),
+    exp: Math.floor((22 * rewardMultiplier + state.team.length * 6) * teamBonus.expMultiplier * battleRewardMultiplier),
+    teamPower: teamAttack.totalAttack,
+    enemyAttack,
+    won,
     marketModifier: round(marketModifier, 2)
   };
 }
@@ -555,7 +569,7 @@ export function runDailyEvent(state: GameState, now = new Date()): DailyEventRes
 
   const trader = addTraderExp(state, status.exp);
 
-  const message = `市場作戦ランク${status.rank}。スコア${status.score}で報酬を獲得しました。`;
+  const message = `市場作戦${status.won ? "勝利" : "敗北"}。味方${status.teamPower.toLocaleString("ja-JP")} vs 相手${status.enemyAttack.toLocaleString("ja-JP")}。ランク${status.rank}で報酬を獲得しました。`;
 
   return {
     ok: true,
@@ -1013,6 +1027,22 @@ export function getTeamBonus(state: GameState): TeamBonus {
   };
 }
 
+export function getTeamAttackSummary(state: GameState): TeamAttackSummary {
+  const teamBonus = getTeamBonus(state);
+  const baseAttack = state.team.slice(0, 3).reduce((sum, id) => {
+    const owned = state.owned[id];
+    return owned ? sum + getAttackPower(owned) : sum;
+  }, 0);
+  const multiplier = teamBonus.statMultipliers.attack ?? (teamBonus.active ? teamBonus.multiplier : 1);
+
+  return {
+    memberCount: state.team.slice(0, 3).filter((id) => Boolean(state.owned[id])).length,
+    baseAttack,
+    multiplier,
+    totalAttack: Math.floor(baseAttack * multiplier)
+  };
+}
+
 export function getDisplayStats(owned: OwnedMonster, teamBonus?: TeamBonus): MonsterStats {
   const baseStats = {
     attack: getAttackPower(owned)
@@ -1055,22 +1085,6 @@ function applyStatMultipliers(
   return {
     attack: Math.floor(stats.attack * (multipliers.attack ?? 1))
   };
-}
-
-function calculateDailyEventTeamPower(state: GameState): number {
-  const teamBonus = getTeamBonus(state);
-  const activeTeam = state.team
-    .map((id) => state.owned[id])
-    .filter(Boolean);
-
-  if (activeTeam.length === 0) return 0;
-
-  const teamAttack = activeTeam.reduce((sum, owned) => {
-    const stats = getDisplayStats(owned, teamBonus);
-    return sum + stats.attack / 12;
-  }, 0);
-
-  return teamAttack + state.traderLevel * 32;
 }
 
 function addTraderExp(state: GameState, amount: number): GameState {

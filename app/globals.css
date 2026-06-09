@@ -134,7 +134,7 @@ button {
 
 .top-header {
   display: grid;
-  grid-template-columns: 112px minmax(64px, 1fr) 90px 74px;
+  grid-template-columns: 112px minmax(86px, 1fr) 90px 74px;
   gap: 5px;
   align-items: center;
   margin-bottom: 8px;
@@ -194,15 +194,35 @@ button {
 
 .trainer-chip {
   min-width: 0;
-  font-size: 10px;
+  font-size: 9px;
   white-space: nowrap;
   overflow: hidden;
 }
 
-.trainer-chip span:last-child {
-  max-width: 50px;
+.trainer-chip-info {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 3px;
+}
+
+.trainer-chip-info > span {
+  max-width: 78px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.trainer-exp-bar {
+  height: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(99, 168, 255, 0.34);
+  background: rgba(3, 10, 24, 0.88);
+}
+
+.trainer-exp-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #46a9ff, #60e5ff);
 }
 
 .avatar-pixel,
@@ -1537,41 +1557,33 @@ button {
 
 .home-screen .stats-panel::before,
 .home-screen .stats-panel::after,
-.home-screen .stats-panel .frame-corner,
-.home-screen .home-dashboard-panel::before,
-.home-screen .home-dashboard-panel::after,
-.home-screen .home-dashboard-panel .frame-corner {
+.home-screen .stats-panel .frame-corner {
   width: 18px;
   height: 18px;
   opacity: 0.72;
 }
 
-.home-screen .stats-panel::before,
-.home-screen .home-dashboard-panel::before {
+.home-screen .stats-panel::before {
   top: 0;
   left: 0;
 }
 
-.home-screen .stats-panel::after,
-.home-screen .home-dashboard-panel::after {
+.home-screen .stats-panel::after {
   right: 0;
   bottom: 0;
 }
 
-.home-screen .stats-panel .frame-corner-tr,
-.home-screen .home-dashboard-panel .frame-corner-tr {
+.home-screen .stats-panel .frame-corner-tr {
   top: 0;
   right: 0;
 }
 
-.home-screen .stats-panel .frame-corner-bl,
-.home-screen .home-dashboard-panel .frame-corner-bl {
+.home-screen .stats-panel .frame-corner-bl {
   left: 0;
   bottom: 0;
 }
 
-.home-screen .stats-panel > .frame-edge-side,
-.home-screen .home-dashboard-panel > .frame-edge-side {
+.home-screen .stats-panel > .frame-edge-side {
   top: 13px;
   bottom: 13px;
   width: 15px;
@@ -1579,21 +1591,28 @@ button {
 }
 
 .home-screen .stats-panel > .frame-edge-top,
-.home-screen .stats-panel > .frame-edge-bottom,
-.home-screen .home-dashboard-panel > .frame-edge-top,
-.home-screen .home-dashboard-panel > .frame-edge-bottom {
+.home-screen .stats-panel > .frame-edge-bottom {
   left: 14px;
   right: 14px;
   height: 5px;
   opacity: 0.68;
 }
 
+.home-screen .pixel-panel::before,
+.home-screen .pixel-panel::after,
+.home-screen .frame-corner,
+.home-screen .pixel-panel > .frame-edge-top,
+.home-screen .pixel-panel > .frame-edge-bottom,
+.home-screen .pixel-panel > .frame-edge-side {
+  display: none;
+}
+
 .home-market-panel {
   --ideal-panel-frame: var(--ideal-market-frame);
-  min-height: 66px;
+  min-height: 76px;
   grid-template-columns: 52px 1fr 1px 0.74fr;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background:
     linear-gradient(rgba(94, 216, 255, 0.045) 1px, transparent 1px),
     linear-gradient(90deg, rgba(94, 216, 255, 0.035) 1px, transparent 1px),
@@ -1602,8 +1621,8 @@ button {
 }
 
 .home-market-panel .market-graph {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   font-size: 32px;
   color: transparent;
   background: var(--ideal-market-graph) center / contain no-repeat;
@@ -1666,6 +1685,7 @@ button {
 .home-offline-claim {
   position: relative;
   display: grid;
+  width: 100%;
   grid-template-columns: auto auto minmax(0, 1fr) 44px;
   align-items: center;
   gap: 4px;
@@ -1682,12 +1702,12 @@ button {
 
 .home-offline-claim em {
   position: absolute;
-  left: 5px;
+  left: 18px;
   top: 5px;
   bottom: 5px;
   z-index: 0;
   display: block;
-  max-width: calc(100% - 10px);
+  max-width: calc(100% - 36px);
   border-radius: 3px;
   background:
     linear-gradient(180deg, rgba(136, 255, 180, 0.22), rgba(33, 150, 80, 0.2)),
@@ -1834,9 +1854,9 @@ button {
   --ideal-panel-frame: var(--ideal-monster-frame);
   flex: 0 0 auto;
   grid-template-columns: 52% 48%;
-  height: clamp(220px, 27dvh, 280px);
-  min-height: clamp(220px, 27dvh, 280px);
-  max-height: clamp(220px, 27dvh, 280px);
+  height: clamp(250px, 32dvh, 320px);
+  min-height: clamp(250px, 32dvh, 320px);
+  max-height: clamp(250px, 32dvh, 320px);
   isolation: isolate;
   background:
     linear-gradient(90deg, rgba(1, 6, 17, 0.28) 0%, rgba(2, 9, 24, 0.5) 48%, rgba(3, 12, 32, 0.94) 65%, rgba(4, 13, 34, 0.98) 100%),
@@ -1872,7 +1892,7 @@ button {
 
 .home-monster-card .monster-stage {
   height: 100%;
-  min-height: clamp(220px, 27dvh, 280px);
+  min-height: clamp(250px, 32dvh, 320px);
   overflow: hidden;
   background:
     linear-gradient(rgba(75, 213, 255, 0.08) 1px, transparent 1px),
@@ -1887,8 +1907,7 @@ button {
   display: none;
 }
 
-.home-monster-card .monster-art.large img,
-.home-monster-mini .monster-art img {
+.home-monster-card .monster-art.large img {
   image-rendering: pixelated;
   filter:
     contrast(1.28)
@@ -1910,13 +1929,6 @@ button {
   object-position: 48% 100%;
   transform: scale(1.03);
   transform-origin: 50% 100%;
-}
-
-.home-monster-mini .monster-art img {
-  width: 62%;
-  height: 62%;
-  transform: scale(1.34);
-  transform-origin: 50% 66%;
 }
 
 .home-monster-card .monster-info {
@@ -2003,27 +2015,10 @@ button {
 }
 
 .home-monster-card .level-row {
+  grid-template-columns: 38px 1fr auto;
   margin: 5px 0;
   gap: 5px;
   font-size: 10px;
-}
-
-.home-monster-mini {
-  align-self: end;
-  margin-top: auto;
-}
-
-.home-monster-mini .monster-art {
-  width: 66px;
-  height: 66px;
-  margin-top: 6px;
-  border-color: rgba(77, 220, 255, 0.45);
-  background:
-    radial-gradient(ellipse at 50% 86%, rgba(77, 220, 255, 0.26), transparent 56%),
-    rgba(2, 9, 24, 0.64);
-  box-shadow:
-    inset 0 0 0 1px rgba(3, 8, 20, 0.9),
-    0 0 18px rgba(39, 209, 255, 0.24);
 }
 
 .home-screen .stats-panel {
@@ -2042,82 +2037,6 @@ button {
     linear-gradient(180deg, rgba(8, 25, 59, 0.96), rgba(3, 10, 25, 0.96)),
     linear-gradient(90deg, rgba(83, 221, 114, 0.06), transparent 34%);
   background-size: 8px 8px, 8px 8px, auto, auto, auto, auto;
-}
-
-.home-dashboard-panel {
-  --ideal-panel-frame: var(--ideal-stats-frame);
-  position: relative;
-  flex: 1 1 auto;
-  display: grid;
-  align-content: center;
-  min-height: 66px;
-  padding: 10px 13px;
-  overflow: hidden;
-  background:
-    linear-gradient(rgba(93, 215, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(93, 215, 255, 0.032) 1px, transparent 1px),
-    radial-gradient(ellipse at 18% 20%, rgba(45, 150, 255, 0.16), transparent 46%),
-    radial-gradient(ellipse at 92% 80%, rgba(62, 208, 255, 0.1), transparent 42%),
-    linear-gradient(180deg, rgba(8, 25, 59, 0.96), rgba(3, 10, 25, 0.96));
-  background-size: 8px 8px, 8px 8px, auto, auto, auto;
-}
-
-.home-dashboard-panel > * {
-  position: relative;
-  z-index: 1;
-}
-
-.home-dashboard-main {
-  display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
-  column-gap: 8px;
-  align-content: center;
-  min-height: 52px;
-  padding: 6px 8px;
-  border: 1px solid rgba(85, 198, 255, 0.18);
-  background:
-    linear-gradient(180deg, rgba(6, 25, 61, 0.52), rgba(2, 9, 24, 0.48)),
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: auto, 5px 5px;
-}
-
-.home-dashboard-main span {
-  grid-row: span 2;
-  align-self: center;
-  color: #8feaff;
-  font-size: 12px;
-  font-weight: 900;
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.82);
-}
-
-.home-dashboard-main strong {
-  min-width: 0;
-  overflow: hidden;
-  color: #fff6d6;
-  font-size: 18px;
-  font-weight: 900;
-  line-height: 1.1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.9);
-}
-
-.home-power-bar {
-  height: 6px;
-  overflow: hidden;
-  border: 1px solid rgba(101, 159, 221, 0.44);
-  background:
-    repeating-linear-gradient(90deg, rgba(114, 195, 255, 0.08) 0 2px, transparent 2px 6px),
-    rgba(2, 8, 23, 0.92);
-}
-
-.home-power-bar i {
-  display: block;
-  height: 100%;
-}
-
-.home-power-bar i {
-  background: linear-gradient(90deg, #53dd72, #9bf173);
 }
 
 .home-screen .stat-row {
@@ -2293,8 +2212,8 @@ button {
 .home-team-effect {
   --ideal-panel-frame: var(--ideal-team-frame);
   gap: 8px;
-  min-height: 40px;
-  padding: 6px 9px;
+  min-height: 106px;
+  padding: 8px 11px 10px;
   background:
     linear-gradient(rgba(94, 216, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(94, 216, 255, 0.028) 1px, transparent 1px),
@@ -2304,15 +2223,16 @@ button {
 
 .home-team-effect > div {
   min-width: 0;
+  flex: 1 1 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 4px;
   align-items: center;
 }
 
 .home-team-effect > span {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   font-size: 16px;
 }
 
@@ -2336,14 +2256,51 @@ button {
 }
 
 .home-team-effect .team-effect-metrics {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: 0.72fr 0.72fr 1.35fr;
   gap: 3px;
-  width: 136px;
+  width: 100%;
   margin-top: 0;
+}
+
+.home-team-members {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.home-team-members i {
+  display: grid;
+  min-height: 30px;
+  align-content: center;
+  gap: 1px;
+  padding: 3px 4px;
+  border: 1px solid rgba(103, 213, 255, 0.24);
+  border-radius: 3px;
+  color: #f4e7c2;
+  background: rgba(7, 19, 42, 0.66);
+  font-style: normal;
+  overflow: hidden;
+}
+
+.home-team-members b,
+.home-team-members small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-team-members b {
+  color: #fffdf5;
+  font-size: 9px;
+  line-height: 1.15;
+}
+
+.home-team-members small {
+  color: #9eeeff;
+  font-size: 7px;
+  line-height: 1.15;
 }
 
 .home-team-effect .team-effect-metrics i {
@@ -3225,7 +3182,7 @@ button {
   }
 
   .top-header {
-    grid-template-columns: minmax(110px, auto) minmax(58px, 1fr) auto auto;
+    grid-template-columns: minmax(108px, auto) minmax(88px, 1fr) auto auto;
     gap: 5px;
     margin-bottom: 5px;
   }
@@ -3247,15 +3204,19 @@ button {
 
   .trainer-chip {
     display: flex;
-    min-height: 29px;
+    min-height: 31px;
     padding: 4px 5px;
-    font-size: 9px;
+    font-size: 8.5px;
   }
 
-  .trainer-chip span:last-child {
-    max-width: 42px;
+  .trainer-chip-info > span {
+    max-width: 76px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .trainer-exp-bar {
+    height: 4px;
   }
 
   .currency-chip {
@@ -3280,15 +3241,15 @@ button {
   }
 
   .home-market-panel {
-    min-height: 50px;
-    grid-template-columns: 38px 1fr 1px 0.65fr;
-    gap: 5px;
-    padding: 5px 7px;
+    min-height: 64px;
+    grid-template-columns: 40px 1fr 1px 0.68fr;
+    gap: 6px;
+    padding: 8px 9px;
   }
 
   .home-market-panel .market-graph {
-    width: 31px;
-    height: 31px;
+    width: 35px;
+    height: 35px;
     font-size: 23px;
   }
 
@@ -3297,15 +3258,16 @@ button {
   }
 
   .home-market-panel h2 {
-    font-size: 13px;
+    font-size: 14px;
     gap: 4px;
   }
 
   .home-market-panel strong {
-    font-size: 17px;
+    font-size: 18px;
   }
 
   .home-offline-claim {
+    width: 100%;
     grid-template-columns: auto auto minmax(0, 1fr) 40px;
     gap: 3px;
     min-height: 27px;
@@ -3368,14 +3330,14 @@ button {
   }
 
   .home-monster-card {
-    height: 218px;
+    height: 272px;
     min-height: 0;
-    max-height: 218px;
+    max-height: 272px;
     grid-template-columns: 48% 52%;
   }
 
   .home-monster-card .monster-stage {
-    height: 218px;
+    height: 272px;
     min-height: 0;
     overflow: hidden;
   }
@@ -3396,26 +3358,27 @@ button {
 
   .home-monster-card .monster-info {
     overflow: hidden;
-    padding: 7px 8px 7px 6px;
+    justify-content: center;
+    padding: 9px 10px 9px 8px;
   }
 
   .home-monster-card .monster-info h2 {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .home-monster-card .stars {
-    margin: 1px 0 3px;
-    font-size: 12px;
+    margin: 2px 0 5px;
+    font-size: 13px;
   }
 
   .home-monster-card .monster-info p {
-    font-size: 8.5px;
-    line-height: 1.2;
+    font-size: 9.4px;
+    line-height: 1.24;
   }
 
   .home-monster-card .monster-line {
-    min-height: 15px;
-    padding-left: 17px;
+    min-height: 17px;
+    padding-left: 18px;
   }
 
   .home-monster-card .monster-line::before {
@@ -3431,21 +3394,9 @@ button {
     display: none;
   }
 
-  .home-monster-mini .monster-art {
-    width: 46px;
-    height: 46px;
-    margin-top: 2px;
-  }
-
-  .home-monster-mini .monster-art img {
-    width: 60%;
-    height: 60%;
-    transform: scale(1.36);
-  }
-
   .home-result-panel {
     gap: 4px;
-    padding: 13px 5px 5px;
+    padding: 14px 6px 6px;
   }
 
   .home-result-panel .section-label {
@@ -3455,13 +3406,13 @@ button {
 
   .home-result-panel .result-tile {
     grid-template-rows: 18px auto auto;
-    min-height: 45px;
+    min-height: 50px;
     padding: 3px 2px 4px;
   }
 
   .home-result-panel .result-tile::before {
-    width: 20px;
-    height: 20px;
+    width: 21px;
+    height: 21px;
   }
 
   .home-result-panel .result-tile span {
@@ -3469,44 +3420,67 @@ button {
   }
 
   .home-result-panel .result-tile strong {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .home-team-effect {
-    min-height: 31px;
-    padding: 4px 7px;
+    min-height: 112px;
+    padding: 8px 9px;
   }
 
   .home-team-effect > span {
-    width: 23px;
-    height: 23px;
+    width: 27px;
+    height: 27px;
     font-size: 13px;
   }
 
   .home-team-effect strong {
-    font-size: 10px;
+    font-size: 11px;
+  }
+
+  .home-team-effect p {
+    font-size: 9px;
+    line-height: 1.22;
   }
 
   .home-team-effect .team-effect-metrics {
-    display: flex;
+    display: grid;
+    grid-template-columns: 0.72fr 0.72fr 1.35fr;
     gap: 2px;
-    width: 118px;
+    width: 100%;
     margin-top: 0;
   }
 
+  .home-team-members {
+    gap: 3px;
+  }
+
+  .home-team-members i {
+    min-height: 31px;
+    padding: 3px 4px;
+  }
+
+  .home-team-members b {
+    font-size: 8.5px;
+  }
+
+  .home-team-members small {
+    font-size: 6.5px;
+  }
+
   .home-team-effect .team-effect-metrics i {
-    min-height: 13px;
+    min-height: 17px;
     padding: 1px 2px;
-    font-size: 7px;
+    font-size: 7.3px;
   }
 
   .home-screen.has-offline-reward .home-monster-card {
-    height: 196px;
-    max-height: 196px;
+    height: 246px;
+    max-height: 246px;
   }
 
   .home-screen.has-offline-reward .home-monster-card .monster-stage {
-    height: 196px;
+    height: 246px;
   }
 
   .home-screen.has-offline-reward .home-monster-card .monster-info {
@@ -3537,33 +3511,14 @@ button {
   }
 
   .home-screen.has-offline-reward .home-team-effect {
-    min-height: 28px;
-    padding-top: 3px;
-    padding-bottom: 3px;
+    min-height: 92px;
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
 
   .home-screen .stats-panel {
     min-height: 70px;
     padding: 7px 9px 6px;
-  }
-
-  .home-dashboard-panel {
-    min-height: 64px;
-    padding: 7px 9px 6px;
-  }
-
-  .home-dashboard-main {
-    grid-template-columns: 70px minmax(0, 1fr);
-    min-height: 46px;
-    padding: 4px 6px;
-  }
-
-  .home-dashboard-main span {
-    font-size: 10px;
-  }
-
-  .home-dashboard-main strong {
-    font-size: 15px;
   }
 
   .home-screen .stat-row {
@@ -3732,7 +3687,7 @@ button {
   .home-market-panel {
     grid-template-columns: 42px 1fr 1px 0.68fr;
     gap: 6px;
-    padding: 7px 8px;
+    padding: 8px 9px;
   }
 
   .home-market-panel .market-graph {
@@ -3742,17 +3697,18 @@ button {
   }
 
   .home-offline-claim {
+    width: 100%;
     grid-template-columns: auto auto minmax(0, 1fr) 38px;
     gap: 3px;
   }
 
   .home-screen.has-offline-reward .home-monster-card {
-    height: 185px;
-    max-height: 185px;
+    height: 208px;
+    max-height: 208px;
   }
 
   .home-screen.has-offline-reward .home-monster-card .monster-stage {
-    height: 185px;
+    height: 208px;
   }
 
   .home-quick-grid {
@@ -3867,30 +3823,25 @@ button {
   }
 
   .home-monster-card {
-    height: 206px;
+    height: 252px;
     min-height: 0;
-    max-height: 206px;
+    max-height: 252px;
   }
 
   .home-monster-card .monster-stage {
-    height: 206px;
+    height: 252px;
     min-height: 0;
   }
 
   .home-monster-card .monster-info h2 {
-    font-size: 18px;
+    font-size: 19px;
   }
 
   .home-result-panel .result-tile {
-    min-height: 42px;
+    min-height: 46px;
   }
 
   .home-screen .stats-panel {
-    padding: 8px;
-  }
-
-  .home-dashboard-panel {
-    min-height: 60px;
     padding: 8px;
   }
 
@@ -3910,51 +3861,35 @@ button {
   }
 
   .home-market-panel {
-    min-height: 47px;
+    min-height: 62px;
   }
 
   .home-monster-card {
-    height: 206px;
-    max-height: 206px;
+    height: 268px;
+    max-height: 268px;
   }
 
   .home-monster-card .monster-stage {
-    height: 206px;
+    height: 268px;
   }
 
   .home-monster-card .monster-info h2 {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .home-monster-card .stars {
-    font-size: 11px;
-  }
-
-  .home-monster-mini .monster-art {
-    width: 40px;
-    height: 40px;
-  }
-
-  .home-monster-mini .monster-art img {
-    width: 58%;
-    height: 58%;
-    transform: scale(1.38);
+    font-size: 12px;
   }
 
   .home-result-panel .result-tile {
-    min-height: 40px;
+    min-height: 50px;
   }
 
   .home-team-effect {
-    min-height: 28px;
+    min-height: 112px;
   }
 
   .home-screen .stats-panel {
-    padding: 7px;
-  }
-
-  .home-dashboard-panel {
-    min-height: 58px;
     padding: 7px;
   }
 
@@ -3969,22 +3904,22 @@ button {
 
 @media (max-height: 660px) {
   .home-monster-card {
-    height: 188px;
-    max-height: 188px;
+    height: 238px;
+    max-height: 238px;
   }
 
   .home-monster-card .monster-stage {
-    height: 188px;
+    height: 238px;
   }
 
   .home-result-panel .result-tile {
-    min-height: 38px;
+    min-height: 44px;
   }
 
   .home-team-effect {
-    min-height: 26px;
-    padding-top: 3px;
-    padding-bottom: 3px;
+    min-height: 100px;
+    padding-top: 5px;
+    padding-bottom: 5px;
   }
 
   .home-screen .stats-panel {
@@ -3992,9 +3927,4 @@ button {
     padding-bottom: 6px;
   }
 
-  .home-dashboard-panel {
-    min-height: 54px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-  }
 }

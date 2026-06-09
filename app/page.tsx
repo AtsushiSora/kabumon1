@@ -5,7 +5,6 @@ import {
   accrueOfflineReward,
   balance,
   buyMonsterFromMarket,
-  calculateOfflineReward,
   claimDailyCheckin,
   claimMissionReward,
   claimOfflineReward,
@@ -20,6 +19,7 @@ import {
   getMarketQuote,
   getMissions,
   getRequiredExp,
+  getTeamAttackSummary,
   getTeamBonus,
   hydrateState,
   marketSourceLabels,
@@ -426,6 +426,9 @@ export default function KabumonApp() {
 }
 
 function Header({ state }: { state: GameState }) {
+  const traderExpRequired = getRequiredExp(state.traderLevel);
+  const traderExpPercent = Math.min(100, (state.traderExp / traderExpRequired) * 100);
+
   return (
     <header className="top-header">
       <div className="brand-mark">
@@ -434,7 +437,12 @@ function Header({ state }: { state: GameState }) {
       </div>
       <div className="trainer-chip">
         <span className="avatar-pixel" aria-hidden="true" />
-        <span>Lv.{state.traderLevel}</span>
+        <div className="trainer-chip-info">
+          <span>トレーダー Lv.{state.traderLevel}</span>
+          <div className="trainer-exp-bar" aria-label="トレーダー経験値">
+            <i style={{ width: `${traderExpPercent}%` }} />
+          </div>
+        </div>
       </div>
       <CurrencyChip kind="coin" value={state.kabuCoins} />
       <CurrencyChip kind="gem" value={state.dividendCoins} />
@@ -518,11 +526,23 @@ function HomePanel({
   onRefreshMarket: () => void;
   onClaimOffline: () => void;
 }) {
-  const traderExpRequired = getRequiredExp(state.traderLevel);
-  const traderExpPercent = Math.min(100, (state.traderExp / traderExpRequired) * 100);
   const attackPower = getAttackPower(buddy);
   const attackBreakdown = getAttackPowerBreakdown(buddy);
-  const idleHourlyReward = calculateOfflineReward(state, 1);
+  const teamSlots = Array.from({ length: 3 }, (_, index) => {
+    const id = state.team[index];
+    const owned = id ? state.owned[id] : undefined;
+    const master = id ? monsterById.get(id) : undefined;
+    if (!owned || !master) {
+      return null;
+    }
+    return {
+      id,
+      name: master.name,
+      effectName: master.effect.name,
+      attack: getAttackPower(owned)
+    };
+  });
+  const teamAttackSummary = getTeamAttackSummary(state);
   const offlineReward = state.offlinePending;
   const offlineProgress = offlineReward
     ? Math.min(100, (offlineReward.hours / balance.offlineMaxHours) * 100)
@@ -614,13 +634,6 @@ function HomePanel({
           <h2>{buddyMaster.name}</h2>
           <div className="stars">★★★★★</div>
           <p className="monster-line stock-line">銘柄: {buddyMaster.companyAlias}</p>
-          <div className="level-row">
-            <strong>トレーダー Lv.{state.traderLevel}</strong>
-            <div className="exp-bar">
-              <span style={{ width: `${traderExpPercent}%` }} />
-            </div>
-            <small>あと {Math.max(0, traderExpRequired - state.traderExp)}</small>
-          </div>
           <p className="monster-line shares-line">持ち株: <strong>{buddy.shares}</strong> 株</p>
           <p className="monster-line attr-line power-line">攻撃力: {attackPower.toLocaleString("ja-JP")}</p>
           <p className="monster-line attr-line calc-line">計算: {buddy.shares}株 × {buddyMaster.sharePrice.toLocaleString("ja-JP")}円</p>
@@ -634,9 +647,6 @@ function HomePanel({
               {" "}{formatSigned(state.currentMarket.change)}%
             </strong>
           </p>
-          <div className="home-monster-mini">
-            <MonsterArt monster={buddyMaster} />
-          </div>
         </div>
       </section>
 
@@ -655,17 +665,22 @@ function HomePanel({
         <div>
           <strong>チーム効果: {teamBonus.name}</strong>
           <p>{teamBonus.detail}</p>
+          <div className="home-team-members">
+            {teamSlots.map((member, index) => (
+              <i key={member?.id ?? `empty-${index}`}>
+                <b>{member?.name ?? `空き枠 ${index + 1}`}</b>
+                <small>{member?.effectName ?? "編成待ち"}</small>
+              </i>
+            ))}
+          </div>
           <div className="team-effect-metrics">
-            <i>C+{idleHourlyReward.kabuCoins.toLocaleString("ja-JP")}/h</i>
-            <i>D+{idleHourlyReward.dividendCoins.toLocaleString("ja-JP")}/h</i>
-            <i>EXP+{idleHourlyReward.exp.toLocaleString("ja-JP")}/h</i>
+            <i>3体編成 {teamAttackSummary.memberCount}/3</i>
+            <i>補正 x{teamAttackSummary.multiplier.toFixed(2)}</i>
+            <i>総合攻撃力 {teamAttackSummary.totalAttack.toLocaleString("ja-JP")}</i>
           </div>
         </div>
       </section>
 
-      <HomeDashboardPanel
-        attack={displayStats.attack}
-      />
     </div>
   );
 }
@@ -862,8 +877,10 @@ function EventPanel({
         <div className="event-score-grid">
           <span>作戦スコア <strong>{status.score}</strong></span>
           <span>目標 <strong>{status.target}</strong></span>
-          <span>チーム力 <strong>{status.teamPower}</strong></span>
+          <span>味方攻撃力 <strong>{status.teamPower.toLocaleString("ja-JP")}</strong></span>
+          <span>相手攻撃力 <strong>{status.enemyAttack.toLocaleString("ja-JP")}</strong></span>
           <span>市場補正 <strong>x{status.marketModifier.toFixed(2)}</strong></span>
+          <span>勝敗 <strong className={status.won ? "positive" : "negative"}>{status.won ? "勝利" : "敗北"}</strong></span>
         </div>
         <div className="event-progress">
           <span style={{ width: `${scorePercent}%` }} />
@@ -918,13 +935,16 @@ function TeamPanel({
   onBuddy: (id: string) => void;
 }) {
   const teamBonus = getTeamBonus(state);
+  const teamAttackSummary = getTeamAttackSummary(state);
   return (
     <div className="screen-content">
       <section className="feature-panel pixel-panel">
         <h2>チーム編成</h2>
-        <p>3体まで編成できます。編成中の株モンは放置報酬に影響します。</p>
+        <p>3体でチームを組み、効果反映後の総合攻撃力で勝敗を決めます。</p>
         <div className="message-box">現在: {teamBonus.name} / {teamBonus.detail}</div>
         <div className="team-bonus-grid">
+          <span>編成 {teamAttackSummary.memberCount}/3</span>
+          <span>総合攻撃力 {teamAttackSummary.totalAttack.toLocaleString("ja-JP")}</span>
           <span>放置 x{teamBonus.offlineMultiplier.toFixed(2)}</span>
           <span>トレーダー経験値 x{teamBonus.expMultiplier.toFixed(2)}</span>
           <span>配当 x{teamBonus.dividendMultiplier.toFixed(2)}</span>
@@ -1284,25 +1304,6 @@ function StatsPanel({ stats }: { stats: MonsterStats }) {
           </div>
         );
       })}
-    </section>
-  );
-}
-
-function HomeDashboardPanel({
-  attack
-}: {
-  attack: number;
-}) {
-  return (
-    <section className="home-dashboard-panel pixel-panel">
-      <FrameCorners />
-      <div className="home-dashboard-main">
-        <span>攻撃力</span>
-        <strong>{attack.toLocaleString("ja-JP")}</strong>
-        <div className="home-power-bar">
-          <i style={{ width: `${Math.min(100, (attack / 500000) * 100)}%` }} />
-        </div>
-      </div>
     </section>
   );
 }
