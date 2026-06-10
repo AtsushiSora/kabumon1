@@ -93,6 +93,11 @@ export type DailyEventStatus = {
   exp: number;
   teamPower: number;
   enemyAttack: number;
+  enemyTeam: CpuTeamMember[];
+  enemyTeamName: string;
+  enemyBonusName: string;
+  enemyBonusDetail: string;
+  enemyBonusMultiplier: number;
   won: boolean;
   marketModifier: number;
 };
@@ -114,6 +119,7 @@ export type TrainResult = {
 export type AttackPowerBreakdown = {
   baseAttack: number;
   dividendBonus: number;
+  dividendUnits: number;
   totalAttack: number;
   effectName: string;
   effectDescription: string;
@@ -142,6 +148,13 @@ export type TeamAttackSummary = {
   baseAttack: number;
   multiplier: number;
   totalAttack: number;
+};
+
+export type CpuTeamMember = {
+  id: string;
+  name: string;
+  effectName: string;
+  attack: number;
 };
 
 export type MissionReward = {
@@ -197,8 +210,12 @@ export const marketPrices: Record<Rarity, number> = {
   UR: 50000
 };
 
+const starterTeamIds = ["toyodora", "chip-thunder", "nintendora"];
+
 export function createInitialState(now = new Date()): GameState {
-  const starter = createOwnedMonster("toyodora", 100);
+  const starterOwned = Object.fromEntries(
+    starterTeamIds.map((id) => [id, createOwnedMonster(id, 100)])
+  );
 
   return {
     saveVersion: SAVE_VERSION,
@@ -208,10 +225,8 @@ export function createInitialState(now = new Date()): GameState {
     gachaTickets: 0,
     kabuCoins: 80000,
     dividendCoins: 240,
-    owned: {
-      toyodora: starter
-    },
-    team: ["toyodora"],
+    owned: starterOwned,
+    team: starterTeamIds,
     buddyId: "toyodora",
     lastLoginAt: now.toISOString(),
     dailyCheckinDate: null,
@@ -226,7 +241,7 @@ export function createInitialState(now = new Date()): GameState {
         id: cryptoId(),
         date: now.toISOString(),
         title: "株モン開始",
-        detail: "トヨドラが相棒になりました。",
+        detail: "スターター3体がチームに入りました。",
         coins: 0,
         dividendCoins: 0,
         exp: 0,
@@ -280,7 +295,7 @@ function migrateState(parsed: Partial<GameState>, now: Date): GameState {
   const legacySaveVersion = normalizeNumber(parsed.saveVersion, 1, 1);
   const marketRebalanceGrant = legacySaveVersion < 4 ? 60000 : 0;
   const owned = normalizeOwned(parsed.owned);
-  const normalizedOwned = Object.keys(owned).length > 0 ? owned : base.owned;
+  const normalizedOwned = ensureStarterRoster(Object.keys(owned).length > 0 ? owned : base.owned);
   const team = normalizeTeam(parsed.team, normalizedOwned);
   const buddyId = parsed.buddyId && normalizedOwned[parsed.buddyId]
     ? parsed.buddyId
@@ -339,6 +354,18 @@ function normalizeOwned(rawOwned: GameState["owned"] | undefined): GameState["ow
   );
 }
 
+function ensureStarterRoster(owned: GameState["owned"]): GameState["owned"] {
+  const nextOwned = { ...owned };
+
+  starterTeamIds.forEach((id) => {
+    if (!nextOwned[id]) {
+      nextOwned[id] = createOwnedMonster(id, 100);
+    }
+  });
+
+  return nextOwned;
+}
+
 function normalizeStats(rawStats: MonsterStats | undefined, fallback: MonsterStats): MonsterStats {
   return {
     attack: normalizeNumber(rawStats?.attack, fallback.attack, 1)
@@ -350,8 +377,19 @@ function normalizeTeam(rawTeam: string[] | undefined, owned: GameState["owned"])
     .filter((id) => Boolean(owned[id]))
     .slice(0, 3);
 
-  if (team.length > 0) return team;
-  return Object.keys(owned).slice(0, 1);
+  starterTeamIds.forEach((id) => {
+    if (team.length < 3 && owned[id] && !team.includes(id)) {
+      team.push(id);
+    }
+  });
+
+  Object.keys(owned).forEach((id) => {
+    if (team.length < 3 && !team.includes(id)) {
+      team.push(id);
+    }
+  });
+
+  return team.slice(0, 3);
 }
 
 function normalizeMarketEnergy(rawMarket: MarketEnergy | undefined, now: Date): MarketEnergy {
@@ -530,12 +568,15 @@ export function claimDailyCheckin(state: GameState, now = new Date()): { state: 
 export function getDailyEventStatus(state: GameState, now = new Date()): DailyEventStatus {
   const todayKey = getLocalDateKey(now);
   const teamAttack = getTeamAttackSummary(state);
+  const enemyTeam = createCpuTeam(state);
+  const enemyBonus = getTeamBonusByIds(enemyTeam.map((member) => member.id));
   const marketModifier = clamp(1 + state.currentMarket.change * 0.035, 0.82, 1.18);
   const score = Math.floor((teamAttack.totalAttack / 350) * marketModifier);
   const rank = score >= 1250 ? "S" : score >= 920 ? "A" : score >= 650 ? "B" : "C";
   const rewardMultiplier = rank === "S" ? 1.85 : rank === "A" ? 1.35 : rank === "B" ? 1 : 0.72;
   const teamBonus = getTeamBonus(state);
-  const enemyAttack = roundToUnit(240000 + state.traderLevel * 4000 + Math.max(0, -state.currentMarket.change) * 5000, 1000);
+  const enemyBaseAttack = enemyTeam.reduce((sum, member) => sum + member.attack, 0);
+  const enemyAttack = roundToUnit(enemyBaseAttack * enemyBonus.multiplier, 100);
   const won = teamAttack.totalAttack >= enemyAttack;
   const battleRewardMultiplier = won ? 1 : 0.45;
 
@@ -550,6 +591,11 @@ export function getDailyEventStatus(state: GameState, now = new Date()): DailyEv
     exp: Math.floor((22 * rewardMultiplier + state.team.length * 6) * teamBonus.expMultiplier * battleRewardMultiplier),
     teamPower: teamAttack.totalAttack,
     enemyAttack,
+    enemyTeam,
+    enemyTeamName: getCpuTeamName(state.currentMarket.theme),
+    enemyBonusName: enemyBonus.name,
+    enemyBonusDetail: enemyBonus.detail,
+    enemyBonusMultiplier: enemyBonus.multiplier,
     won,
     marketModifier: round(marketModifier, 2)
   };
@@ -609,8 +655,8 @@ export function rollGacha(state: GameState): { state: GameState; monsterId: stri
   const duplicate = Boolean(existing);
 
   nextOwned[monster.id] = existing
-    ? { ...existing, shares: existing.shares + 100 }
-    : createOwnedMonster(monster.id, 100);
+    ? { ...existing, shares: existing.shares + 1 }
+    : createOwnedMonster(monster.id, 1);
 
   const nextTeam = state.team.includes(monster.id)
     ? state.team
@@ -632,7 +678,7 @@ export function rollGacha(state: GameState): { state: GameState; monsterId: stri
       logs: [
         createLog(
           duplicate ? "持ち株追加" : "新規入手",
-          duplicate ? `${monster.name}の持ち株が100株増えました。` : `${monster.name}を図鑑に登録しました。`,
+          duplicate ? `${monster.name}の持ち株が1株増えました。` : `${monster.name}を図鑑に登録しました。`,
           usedTicket ? 0 : -cost,
           0,
           0,
@@ -659,8 +705,8 @@ export function buyMonsterFromMarket(state: GameState, monsterId: string): { sta
   const existing = state.owned[monster.id];
   const nextOwned = { ...state.owned };
   nextOwned[monster.id] = existing
-    ? { ...existing, shares: existing.shares + 100 }
-    : createOwnedMonster(monster.id, 100);
+    ? { ...existing, shares: existing.shares + 1 }
+    : createOwnedMonster(monster.id, 1);
 
   const nextTeam = state.team.includes(monster.id)
     ? state.team
@@ -669,7 +715,7 @@ export function buyMonsterFromMarket(state: GameState, monsterId: string): { sta
       : state.team;
 
   const message = existing
-    ? `${monster.name}を100株追加購入しました。${quote.reason}`
+    ? `${monster.name}を1株追加購入しました。${quote.reason}`
     : `${monster.name}をマーケットで入手しました。${quote.reason}`;
 
   return {
@@ -700,8 +746,8 @@ export function sellMonsterUnit(state: GameState, monsterId: string): { state: G
     return { state, ok: false, message: `${monster.name}はロック中です。` };
   }
 
-  if (owned.shares <= 100) {
-    return { state, ok: false, message: "最低100株は残す必要があります。" };
+  if (owned.shares <= 1) {
+    return { state, ok: false, message: "最低1株は残す必要があります。" };
   }
 
   const sellPrice = getMarketQuote(state, monster.id).sellPrice;
@@ -709,10 +755,10 @@ export function sellMonsterUnit(state: GameState, monsterId: string): { state: G
     ...state.owned,
     [monsterId]: {
       ...owned,
-      shares: owned.shares - 100
+      shares: owned.shares - 1
     }
   };
-  const message = `${monster.name}を100株売却しました。`;
+  const message = `${monster.name}を1株売却しました。`;
 
   return {
     ok: true,
@@ -722,7 +768,7 @@ export function sellMonsterUnit(state: GameState, monsterId: string): { state: G
       kabuCoins: state.kabuCoins + sellPrice,
       owned: nextOwned,
       logs: [
-        createLog("100株売却", message, sellPrice, 0, 0, state.currentMarket.change),
+        createLog("1株売却", message, sellPrice, 0, 0, state.currentMarket.change),
         ...state.logs
       ].slice(0, balance.visibleLogLimit)
     }
@@ -954,13 +1000,17 @@ export function toggleTeamMember(state: GameState, id: string): GameState {
     if (state.team.length <= 1) return state;
     return { ...state, team: state.team.filter((memberId) => memberId !== id) };
   }
-  if (state.team.length >= 3) return state;
+  if (state.team.length >= 3) return { ...state, team: [...state.team.slice(0, 2), id] };
   return { ...state, team: [...state.team, id] };
 }
 
 export function getTeamBonus(state: GameState): TeamBonus {
+  return getTeamBonusByIds(state.team);
+}
+
+function getTeamBonusByIds(ids: string[]): TeamBonus {
   const tags = new Set(
-    state.team.flatMap((id) => monsterById.get(id)?.tags ?? [])
+    ids.flatMap((id) => monsterById.get(id)?.tags ?? [])
   );
 
   if (tags.has("自動車") && tags.has("半導体") && (tags.has("テック") || tags.has("モビリティ"))) {
@@ -1043,6 +1093,43 @@ export function getTeamAttackSummary(state: GameState): TeamAttackSummary {
   };
 }
 
+function createCpuTeam(state: GameState): CpuTeamMember[] {
+  const preferred = monsters
+    .filter((monster) => monster.tags.includes(state.currentMarket.theme))
+    .map((monster) => monster.id);
+  const candidateIds = uniqueStrings([...preferred, ...starterTeamIds, ...monsters.map((monster) => monster.id)])
+    .filter((id) => monsterById.has(id))
+    .slice(0, 3);
+  const playerAttack = Math.max(1, getTeamAttackSummary(state).totalAttack);
+  const pressure = clamp(0.72 + state.traderLevel * 0.012 + Math.max(0, -state.currentMarket.change) * 0.03, 0.68, 1.08);
+  const targetTotal = Math.max(280000, Math.floor(playerAttack * pressure));
+  const baseTotal = candidateIds.reduce((sum, id) => {
+    const monster = monsterById.get(id);
+    return sum + ((monster?.sharePrice ?? 1000) * 100);
+  }, 0);
+  const scale = baseTotal > 0 ? targetTotal / baseTotal : 1;
+
+  return candidateIds.map((id) => {
+    const monster = monsterById.get(id);
+    const baseAttack = (monster?.sharePrice ?? 1000) * 100;
+
+    return {
+      id,
+      name: monster?.name ?? "CPUモン",
+      effectName: monster?.effect.name ?? "通常攻撃",
+      attack: roundToUnit(baseAttack * scale, 100)
+    };
+  });
+}
+
+function getCpuTeamName(theme: string): string {
+  if (theme === "半導体") return "CPU半導体部隊";
+  if (theme === "エネルギー") return "CPUインフラ部隊";
+  if (theme === "モビリティ") return "CPUモビリティ隊";
+  if (theme === "ゲーム") return "CPUエンタメ隊";
+  return "CPUマーケット隊";
+}
+
 export function getDisplayStats(owned: OwnedMonster, teamBonus?: TeamBonus): MonsterStats {
   const baseStats = {
     attack: getAttackPower(owned)
@@ -1062,7 +1149,7 @@ export function formatSigned(value: number): string {
 function calculateTraining(owned: OwnedMonster, market: MarketEnergy, teamBonus: TeamBonus): TrainResult {
   const master = monsterById.get(owned.id);
   const dividendBase = master ? baseDividendPerUnit[master.dividendType] : 15;
-  const units = owned.shares / 100;
+  const units = Math.floor(owned.shares / 100);
   const absChange = Math.abs(market.change);
   const traderExp = market.change >= 0
     ? Math.floor((balance.traderBaseExp + absChange * 10 + units * 3) * teamBonus.expMultiplier)
@@ -1114,13 +1201,14 @@ export function getAttackPowerBreakdown(owned: OwnedMonster): AttackPowerBreakdo
   const master = monsterById.get(owned.id);
   const sharePrice = master?.sharePrice ?? Math.max(1, Math.floor((owned.stats.attack || 10000) / 100));
   const baseAttack = Math.floor(owned.shares * sharePrice);
-  const units = Math.max(1, Math.floor(owned.shares / 100));
+  const units = Math.floor(owned.shares / 100);
   const bonusRate = master?.effect.attackBonusPer100Shares ?? 0;
   const dividendBonus = Math.floor(baseAttack * bonusRate * units);
 
   return {
     baseAttack,
     dividendBonus,
+    dividendUnits: units,
     totalAttack: baseAttack + dividendBonus,
     effectName: master?.effect.name ?? "通常攻撃",
     effectDescription: master?.effect.description ?? "株価と持ち株数に応じて攻撃力が決まります。",
@@ -1215,14 +1303,14 @@ function calculateMarketQuote(
   owned: OwnedMonster | undefined,
   market: MarketEnergy
 ): MarketQuote {
-  const basePrice = monster.sharePrice * 100;
+  const basePrice = monster.sharePrice;
   const themeMatched = isThemeMatched(monster, market.theme);
   const themeMultiplier = themeMatched ? 1.08 : 0.98;
   const marketMultiplier = clamp(1 + market.change * 0.025, 0.88, 1.14);
   const ownedUnits = owned ? Math.floor(owned.shares / 100) : 0;
   const demandMultiplier = 1 + Math.min(0.18, ownedUnits * 0.018);
-  const buyPrice = roundToUnit(basePrice * themeMultiplier * marketMultiplier * demandMultiplier, 50);
-  const sellPrice = roundToUnit(basePrice * 0.58 * themeMultiplier * marketMultiplier, 50);
+  const buyPrice = roundToUnit(basePrice * themeMultiplier * marketMultiplier * demandMultiplier, 1);
+  const sellPrice = roundToUnit(basePrice * 0.58 * themeMultiplier * marketMultiplier, 1);
   const direction = market.change >= 0 ? "上昇" : "下落";
   const reason = themeMatched
     ? ` ${market.theme}テーマ一致・市場${direction}を反映。`
