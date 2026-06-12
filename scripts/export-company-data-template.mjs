@@ -59,6 +59,8 @@ const assets = readdirSync(monsterDir)
     return [{
       ticker,
       company,
+      monsterId: `jp-${ticker.toLowerCase()}`,
+      imageFile: file,
       currentSharePrice: inferSharePrice(ticker),
       currentIssuedShares: inferIssuedShares(ticker, rarity),
       currentDividendType: inferDividendType(company),
@@ -75,6 +77,8 @@ const assets = readdirSync(monsterDir)
 const headers = [
   "ticker",
   "company",
+  "monsterId",
+  "imageFile",
   "currentSharePrice",
   "currentIssuedShares",
   "currentDividendType",

@@ -16,6 +16,7 @@ docs/company-data-template.csv
 ```
 
 CSVの `override...` 列に実データ候補を入れて確認し、採用する値だけ `companyDataOverrides.ts` へ転記します。
+`monsterId` と `imageFile` は確認用です。編集せず、画像やアプリ表示との突き合わせに使います。
 手で転記せず、まず次のコマンドで反映予定を確認できます。
 
 ```bash
