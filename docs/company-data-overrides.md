@@ -16,10 +16,30 @@ docs/company-data-template.csv
 ```
 
 CSVの `override...` 列に実データ候補を入れて確認し、採用する値だけ `companyDataOverrides.ts` へ転記します。
-手で転記せず、次のコマンドでCSVから反映できます。
+手で転記せず、まず次のコマンドで反映予定を確認できます。
+
+```bash
+npm run preview:company-overrides
+```
+
+previewでは、入力した銘柄ごとに `現在値 -> 上書き値` が表示されます。ここではファイルを書き換えません。
+
+確認後、次のコマンドでCSVから反映できます。
 
 ```bash
 npm run import:company-overrides
+```
+
+変換処理そのものを確認したい場合は、次のテストを実行します。実データファイルは書き換えません。
+
+```bash
+npm run test:company-overrides
+```
+
+画像取り込みからCSV生成、preview、import、変換テストまでまとめて確認する場合は、次のコマンドを使います。
+
+```bash
+npm run verify:company-data
 ```
 
 ## 入力形式

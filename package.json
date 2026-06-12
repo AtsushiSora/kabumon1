@@ -5,7 +5,12 @@
   "scripts": {
     "sync:monsters": "node scripts/sync-monster-assets.mjs",
     "export:company-template": "node scripts/export-company-data-template.mjs",
+    "preview:company-overrides": "node scripts/import-company-data-overrides.mjs --dry-run",
     "import:company-overrides": "node scripts/import-company-data-overrides.mjs",
+    "test:company-overrides": "node scripts/test-company-overrides.mjs",
+    "verify:company-data": "node scripts/verify-company-data.mjs",
+    "verify": "node scripts/verify-company-data.mjs && tsc --noEmit",
+    "verify:ci": "npm run verify && git diff --exit-code",
     "predev": "npm run sync:monsters",
     "dev": "next dev",
     "prebuild": "npm run sync:monsters",
