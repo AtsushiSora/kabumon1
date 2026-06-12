@@ -1,3 +1,5 @@
+import { companyMonsterAssets, type CompanyMonsterAsset } from "./companyMonsterAssets";
+import { companyDataOverrides } from "./companyDataOverrides";
 import { withBasePath } from "./paths";
 
 export type Rarity = "R" | "SR" | "SSR" | "UR";
@@ -14,6 +16,8 @@ export type MonsterStats = {
   attack: number;
 };
 
+export type CompanyDataSource = "estimated" | "manual" | "live";
+
 export type MonsterMaster = {
   id: string;
   name: string;
@@ -27,6 +31,7 @@ export type MonsterMaster = {
   dividendType: DividendType;
   sharePrice: number;
   issuedShares: number;
+  dataSource: CompanyDataSource;
   effect: MonsterEffect;
   tags: string[];
   baseStats: MonsterStats;
@@ -72,161 +77,204 @@ const effects = {
   }
 } satisfies Record<string, MonsterEffect>;
 
-export const monsters: MonsterMaster[] = [
-  {
-    id: "toyodora",
-    name: "トヨドラ",
-    ticker: "7203",
-    companyAlias: "自動車メーカーA",
-    rarity: "SSR",
-    attribute: "メカ",
-    role: "安定成長型",
-    equipment: "ハイブリッドエンジン",
-    skill: "カイゼンブースト",
-    dividendType: "中配当",
-    sharePrice: 2854,
-    issuedShares: 15_794_987_460,
-    effect: effects.midDividend,
-    tags: ["自動車", "メカ", "モビリティ", "安定"],
-    baseStats: {
-      attack: 285400
-    },
-    image: withBasePath("/monsters/toyodora-transparent.png"),
-    icon: withBasePath("/monsters/toyodora-icon-transparent.png"),
-    assetReady: true
-  },
-  {
-    id: "nintendora",
-    name: "ニンテンドラ",
-    ticker: "7974",
-    companyAlias: "ゲーム企業A",
-    rarity: "SR",
-    attribute: "遊び",
-    role: "変化成長型",
-    equipment: "遊び心のコントローラー",
-    skill: "ワクワク変化",
-    dividendType: "低配当",
-    sharePrice: 7693,
-    issuedShares: 1_298_690_000,
-    effect: effects.lowDividend,
-    tags: ["ゲーム", "エンタメ", "遊び", "運"],
-    baseStats: {
-      attack: 769300
-    },
-    image: withBasePath("/monsters/nintendora-transparent.png"),
-    icon: withBasePath("/monsters/nintendora-icon-transparent.png"),
-    assetReady: true
-  },
-  {
-    id: "sonic-leo",
-    name: "ソニックレオ",
-    ticker: "6758",
-    companyAlias: "クリエイティブ企業A",
-    rarity: "SSR",
-    attribute: "光・音",
-    role: "特殊高速型",
-    equipment: "クリエイターゴーグル",
-    skill: "イメージセンサー",
-    dividendType: "低配当",
-    sharePrice: 3445,
-    issuedShares: 6_149_810_645,
-    effect: effects.lowDividend,
-    tags: ["クリエイティブ", "エンタメ", "テック", "高速"],
-    baseStats: {
-      attack: 344500
-    },
-    image: withBasePath("/monsters/sonic-leo-transparent.png"),
-    icon: withBasePath("/monsters/sonic-leo-icon-transparent.png"),
-    assetReady: true
-  },
-  {
-    id: "bank-golem",
-    name: "バンクゴーレム",
-    ticker: "8306",
-    companyAlias: "銀行グループA",
-    rarity: "SR",
-    attribute: "鉄壁",
-    role: "配当防御型",
-    equipment: "巨大金庫の盾",
-    skill: "安定守護",
-    dividendType: "高配当",
-    sharePrice: 3184,
-    issuedShares: 11_867_710_920,
-    effect: effects.highDividend,
-    tags: ["金融", "防御", "配当", "安定"],
-    baseStats: {
-      attack: 318400
-    },
-    image: withBasePath("/monsters/bank-golem-transparent.png"),
-    icon: withBasePath("/monsters/bank-golem-icon-transparent.png"),
-    assetReady: true
-  },
-  {
-    id: "chip-thunder",
-    name: "チップサンダー",
-    ticker: "6920",
-    companyAlias: "半導体装置企業A",
-    rarity: "SSR",
-    attribute: "雷",
-    role: "高変動型",
-    equipment: "精密レーザーコア",
-    skill: "ボラティリティ放電",
-    dividendType: "低配当",
-    sharePrice: 40710,
-    issuedShares: 94_286_400,
-    effect: effects.lowDividend,
-    tags: ["半導体", "テック", "雷", "高変動"],
-    baseStats: {
-      attack: 4071000
-    },
-    image: withBasePath("/monsters/chip-thunder-transparent.png"),
-    icon: withBasePath("/monsters/chip-thunder-icon-transparent.png"),
-    assetReady: true
-  },
-  {
-    id: "medica-seraph",
-    name: "メディカセラフ",
-    ticker: "4519",
-    companyAlias: "医療バイオ企業A",
-    rarity: "SR",
-    attribute: "癒やし",
-    role: "回復支援型",
-    equipment: "バイオリアクターの翼",
-    skill: "リカバリー配当",
-    dividendType: "中配当",
-    sharePrice: 7369,
-    issuedShares: 1_679_057_667,
-    effect: effects.midDividend,
-    tags: ["医療", "バイオ", "安定", "支援"],
-    baseStats: {
-      attack: 736900
-    },
-    image: withBasePath("/monsters/medica-seraph-transparent.png"),
-    icon: withBasePath("/monsters/medica-seraph-icon-transparent.png"),
-    assetReady: true
-  },
-  {
-    id: "grid-wyvern",
-    name: "グリッドワイバーン",
-    ticker: "9501",
-    companyAlias: "電力インフラ企業A",
-    rarity: "SR",
-    attribute: "電力",
-    role: "インフラ安定型",
-    equipment: "スマートグリッド翼",
-    skill: "パワーリレー",
-    dividendType: "無配当",
-    sharePrice: 541,
-    issuedShares: 1_607_017_531,
-    effect: effects.noDividend,
-    tags: ["エネルギー", "インフラ", "安定", "配当"],
-    baseStats: {
-      attack: 54100
-    },
-    image: withBasePath("/monsters/grid-wyvern-transparent.png"),
-    icon: withBasePath("/monsters/grid-wyvern-icon-transparent.png"),
-    assetReady: true
+type CompanyProfile = {
+  attribute: string;
+  role: string;
+  equipment: string;
+  skill: string;
+  tags: string[];
+  dividendType: DividendType;
+};
+
+function effectForDividend(type: DividendType): MonsterEffect {
+  if (type === "高配当") return effects.highDividend;
+  if (type === "中配当") return effects.midDividend;
+  if (type === "低配当") return effects.lowDividend;
+  return effects.noDividend;
+}
+
+const highDividendKeywords = ["ハウス", "建設", "セメント", "ENEOS", "出光", "東ソー", "UBE", "ブリヂストン", "王子"];
+const midDividendKeywords = ["化学", "食品", "硝子", "ゴム", "TOTO", "花王", "富士", "日東", "ニッスイ", "味の素"];
+const lowDividendKeywords = ["ゲーム", "ZOZO", "SHIFT", "エムスリー", "ネクソン", "資生堂", "キオクシア"];
+
+function includesAny(value: string, keywords: string[]): boolean {
+  return keywords.some((keyword) => value.includes(keyword));
+}
+
+function inferDividendType(company: string): DividendType {
+  if (includesAny(company, highDividendKeywords)) return "高配当";
+  if (includesAny(company, lowDividendKeywords)) return "低配当";
+  if (includesAny(company, midDividendKeywords)) return "中配当";
+  return "中配当";
+}
+
+function inferRarity(ticker: string, company: string): Rarity {
+  if (["4063", "4901"].includes(ticker)) return "UR";
+  if (includesAny(company, ["キオクシア", "味の素", "花王", "ENEOS", "ブリヂストン", "富士", "信越", "日東"])) return "SSR";
+  if (includesAny(company, ["ホールディングス", "化学", "建設", "AGC", "TOTO", "SUMCO", "SHIFT"])) return "SR";
+  return "R";
+}
+
+function inferSharePrice(ticker: string): number {
+  const numericTicker = Number(ticker.replace(/\D/g, "")) || 1000;
+  return Math.max(300, Math.round((numericTicker % 7000) + 500));
+}
+
+function inferIssuedShares(ticker: string, rarity: Rarity): number {
+  const numericTicker = Number(ticker.replace(/\D/g, "")) || 1000;
+  const base = rarity === "UR" ? 1_500_000_000 : rarity === "SSR" ? 850_000_000 : rarity === "SR" ? 420_000_000 : 180_000_000;
+  return base + (numericTicker % 97) * 5_000_000;
+}
+
+function shortCompanyName(company: string): string {
+  return company
+    .replace(/ホールディングス|グループ|コーポレーション|工業|本社|産業|建設|化学|電工|電気|硝子/g, "")
+    .replace(/[・（）()＆&\s]/g, "")
+    .slice(0, 8) || company.slice(0, 8);
+}
+
+function createMonsterName(company: string): string {
+  return `${shortCompanyName(company)}モン`;
+}
+
+function inferCompanyProfile(company: string): CompanyProfile {
+  if (includesAny(company, ["キオクシア", "SUMCO", "信越", "半導体"])) {
+    return {
+      attribute: "半導体",
+      role: "半導体素材型",
+      equipment: "シリコンコア",
+      skill: "ウェハチャージ",
+      dividendType: inferDividendType(company),
+      tags: ["半導体", "素材", "テック", "成長"]
+    };
   }
-];
+
+  if (includesAny(company, ["化学", "レゾナック", "東ソー", "トクヤマ", "デンカ", "クラレ", "旭化成", "UBE", "日産"])) {
+    return {
+      attribute: "化学",
+      role: "素材連携型",
+      equipment: "ケミカルコア",
+      skill: "素材反応",
+      dividendType: inferDividendType(company),
+      tags: ["素材", "化学", "配当", "高変動"]
+    };
+  }
+
+  if (includesAny(company, ["建設", "ハウス", "セメント", "TOTO", "不動産"])) {
+    return {
+      attribute: "建設",
+      role: "インフラ安定型",
+      equipment: "ビルドシールド",
+      skill: "基盤補強",
+      dividendType: inferDividendType(company),
+      tags: ["建設", "インフラ", "防御", "安定"]
+    };
+  }
+
+  if (includesAny(company, ["食品", "ニッスイ", "日本ハム", "味の素", "キッコーマン", "キリン", "アサヒ", "サッポロ", "ニチレイ", "たばこ"])) {
+    return {
+      attribute: "生活",
+      role: "生活安定型",
+      equipment: "サプライコア",
+      skill: "生活補給",
+      dividendType: inferDividendType(company),
+      tags: ["食品", "生活", "安定", "配当"]
+    };
+  }
+
+  if (includesAny(company, ["ENEOS", "出光", "INPEX", "電力"])) {
+    return {
+      attribute: "エネルギー",
+      role: "資源配当型",
+      equipment: "エネルギーコア",
+      skill: "燃料供給",
+      dividendType: inferDividendType(company),
+      tags: ["エネルギー", "資源", "インフラ", "配当"]
+    };
+  }
+
+  if (includesAny(company, ["ゴム", "ブリヂストン"])) {
+    return {
+      attribute: "モビリティ",
+      role: "機動素材型",
+      equipment: "ラバータイヤ",
+      skill: "グリップ加速",
+      dividendType: inferDividendType(company),
+      tags: ["自動車", "素材", "モビリティ", "配当"]
+    };
+  }
+
+  if (includesAny(company, ["ネクソン", "ディー・エヌ・エー", "ZOZO", "SHIFT"])) {
+    return {
+      attribute: "テック",
+      role: "成長テック型",
+      equipment: "データコア",
+      skill: "成長リンク",
+      dividendType: inferDividendType(company),
+      tags: ["テック", "成長", "高変動", "エンタメ"]
+    };
+  }
+
+  if (includesAny(company, ["エムスリー", "富士", "資生堂", "花王"])) {
+    return {
+      attribute: "生活医療",
+      role: "生活支援型",
+      equipment: "ヘルスコア",
+      skill: "日常支援",
+      dividendType: inferDividendType(company),
+      tags: ["生活", "医療", "安定", "配当"]
+    };
+  }
+
+  return {
+    attribute: "企業",
+    role: "市場連動型",
+    equipment: "マーケットコア",
+    skill: "株価リンク",
+    dividendType: inferDividendType(company),
+    tags: ["安定", "配当", "市場", "成長"]
+  };
+}
+
+function createCompanyMonster(asset: CompanyMonsterAsset): MonsterMaster {
+  const override = companyDataOverrides[asset.ticker];
+  const rarity = override?.rarity ?? inferRarity(asset.ticker, asset.company);
+  const profile = inferCompanyProfile(asset.company);
+  const dividendType = override?.dividendType ?? profile.dividendType;
+  const sharePrice = override?.sharePrice ?? inferSharePrice(asset.ticker);
+  const issuedShares = override?.issuedShares ?? inferIssuedShares(asset.ticker, rarity);
+  const dataSource = override?.dataSource ?? (override ? "manual" : "estimated");
+  const imagePath = withBasePath(`/monsters/${asset.file}`);
+
+  return {
+    id: `jp-${asset.ticker.toLowerCase()}`,
+    name: createMonsterName(asset.company),
+    ticker: asset.ticker,
+    companyAlias: asset.company,
+    rarity,
+    attribute: profile.attribute,
+    role: profile.role,
+    equipment: profile.equipment,
+    skill: profile.skill,
+    dividendType,
+    sharePrice,
+    issuedShares,
+    dataSource,
+    effect: effectForDividend(dividendType),
+    tags: profile.tags,
+    baseStats: {
+      attack: sharePrice * 100
+    },
+    image: imagePath,
+    icon: imagePath,
+    assetReady: true
+  };
+}
+
+export const specialMonsters: MonsterMaster[] = [];
+
+export const companyMonsters: MonsterMaster[] = companyMonsterAssets.map(createCompanyMonster);
+export const playableMonsters: MonsterMaster[] = companyMonsters;
+export const monsters: MonsterMaster[] = companyMonsters;
 
 export const monsterById = new Map(monsters.map((monster) => [monster.id, monster]));
