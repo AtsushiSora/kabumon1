@@ -7,7 +7,7 @@ const outputFile = join(root, "lib", "companyMonsterAssets.ts");
 const assetPattern = /^([0-9A-Z]+)[\s_-]+(.+)\.png$/u;
 
 const files = readdirSync(monsterDir, { withFileTypes: true })
-  .filter((entry) => entry.isFile())
+  .filter((entry) => entry.isFile() && !entry.name.startsWith("."))
   .map((entry) => entry.name.normalize("NFC"))
   .sort((a, b) => a.localeCompare(b, "ja"));
 

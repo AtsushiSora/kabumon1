@@ -316,10 +316,9 @@ export const companyMonsterAssets = [
 ] satisfies CompanyMonsterAsset[];
 
 export const companyMonsterAssetDiagnostics = {
-  "totalFiles": 90,
+  "totalFiles": 89,
   "usableFiles": 61,
   "ignoredFiles": [
-    ".DS_Store",
     "bank-golem-icon-transparent.png",
     "bank-golem-icon.png",
     "bank-golem-transparent.png",

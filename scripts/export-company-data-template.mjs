@@ -47,7 +47,7 @@ function csv(value) {
 }
 
 const assets = readdirSync(monsterDir, { withFileTypes: true })
-  .filter((entry) => entry.isFile())
+  .filter((entry) => entry.isFile() && !entry.name.startsWith("."))
   .map((entry) => entry.name.normalize("NFC"))
   .flatMap((file) => {
     const match = file.match(assetPattern);
