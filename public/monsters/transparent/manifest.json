@@ -1,0 +1,551 @@
+{
+  "1332-ニッスイ.png": {
+    "sourceHash": "cc28f06253b0cf3f2eea6db872a08b55df19efcae3062299029940bf9da176fd",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "1605-INPEX.png": {
+    "sourceHash": "ad544e9642cca177088eda9332d36061f6937fb933afc636133a62e0b3797011",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "1721-コムシスホールディングス.png": {
+    "sourceHash": "cf7e460d50b53e12e4b0f72c216d5b33de7ccad2561b86a30b72e012ccfcd16d",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "1801-大成建設.png": {
+    "sourceHash": "634aa716b50e81aa1d892421a6a84a923fe6ef24a350544da370ee3ae36445d0",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "1802-大林組.png": {
+    "sourceHash": "9910ada1d311107bfe6c8c95aba51e844a44f2573996468367d1c9c2509d4005",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "1803-清水建設.png": {
+    "sourceHash": "c4d7f522ba729e1a074135eaba7f5c11687c53aba1bc57243fd1b6f44c6356a2",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "1808-長谷工コーポレーション.png": {
+    "sourceHash": "6af759fc6edcb2085876d2a039e63cff2a4180118fb97578debef020cb3e81eb",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "1812-鹿島建設.png": {
+    "sourceHash": "0c131bd3d000bda5bf9a82d7c08ae96c6fffdb9b687b32087787575229c3aabb",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "1925-大和ハウス工業.png": {
+    "sourceHash": "c2095627c8bd0694621f3febeb31669f8b53a5d7fa957a8c0e9f8a7eac28515b",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "1928-積水ハウス.png": {
+    "sourceHash": "c207302bf98efd2d60134e7bf079bfe1a2c215af47736df8758374a2fab6466b",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "2002-日清製粉グループ本社.png": {
+    "sourceHash": "f7c5381e2c2f3d22f196d2e8c0b66e527c7092d459019db4beac77341a1aa219",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2269-明治ホールディングス.png": {
+    "sourceHash": "f49574adbd23806ecf5b4885d087216542c238ba2251bfaf590f5c14e5a53e84",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2282-日本ハム.png": {
+    "sourceHash": "1cf3089ca61fe65d08f3b2ce68f72aa6e2b231d6e1099030bde7d7c8cf356ce5",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2413-エムスリー.png": {
+    "sourceHash": "a9470dbbc4bedb660fb4c497c14c9e572347d821a8a818cf4b5b1e209236f839",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2432-ディー・エヌ・エー.png": {
+    "sourceHash": "8036e847b5744016fd3f70f4ae674a7d75235043869bb23418245582ecd49a7d",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2501-サッポロホールディングス.png": {
+    "sourceHash": "63950fd9b0291e7e51fa1c2eb8216b78b88733a279f55eaa0b8dce6a4f5033ac",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2502-アサヒグループホールディングス.png": {
+    "sourceHash": "c0aef88a3d64ccaf3c9e0d001f31ff306f65373b08b47609e2c2204f5d9dd5dc",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2503-キリンホールディングス.png": {
+    "sourceHash": "d708b675bf0cb9567973a948db1739c8cefa94425dfd120f25ee1caed4bd847b",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2768-双日.png": {
+    "sourceHash": "e9ad4954302bc962fa863267d7563a0655aaf0ee8a9aaec515f6f37f2431a617",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2801-キッコーマン.png": {
+    "sourceHash": "274812d3cb3ecb6cd54e670e383f7fefcb8c0c6170e6005d25c2ed4708d6a4f7",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2802-味の素.png": {
+    "sourceHash": "4ac2fe91048d0ee20bd6a9394d0e2df7b39197014f6fdaf95359db8c1f320049",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "285A-キオクシアホールディングス.png": {
+    "sourceHash": "ead47b9df304a06140edec212a62d52fb4103b7aa12b370ac24711f81c712edc",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2871-ニチレイ.png": {
+    "sourceHash": "c107b2833722476508170ebb33f1370ee8e52fc2f5919b3ff2021caa52188e49",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "2914-日本たばこ産業.png": {
+    "sourceHash": "3b46bb2de2ea82ff7aa15bcb9c7c1b78e8e7e78df48db0112220c2f57423ef1a",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3086-J.フロント リテイリング.png": {
+    "sourceHash": "76cb84c3c91e0c69be1fdcfe3e1bb7ef7acae2ed271489a9b4ee0f4890aa640b",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3092-ZOZO.png": {
+    "sourceHash": "331c4bb01c740435dfeb16032ad0e56cc0c98eb0110cf5a5efee2725f82f8e3b",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3099-三越伊勢丹ホールディングス.png": {
+    "sourceHash": "dacace70650840c04ca1edc0f32376e73fc175d1faa4dbe6faeee931e09e375a",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3289-東急不動産ホールディングス.png": {
+    "sourceHash": "36f0b9bb622e2704b9911ea684b8a8d137296a9fd2582642152ecff1a4628419",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3382-セブン＆アイ・ホールディングス.png": {
+    "sourceHash": "dea068b9582988d15f00bd0f79b3b40c3f81bc8f8dce79dacb8125328dfccdc0",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3401-帝人.png": {
+    "sourceHash": "a6a7ee8eb470558b8659f197d8b15ff27b672315a73218c2d07a3bab3efd0e20",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3402-東レ.png": {
+    "sourceHash": "45a3b9326670ea24eda9b0195139706b2b27d545bee2cd4b032854500743ad42",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3405-クラレ.png": {
+    "sourceHash": "5340b834ea652e168a0888d2f74b59e22fae7e805393f738b8c11ae269921e7b",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3407-旭化成.png": {
+    "sourceHash": "491742fcdeb22403e00caea1e98f8fb8b4f9022b50f733eff637d27467111ca0",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "3436-SUMCO.png": {
+    "sourceHash": "eff3e941a0ba1e302f322802fbc9c5aa4c2052befb1b8042f616ead3f84ee133",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "3659-ネクソン.png": {
+    "sourceHash": "f57316f941b56a7e99fa91c6af75951642dfff7740ec7c38ee5ad4310481a9e5",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "3697-SHIFT.png": {
+    "sourceHash": "6997fddcb3eae4e52b94568fd43a81741daaa5ef99901d4a249a88d24fb87497",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "3861-王子ホールディングス.png": {
+    "sourceHash": "3d977b3d716743c02a913c2631b5b4a2867d52bbb42cc91d92edf4c525430b0a",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 512,
+    "height": 768
+  },
+  "4004-レゾナック・ホールディングス.png": {
+    "sourceHash": "dc4d550de2a673d5bbc4bb359ab0f7b5ffdde136cead02c9efa6044dd523c91c",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4005-住友化学.png": {
+    "sourceHash": "81a97ad103af887e784c74ef4c1cc84a3f1ecedf8806d59a7b724180a393f4b2",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4021-日産化学.png": {
+    "sourceHash": "588d6d728af4ddc1663fc3896f9bd4a130025fa7272d3cd165aa2f032827a7af",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4042-東ソー.png": {
+    "sourceHash": "7f391de3abb2f9f54ce93f42f05e2ba22f6c4cfcc34a80d24404d2ff18cb4861",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4043-トクヤマ.png": {
+    "sourceHash": "4bf0db2dec18daaa820d3e8d71eb8c7d8b8139ae32328049cc11344271044dce",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4061-デンカ.png": {
+    "sourceHash": "dcff2838d9220930d9187a3e049b9753bff34c631c22defea916cff4c29beac5",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4063-信越化学工業.png": {
+    "sourceHash": "28555143a4a785a723fd51d0552ef7800533774319c609bcf05e90646a80b9c0",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4183-三井化学.png": {
+    "sourceHash": "f6dcb9da711c4cd96296c336adab3583fc606663907d5cd1c416856024c3ebdc",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4188-三菱ケミカルグループ.png": {
+    "sourceHash": "20c0c6e312e9615ae40e4320c065934bf4a12710f49e9ef8a32656a284b36638",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4208-UBE.png": {
+    "sourceHash": "10bf876ad60f54dc711a6bbac506ff912d1e35e9fcb57dd34ac17e0e1ebc4274",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4452-花王.png": {
+    "sourceHash": "4ba870c855521cc787a6e0304dc4c9ddcf4e05a7e3610b220a7e0c9b2090ed8b",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4901-富士フイルム.png": {
+    "sourceHash": "1f3a7abd1ff908ecb3d1cc96d3a27e9ef39c9869030af667dc7b48203b3d6d4f",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "4911-資生堂.png": {
+    "sourceHash": "4030352a232927ff9a61158f52c53f452c8a2a6ca774ee663268f9216f028fad",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5019-出光興産.png": {
+    "sourceHash": "ad78ab4f9a776ad1f3c84830b011261657d014b000767ba0c547db2a7f52f441",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5020-ENEOS.png": {
+    "sourceHash": "a970e4d8f044b7d7e21fedc93bb335b86d0069d343403fc17e98435252307ef1",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5101-横浜ゴム.png": {
+    "sourceHash": "a4f2a8ae4b35c23318ad33b64fe7949ea29bf8a98e63f21400a84c1bc836437a",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5108-ブリヂストン.png": {
+    "sourceHash": "9499185e71ffaaf0b7d2ebdd2cdabbf9129d8179c3bc6ea74dbf1125e6f26c1a",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5201-AGC.png": {
+    "sourceHash": "f3e8a1a7237a402f1c257e1d5ec70539fa28b22ae331f31afb7ee2347f2cbf10",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5214-日本電気硝子.png": {
+    "sourceHash": "98676801551f2691d6c9f597ed211d6c707920199e1358fc824c0539607812b8",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5233-太平洋セメント.png": {
+    "sourceHash": "a1005df6544c00de8dbbc2a071771bf3bbf2a5bce48569960b5836fd4555f350",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5301-東海カーボン.png": {
+    "sourceHash": "0e5a0e1e44558292b4a0606d853e727bc3b6dc84308bca2e6b299a02d245f301",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5332-TOTO.png": {
+    "sourceHash": "c7086338a3c9905655543cfd9233386b303780d8dbe949b23804857dbc482589",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "5333-日本碍子（NGK）.png": {
+    "sourceHash": "43ba268f49a2b131ee1f7d022ab4adff4c6f4c7da1efbb6c28983af614487e0e",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  },
+  "6988-日東電工.png": {
+    "sourceHash": "00aa8c611b59870a54a8ac27ce26734d880456ac73ef0a0265b3652eb64ef713",
+    "generatorVersion": 2,
+    "backgroundThreshold": 238,
+    "neutralTolerance": 30,
+    "maxOutputSize": 768,
+    "width": 768,
+    "height": 768
+  }
+}

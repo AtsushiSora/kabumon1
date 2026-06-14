@@ -1,4 +1,4 @@
-const CACHE_VERSION = "kabumon-cache-v4";
+const CACHE_VERSION = "kabumon-cache-v5";
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
 const scopedPath = (path) => {
   if (path === "/") return `${SCOPE_PATH}/` || "/";
@@ -13,7 +13,17 @@ const APP_SHELL = [
   scopedPath("/icons/kabumon-apple-touch.png"),
   scopedPath("/ui/ideal-nav-frame.png"),
   scopedPath("/ui/ideal-nav-active-frame.png"),
-  scopedPath("/ui/ideal-market-icon.png")
+  scopedPath("/ui/ideal-market-icon.png"),
+  scopedPath("/ui/nav-home.png"),
+  scopedPath("/ui/nav-gacha.png"),
+  scopedPath("/ui/nav-train.png"),
+  scopedPath("/ui/nav-event.png"),
+  scopedPath("/ui/nav-team.png"),
+  scopedPath("/ui/nav-dex.png"),
+  scopedPath("/ui/nav-market.png"),
+  scopedPath("/ui/header-coin.png"),
+  scopedPath("/ui/header-gem.png"),
+  scopedPath("/ui/header-avatar.png")
 ];
 
 self.addEventListener("install", (event) => {
@@ -62,7 +72,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(() => caches.match(scopedPath("/offline.html")));
+        .catch(() => caches.match(request));
     })
   );
 });

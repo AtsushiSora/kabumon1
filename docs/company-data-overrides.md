@@ -1,6 +1,6 @@
 # 企業データ上書きルール
 
-企業画像は `public/monsters/<コード>-<企業名>.png` から自動で株モン化されます。
+企業画像は `public/monsters/<コード>-<企業名>.png`、`public/monsters/<コード> <企業名>.png`、`public/monsters/<コード>_<企業名>.png` から自動で株モン化されます。
 株価・発行株数・配当タイプを実データに近づけたい銘柄だけ、`lib/companyDataOverrides.ts` に追加します。
 
 ## テンプレート生成
@@ -37,7 +37,7 @@ npm run import:company-overrides
 npm run test:company-overrides
 ```
 
-画像取り込みからCSV生成、preview、import、変換テストまでまとめて確認する場合は、次のコマンドを使います。
+画像取り込み、背景透明版生成、CSV生成、preview、import、変換テストまでまとめて確認する場合は、次のコマンドを使います。
 
 ```bash
 npm run verify:company-data

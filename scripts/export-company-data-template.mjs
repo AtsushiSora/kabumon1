@@ -5,7 +5,7 @@ const root = process.cwd();
 const monsterDir = join(root, "public", "monsters");
 const outputDir = join(root, "docs");
 const outputFile = join(outputDir, "company-data-template.csv");
-const assetPattern = /^([0-9A-Z]+)-(.+)\.png$/u;
+const assetPattern = /^([0-9A-Z]+)[\s_-]+(.+)\.png$/u;
 
 const highDividendKeywords = ["ハウス", "建設", "セメント", "ENEOS", "出光", "東ソー", "UBE", "ブリヂストン", "王子"];
 const midDividendKeywords = ["化学", "食品", "硝子", "ゴム", "TOTO", "花王", "富士", "日東", "ニッスイ", "味の素"];
@@ -46,8 +46,9 @@ function csv(value) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-const assets = readdirSync(monsterDir)
-  .map((file) => file.normalize("NFC"))
+const assets = readdirSync(monsterDir, { withFileTypes: true })
+  .filter((entry) => entry.isFile())
+  .map((entry) => entry.name.normalize("NFC"))
   .flatMap((file) => {
     const match = file.match(assetPattern);
     if (!match) return [];

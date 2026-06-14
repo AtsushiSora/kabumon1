@@ -37,6 +37,8 @@ export type MonsterMaster = {
   baseStats: MonsterStats;
   image: string;
   icon: string;
+  fallbackImage: string;
+  assetFile: string;
   assetReady: boolean;
 };
 
@@ -244,7 +246,8 @@ function createCompanyMonster(asset: CompanyMonsterAsset): MonsterMaster {
   const sharePrice = override?.sharePrice ?? inferSharePrice(asset.ticker);
   const issuedShares = override?.issuedShares ?? inferIssuedShares(asset.ticker, rarity);
   const dataSource = override?.dataSource ?? (override ? "manual" : "estimated");
-  const imagePath = withBasePath(`/monsters/${asset.file}`);
+  const imagePath = withBasePath(`/monsters/transparent/${asset.file}`);
+  const fallbackImagePath = withBasePath(`/monsters/${asset.file}`);
 
   return {
     id: `jp-${asset.ticker.toLowerCase()}`,
@@ -267,6 +270,8 @@ function createCompanyMonster(asset: CompanyMonsterAsset): MonsterMaster {
     },
     image: imagePath,
     icon: imagePath,
+    fallbackImage: fallbackImagePath,
+    assetFile: asset.file,
     assetReady: true
   };
 }

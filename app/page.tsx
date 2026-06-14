@@ -240,6 +240,7 @@ function matchesMonsterSearch(monster: MonsterMaster, query: string): boolean {
     monster.attribute,
     monster.role,
     monster.dividendType,
+    monster.assetFile,
     ...monster.tags
   ].join(" ").toLowerCase().includes(keyword);
 }
@@ -798,6 +799,8 @@ function HomePanel({
     ? `${state.gachaTickets}枚`
     : balance.gachaCost.toLocaleString("ja-JP");
   const gachaSubLabel = state.gachaTickets > 0 ? "チケット" : "カブコイン";
+  const sourceLabel = formatCompanyDataSource(buddyMaster.dataSource);
+  const unitAttack = buddyMaster.sharePrice * 100;
   const recommendation = offlineReward
     ? {
         label: offlineAtCap ? "放置MAX" : "放置報酬",
@@ -857,7 +860,7 @@ function HomePanel({
         "--stat-icon-speed": `url(${withBasePath("/ui/stat-clean-speed.png")})`,
         "--stat-icon-luck": `url(${withBasePath("/ui/stat-clean-luck.png")})`,
         "--result-icon-exp": `url(${withBasePath("/ui/result-icon-exp.png")})`,
-        "--result-icon-attack": `url(${withBasePath("/ui/stat-clean-attack.png")})`,
+        "--result-icon-ticket": `url(${withBasePath("/ui/nav-gacha.png")})`,
         "--result-icon-defense": `url(${withBasePath("/ui/stat-clean-defense.png")})`,
         "--result-icon-coin": `url(${withBasePath("/ui/result-icon-coin.png")})`,
         "--info-icon-company": `url(${withBasePath("/ui/info-company.png")})`,
@@ -906,39 +909,6 @@ function HomePanel({
         </section>
       )}
 
-      <section className="home-alert-strip pixel-panel">
-        <FrameCorners />
-        <button className={`home-alert-button ${eventStatus.available ? "is-ready" : "is-done"}`} onClick={() => onNavigate("event")}>
-          <span>作戦</span>
-          <strong>{eventStatus.available ? eventStatus.rank : "完了"}</strong>
-          <small>{eventStatus.available ? `${eventStatus.won ? "有利" : "不利"} / ${eventStatus.score}` : "本日完了"}</small>
-        </button>
-        <button className="home-alert-button" onClick={() => onNavigate("team")}>
-          <span>チーム</span>
-          <strong>{teamAttackSummary.memberCount}/3</strong>
-          <small>{formatAttackPower(teamAttackSummary.totalAttack)}</small>
-        </button>
-        <button className="home-alert-button" onClick={() => onNavigate("gacha")}>
-          <span>ガチャ</span>
-          <strong>{gachaMainLabel}</strong>
-          <small>{gachaSubLabel}</small>
-        </button>
-      </section>
-
-      <button
-        className={`home-recommend-panel pixel-panel ${recommendation.action === "claim" ? "is-claim" : ""}`}
-        onClick={recommendation.action === "claim" ? onClaimOffline : () => onNavigate(recommendation.tab as Tab)}
-      >
-        <FrameCorners />
-        <span>今日のおすすめ</span>
-        <strong>{recommendation.label}</strong>
-        <b>{recommendation.action === "claim" ? "受取" : "移動"}</b>
-        <small>{recommendation.detail}</small>
-        <i className="home-recommend-meter" aria-hidden="true">
-          <em style={{ width: `${recommendation.progress}%` }} />
-        </i>
-      </button>
-
       <section
         className="monster-card home-monster-card pixel-panel"
       >
@@ -949,10 +919,15 @@ function HomePanel({
         <div className="monster-info">
           <h2>{buddyMaster.name}</h2>
           <div className="stars">★★★★★</div>
+          <div className="home-monster-summary" aria-label="銘柄データ">
+            <span>{buddyMaster.ticker}</span>
+            <span>{sourceLabel}</span>
+            <span>{buddyMaster.dividendType}</span>
+          </div>
           <p className="monster-line stock-line">銘柄: {buddyMaster.companyAlias}</p>
           <p className="monster-line shares-line">持ち株: <strong>{buddy.shares}</strong> 株</p>
           <p className="monster-line attr-line power-line">攻撃力: {attackPower.toLocaleString("ja-JP")}</p>
-          <p className="monster-line attr-line calc-line">計算: {buddy.shares}株 × {buddyMaster.sharePrice.toLocaleString("ja-JP")}円</p>
+          <p className="monster-line attr-line calc-line">1株 {buddyMaster.sharePrice.toLocaleString("ja-JP")}円 / 100株攻撃 {unitAttack.toLocaleString("ja-JP")}</p>
           <p className="monster-line attr-line effect-line">
             効果: {attackBreakdown.effectName} / 配当単元 {attackBreakdown.dividendUnits}
             {attackBreakdown.dividendBonus > 0 && ` +${attackBreakdown.dividendBonus.toLocaleString("ja-JP")}`}
@@ -970,8 +945,7 @@ function HomePanel({
         <FrameCorners />
         <div className="section-label">本日の成長結果</div>
         <ResultTile kind="exp" label="トレーダー経験値" value={`+${trainResult?.traderExp ?? 0}`} />
-        <ResultTile kind="attack" label="ガチャ券" value={`+${trainResult?.gachaTickets ?? 0}`} />
-        <ResultTile kind="defense" label="攻撃力" value={attackPower.toLocaleString("ja-JP")} />
+        <ResultTile kind="ticket" label="ガチャ券" value={`+${trainResult?.gachaTickets ?? 0}`} />
         <ResultTile kind="coin" label="配当" value={`+${trainResult?.dividendCoins ?? 80}`} />
       </section>
 
@@ -997,6 +971,39 @@ function HomePanel({
         </div>
       </section>
 
+      <section className="home-alert-strip pixel-panel">
+        <FrameCorners />
+        <button className={`home-alert-button ${eventStatus.available ? "is-ready" : "is-done"}`} onClick={() => onNavigate("event")}>
+          <span>作戦</span>
+          <strong>{eventStatus.available ? eventStatus.rank : "完了"}</strong>
+          <small>{eventStatus.available ? `${eventStatus.won ? "有利" : "不利"} / ${eventStatus.score}` : "本日完了"}</small>
+        </button>
+        <button className="home-alert-button" onClick={() => onNavigate("team")}>
+          <span>チーム</span>
+          <strong>{teamAttackSummary.memberCount}/3</strong>
+          <small>{formatAttackPower(teamAttackSummary.totalAttack)}</small>
+        </button>
+        <button className="home-alert-button" onClick={() => onNavigate("gacha")}>
+          <span>ガチャ</span>
+          <strong>{gachaMainLabel}</strong>
+          <small>{gachaSubLabel}</small>
+        </button>
+      </section>
+
+      <button
+        className={`home-recommend-panel pixel-panel ${recommendation.action === "claim" ? "is-claim" : ""}`}
+        onClick={recommendation.action === "claim" ? onClaimOffline : () => onNavigate(recommendation.tab as Tab)}
+      >
+        <FrameCorners />
+        <span>次の行動</span>
+        <strong>{recommendation.label}</strong>
+        <b>{recommendation.action === "claim" ? "受取" : "移動"}</b>
+        <small>{recommendation.detail}</small>
+        <i className="home-recommend-meter" aria-hidden="true">
+          <em style={{ width: `${recommendation.progress}%` }} />
+        </i>
+      </button>
+
     </div>
   );
 }
@@ -1004,11 +1011,13 @@ function HomePanel({
 function MissionPanel({
   state,
   message,
-  onClaim
+  onClaim,
+  limit = 8
 }: {
   state: GameState;
   message: string;
   onClaim: (id: string) => void;
+  limit?: number;
 }) {
   const allMissions = getMissions(state);
   const missions = [...allMissions]
@@ -1022,7 +1031,7 @@ function MissionPanel({
       if (priorityDiff !== 0) return priorityDiff;
       return (b.progress / b.target) - (a.progress / a.target);
     })
-    .slice(0, 8);
+    .slice(0, limit);
   const claimableCount = allMissions.filter((mission) => mission.completed && !mission.claimed).length;
   const activeCount = allMissions.filter((mission) => !mission.completed).length;
   const completedCount = allMissions.filter((mission) => mission.completed).length;
@@ -1199,11 +1208,18 @@ function GachaPanel({
     });
   const ownedCount = allGachaRows.filter((row) => row.owned).length;
   const highestRate = allGachaRows.reduce((max, row) => Math.max(max, row.dropRate), 0);
+  const lowestRate = allGachaRows.reduce((min, row) => Math.min(min, row.dropRate), Number.POSITIVE_INFINITY);
+  const issuedSharesRange = allGachaRows.reduce((range, row) => ({
+    min: Math.min(range.min, row.monster.issuedShares),
+    max: Math.max(range.max, row.monster.issuedShares)
+  }), { min: Number.POSITIVE_INFINITY, max: 0 });
   const dataSourceCounts = getCompanyDataSourceCounts(playableMonsters);
   const rateLeader = allGachaRows[0];
 
+  const rateLeaderOwned = rateLeader ? state.owned[rateLeader.monster.id] : undefined;
+
   return (
-    <div className="screen-content">
+    <div className="screen-content gacha-screen">
       <section className="feature-panel pixel-panel gacha-hero">
         <div>
           <h2>銘柄ガチャ</h2>
@@ -1225,6 +1241,38 @@ function GachaPanel({
           <span>排出基準 発行株数</span>
           <span>{rateLeader ? `最大 ${rateLeader.monster.ticker}` : "最大 -"}</span>
         </div>
+        <div className="gacha-rule-panel">
+          <span>
+            <b>入手単位</b>
+            1回 = 1株
+          </span>
+          <span>
+            <b>排出率</b>
+            発行株数で調整
+          </span>
+          <span>
+            <b>排出幅</b>
+            {(Number.isFinite(lowestRate) ? lowestRate * 100 : 0).toFixed(1)}% - {(highestRate * 100).toFixed(1)}%
+          </span>
+          <span>
+            <b>発行株数</b>
+            {formatIssuedShares(issuedSharesRange.min)} - {formatIssuedShares(issuedSharesRange.max)}
+          </span>
+        </div>
+        {rateLeader && (
+          <article className="gacha-focus-card">
+            <MonsterArt monster={rateLeader.monster} />
+            <div>
+              <span>注目候補</span>
+              <strong>{rateLeader.monster.name}</strong>
+              <p>{rateLeader.monster.ticker} / {rateLeader.monster.companyAlias}</p>
+              <small>
+                排出 {(rateLeader.dropRate * 100).toFixed(1)}% ・ 発行 {formatIssuedShares(rateLeader.monster.issuedShares)} ・ 1株攻撃 {rateLeader.monster.sharePrice.toLocaleString("ja-JP")}
+                {rateLeaderOwned ? ` ・ 所持 ${rateLeaderOwned.shares}株` : " ・ 未所持"}
+              </small>
+            </div>
+          </article>
+        )}
         <ListTools
           query={query}
           onQuery={setQuery}
@@ -1324,7 +1372,7 @@ function TrainPanel({
             <small>配当 +{previewDividend} / 単元 {dividendUnits}</small>
           </div>
           <button className="gold-button full train-main-button" onClick={onTrain} disabled={!canTrain}>
-            市場エネルギー反映
+            育成する
           </button>
         </div>
       </section>
@@ -1346,11 +1394,28 @@ function TrainPanel({
         </div>
       </section>
 
+      <section className="train-rule-panel pixel-panel">
+        <div className={state.currentMarket.change >= 0 ? "active" : ""}>
+          <span>市場上昇</span>
+          <strong>トレーダー経験値</strong>
+          <small>今日の予測 +{previewExp}</small>
+        </div>
+        <div className={state.currentMarket.change < 0 ? "active" : ""}>
+          <span>市場下落</span>
+          <strong>ガチャ券</strong>
+          <small>今日の予測 +{previewTickets}</small>
+        </div>
+        <div>
+          <span>100株単元</span>
+          <strong>配当報酬</strong>
+          <small>今日の予測 +{previewDividend}</small>
+        </div>
+      </section>
+
       <section className="result-panel train-result-panel pixel-panel">
         <div className="section-label">育成結果</div>
         <ResultTile label="トレーダー経験値" value={`+${result?.traderExp ?? 0}`} />
         <ResultTile label="ガチャ券" value={`+${result?.gachaTickets ?? 0}`} />
-        <ResultTile label="攻撃力" value={attackPower.toLocaleString("ja-JP")} />
         <ResultTile label="配当" value={`+${result?.dividendCoins ?? 0}`} />
       </section>
 
@@ -1391,6 +1456,7 @@ function EventPanel({
 }) {
   const status = getDailyEventStatus(state);
   const teamBonus = getTeamBonus(state);
+  const teamAttackSummary = getTeamAttackSummary(state);
   const scorePercent = Math.min(100, (status.score / status.target) * 100);
   const allyTeam = state.team.slice(0, 3).flatMap((id) => {
     const monster = monsterById.get(id);
@@ -1406,6 +1472,7 @@ function EventPanel({
     }];
   });
   const displayStatus = result?.status ?? status;
+  const enemyBaseAttack = displayStatus.enemyTeam.reduce((sum, member) => sum + member.attack, 0);
   const battleTotalPower = Math.max(1, displayStatus.teamPower + displayStatus.enemyAttack);
   const allyPowerPercent = Math.max(6, Math.min(94, (displayStatus.teamPower / battleTotalPower) * 100));
   const enemyPowerPercent = Math.max(6, Math.min(94, (displayStatus.enemyAttack / battleTotalPower) * 100));
@@ -1466,14 +1533,65 @@ function EventPanel({
     : status.available
       ? "作戦開始で本日の報酬判定"
       : "明日の市場作戦を待つ";
+  const resultAction = result?.ok
+    ? {
+        label: displayStatus.won ? "チーム確認" : "強化する",
+        tab: displayStatus.won ? "team" as Tab : "market" as Tab
+      }
+    : null;
   const upgradeTargets = getPurchaseUpgradeTargets(state, displayStatus).slice(0, 3);
   const upgradePanelTitle = displayStatus.won ? "次の強化候補" : "勝利までの購入目安";
   const upgradePanelDetail = displayStatus.won
     ? "余力を伸ばすなら、総合攻撃力の伸びが大きい株モンから買い増しします。"
     : "不足分を埋めるために、効果込みの総合攻撃力で必要株数を試算しています。";
+  const rewardItems = [
+    { label: "カブコイン", value: `+${displayStatus.kabuCoins.toLocaleString("ja-JP")}`, kind: "coin" },
+    { label: "配当", value: `+${displayStatus.dividendCoins}`, kind: "dividend" },
+    { label: "トレーダー経験値", value: `+${displayStatus.exp}`, kind: "exp" }
+  ];
+  const enemyLead = displayStatus.enemyTeam[0];
+  const nextActions = state.team.length < 3
+    ? {
+        title: "次は3体編成",
+        detail: "空き枠を埋めると作戦の総合攻撃力が安定します。",
+        primaryLabel: "チームへ",
+        primaryTab: "team" as Tab,
+        secondaryLabel: "ガチャへ",
+        secondaryTab: "gacha" as Tab
+      }
+    : !status.available
+      ? {
+          title: "本日の作戦完了",
+          detail: displayStatus.won
+            ? "明日に備えてチーム効果か持ち株を伸ばします。"
+            : "次の作戦に向けて攻撃力を補強します。",
+          primaryLabel: displayStatus.won ? "チーム確認" : "マーケットへ",
+          primaryTab: displayStatus.won ? "team" as Tab : "market" as Tab,
+          secondaryLabel: "ホームへ",
+          secondaryTab: "home" as Tab
+        }
+      : displayStatus.won
+        ? {
+            title: "作戦準備OK",
+            detail: "勝利見込みです。作戦開始後は報酬を受け取り、次の育成へ進めます。",
+            primaryLabel: "作戦開始",
+            primaryTab: "event" as Tab,
+            secondaryLabel: "チーム確認",
+            secondaryTab: "team" as Tab
+          }
+        : {
+            title: "攻撃力を補強",
+            detail: upgradeTargets[0]
+              ? `${upgradeTargets[0].monster.name}を買い増すと勝利に近づきます。`
+              : "マーケットで1株ずつ買い増して総合攻撃力を上げます。",
+            primaryLabel: "マーケットへ",
+            primaryTab: "market" as Tab,
+            secondaryLabel: "チームへ",
+            secondaryTab: "team" as Tab
+          };
 
   return (
-    <div className="screen-content">
+    <div className="screen-content event-screen">
       <section className="feature-panel pixel-panel event-hero">
         <div>
           <h2>市場作戦</h2>
@@ -1490,6 +1608,35 @@ function EventPanel({
             味方 {formatCompactAmount(displayStatus.teamPower)} / CPU {formatCompactAmount(displayStatus.enemyAttack)}
           </small>
         </div>
+        <div className={`event-battle-formula ${displayStatus.won ? "won" : "lost"}`}>
+          <span>
+            <b>味方</b>
+            {formatAttackPower(teamAttackSummary.baseAttack)} x{teamAttackSummary.multiplier.toFixed(2)}
+            <strong>{formatAttackPower(displayStatus.teamPower)}</strong>
+          </span>
+          <em>{displayStatus.won ? ">=" : "<"}</em>
+          <span>
+            <b>CPU</b>
+            {formatAttackPower(enemyBaseAttack)} x{displayStatus.enemyBonusMultiplier.toFixed(2)}
+            <strong>{formatAttackPower(displayStatus.enemyAttack)}</strong>
+          </span>
+        </div>
+        {result && (
+          <div className={`event-outcome-strip ${displayStatus.won ? "won" : "lost"}`}>
+            <div>
+              <span>{result.ok ? "作戦結果" : "本日完了"}</span>
+              <strong>{result.ok ? (displayStatus.won ? "勝利" : "敗北") : "完了済み"}</strong>
+            </div>
+            <p>
+              C +{displayStatus.kabuCoins.toLocaleString("ja-JP")} / D +{displayStatus.dividendCoins} / トレーダー経験値 +{displayStatus.exp}
+            </p>
+            {resultAction && (
+              <button type="button" onClick={() => onNavigate(resultAction.tab)}>
+                {resultAction.label}
+              </button>
+            )}
+          </div>
+        )}
         <div className="event-power-meter" aria-label="味方とCPUの攻撃力比較">
           <i className="ally" style={{ width: `${allyPowerPercent}%` }}>
             味方
@@ -1518,6 +1665,18 @@ function EventPanel({
             </button>
           )}
         </div>
+        <div className={`event-reward-summary ${displayStatus.won ? "won" : "lost"}`}>
+          <header>
+            <span>{result ? "獲得報酬" : "勝敗後の報酬"}</span>
+            <strong>{displayStatus.won ? "通常報酬" : "敗北報酬"}</strong>
+          </header>
+          {rewardItems.map((item) => (
+            <i key={item.kind} className={`reward-${item.kind}`}>
+              <b>{item.label}</b>
+              <strong>{item.value}</strong>
+            </i>
+          ))}
+        </div>
         <div className="event-score-grid">
           <span>作戦スコア <strong>{status.score}</strong></span>
           <span>目標 <strong>{status.target}</strong></span>
@@ -1532,13 +1691,25 @@ function EventPanel({
         <button className={`gold-button full event-start-button ${status.available ? "ready" : ""}`} disabled={!status.available} onClick={onRun}>
           {status.available ? "作戦開始" : "本日完了"}
         </button>
-        <div className="event-reward-row">
-          <span>カブコイン +{status.kabuCoins.toLocaleString("ja-JP")}</span>
-          <span>配当 +{status.dividendCoins}</span>
-          <span>トレーダー経験値 +{status.exp}</span>
-        </div>
+        {!result && (
+          <div className="event-reward-row">
+            <span>カブコイン +{status.kabuCoins.toLocaleString("ja-JP")}</span>
+            <span>配当 +{status.dividendCoins}</span>
+            <span>トレーダー経験値 +{status.exp}</span>
+          </div>
+        )}
+      </section>
+
+      <section className="feature-panel pixel-panel event-detail-panel">
         <div className="message-box compact">
           現在: {teamBonus.name} / {teamBonus.detail}
+        </div>
+        <div className="event-cpu-summary">
+          <span>CPU敵チーム</span>
+          <strong>{displayStatus.enemyTeamName}</strong>
+          <p>
+            主力 {enemyLead?.name ?? "CPUモン"} / 基礎 {formatAttackPower(enemyBaseAttack)} / 効果 {displayStatus.enemyBonusName}
+          </p>
         </div>
         <div className="event-effect-compare">
           <span>
@@ -1611,6 +1782,30 @@ function EventPanel({
           </div>
           <p>{decisionNextAction}</p>
         </div>
+        <div className={`event-next-action-panel ${displayStatus.won ? "won" : "lost"}`}>
+          <div>
+            <span>次の一手</span>
+            <strong>{nextActions.title}</strong>
+            <p>{nextActions.detail}</p>
+          </div>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => {
+              if (nextActions.primaryTab === "event") {
+                onRun();
+              } else {
+                onNavigate(nextActions.primaryTab);
+              }
+            }}
+            disabled={nextActions.primaryTab === "event" && !status.available}
+          >
+            {nextActions.primaryLabel}
+          </button>
+          <button type="button" onClick={() => onNavigate(nextActions.secondaryTab)}>
+            {nextActions.secondaryLabel}
+          </button>
+        </div>
         <div className={`event-upgrade-panel ${displayStatus.won ? "won" : "lost"}`}>
           <header>
             <div>
@@ -1680,9 +1875,9 @@ function EventPanel({
         })}
       </section>
 
-      <MissionPanel state={state} message={message} onClaim={onClaimMission} />
+      <MissionPanel state={state} message={message} onClaim={onClaimMission} limit={4} />
 
-      <LogList state={state} />
+      <LogList state={state} limit={3} />
     </div>
   );
 }
@@ -1847,13 +2042,75 @@ function TeamPanel({
           targetId: "",
           positive: false
         };
+  const teamEffectRows = teamSlots.flatMap((slot) => {
+    if (!slot) return [];
+    const baseAttack = getAttackPower(slot.owned);
+    return [{
+      id: slot.monster.id,
+      name: slot.monster.name,
+      effect: slot.monster.effect.name,
+      shares: slot.owned.shares,
+      baseAttack,
+      adjustedAttack: Math.floor(baseAttack * teamAttackSummary.multiplier)
+    }];
+  });
+  const candidateInsightRows = candidateRows
+    .filter((row) => row.owned && !row.inTeam && row.projection)
+    .map((row) => {
+      const projectedGain = row.projection?.gain ?? 0;
+      const projectedBonus = row.projectedBonus;
+      const effectChanged = Boolean(projectedBonus && projectedBonus.name !== teamBonus.name);
+      return {
+        ...row,
+        projectedGain,
+        effectChanged,
+        replacedMonster: row.projection?.replacedId ? monsterById.get(row.projection.replacedId) : null
+      };
+    });
+  const recommendedCandidates = candidateInsightRows
+    .filter((row) => row.projectedGain > 0 || row.effectChanged)
+    .sort((a, b) => {
+      if (Number(b.projectedGain > 0) !== Number(a.projectedGain > 0)) {
+        return Number(b.projectedGain > 0) - Number(a.projectedGain > 0);
+      }
+      if (b.projectedGain !== a.projectedGain) return b.projectedGain - a.projectedGain;
+      return Number(b.effectChanged) - Number(a.effectChanged);
+    })
+    .slice(0, 3);
+  const positiveCandidateCount = candidateInsightRows.filter((row) => row.projectedGain > 0).length;
+  const effectChangeCandidateCount = candidateInsightRows.filter((row) => row.effectChanged).length;
+  const ownedCandidateRows = candidateRows.filter((row) => row.owned);
 
   return (
-    <div className="screen-content">
-      <section className="feature-panel pixel-panel">
+    <div className="screen-content team-screen">
+      <section className="feature-panel pixel-panel team-hero">
         <h2>チーム編成</h2>
         <p>3体でチームを組み、効果反映後の総合攻撃力で勝敗を決めます。</p>
         <div className="message-box">現在: {teamBonus.name} / {teamBonus.detail}</div>
+        <div className="team-power-readout">
+          <div>
+            <span>総合攻撃力</span>
+            <strong>{teamAttackSummary.totalAttack.toLocaleString("ja-JP")}</strong>
+          </div>
+          <i>
+            基礎 {teamAttackSummary.baseAttack.toLocaleString("ja-JP")}
+            <b>x{teamAttackSummary.multiplier.toFixed(2)}</b>
+          </i>
+        </div>
+        <div className="team-battle-rule">
+          <span>
+            <b>1</b>
+            3体の攻撃力を合計
+          </span>
+          <span>
+            <b>2</b>
+            チーム効果を反映
+          </span>
+          <span>
+            <b>3</b>
+            CPU以上なら勝利
+          </span>
+        </div>
         <div className="team-bonus-grid">
           <span>編成 {teamAttackSummary.memberCount}/3</span>
           <span>総合攻撃力 {teamAttackSummary.totalAttack.toLocaleString("ja-JP")}</span>
@@ -1904,6 +2161,90 @@ function TeamPanel({
           {suggestion.action}
         </button>
       </section>
+      <section className={`team-effect-panel pixel-panel ${teamBonus.active ? "active" : ""}`}>
+        <div className="team-effect-header">
+          <div>
+            <span>発動中の効果</span>
+            <strong>{teamBonus.name}</strong>
+            <p>{teamBonus.detail}</p>
+          </div>
+          <i>{teamBonus.active ? "発動中" : "未発動"}</i>
+        </div>
+        <div className="team-effect-formula">
+          <span>基礎攻撃力 <b>{teamAttackSummary.baseAttack.toLocaleString("ja-JP")}</b></span>
+          <span>攻撃補正 <b>x{teamAttackSummary.multiplier.toFixed(2)}</b></span>
+          <span>総合攻撃力 <b>{teamAttackSummary.totalAttack.toLocaleString("ja-JP")}</b></span>
+        </div>
+        <div className="team-effect-member-list">
+          {teamEffectRows.map((row) => (
+            <article key={row.id}>
+              <div>
+                <strong>{row.name}</strong>
+                <span>{row.effect} / {row.shares}株</span>
+              </div>
+              <p>
+                {row.baseAttack.toLocaleString("ja-JP")}
+                <b>{row.adjustedAttack.toLocaleString("ja-JP")}</b>
+              </p>
+            </article>
+          ))}
+          {teamEffectRows.length === 0 && (
+            <article className="empty">
+              <div>
+                <strong>未編成</strong>
+                <span>3体を編成すると効果が計算されます</span>
+              </div>
+              <p>0<b>0</b></p>
+            </article>
+          )}
+        </div>
+      </section>
+      <section className="team-recommend-panel pixel-panel">
+        <div className="team-recommend-header">
+          <div>
+            <span>入替候補</span>
+            <strong>おすすめ候補</strong>
+          </div>
+          <p>
+            攻撃力UP {positiveCandidateCount}
+            <b>効果変化 {effectChangeCandidateCount}</b>
+          </p>
+        </div>
+        <div className="team-recommend-list">
+          {recommendedCandidates.length > 0 ? recommendedCandidates.map((row) => {
+            const projectedTotal = row.projection?.summary.totalAttack ?? teamAttackSummary.totalAttack;
+            return (
+              <article key={row.monster.id} className={row.projectedGain > 0 ? "positive" : ""}>
+                <MonsterArt monster={row.monster} />
+                <div>
+                  <strong>{row.monster.name}</strong>
+                  <span>
+                    {row.replacedMonster ? `${row.replacedMonster.name}と入替` : "空き枠へ編成"}
+                  </span>
+                  <small>
+                    総合 {formatAttackPower(projectedTotal)}
+                    {row.projectedGain !== 0 ? ` / ${row.projectedGain > 0 ? "+" : ""}${formatAttackPower(row.projectedGain)}` : ""}
+                  </small>
+                  {row.effectChanged && row.projectedBonus && (
+                    <small className="positive">効果: {row.projectedBonus.name}</small>
+                  )}
+                </div>
+                <button onClick={() => onToggle(row.monster.id)}>
+                  {row.projectedGain > 0 ? "入替" : "効果狙い"}
+                </button>
+              </article>
+            );
+          }) : (
+            <article className="empty">
+              <div>
+                <strong>今の3体が安定</strong>
+                <span>攻撃力を伸ばすにはマーケットで買い増し</span>
+                <small>所持株を増やすと候補が変わります</small>
+              </div>
+            </article>
+          )}
+        </div>
+      </section>
       <section className="team-recipe-panel pixel-panel">
         <div className="team-recipe-header">
           <strong>おすすめ効果</strong>
@@ -1943,34 +2284,39 @@ function TeamPanel({
           ))}
         </div>
       </section>
-      <section className="grid-panel">
+      <section className="grid-panel team-candidate-grid">
         <div className="team-candidate-list-header">
-          <strong>株モン一覧</strong>
-          <span>編成中・所持済みを優先表示</span>
+          <strong>所持株モン一覧</strong>
+          <span>所持 {ownedCandidateRows.length} / 攻撃UP {positiveCandidateCount}</span>
         </div>
-        {candidateRows.map(({ monster, owned, inTeam, attack, projection, projectedBonus }) => {
+        <div className="team-candidate-summary-strip">
+          <span>編成中 <b>{teamAttackSummary.memberCount}</b></span>
+          <span>入替候補 <b>{positiveCandidateCount}</b></span>
+          <span>効果変化 <b>{effectChangeCandidateCount}</b></span>
+        </div>
+        {ownedCandidateRows.map(({ monster, owned, inTeam, attack, projection, projectedBonus }) => {
+          if (!owned) return null;
           const projectedGain = projection?.gain ?? 0;
           const projectedTotal = projection?.summary.totalAttack ?? teamAttackSummary.totalAttack;
           const replacedName = projection?.replacedId ? monsterById.get(projection.replacedId)?.name : "";
-          const actionLabel = !owned
-            ? "未所持"
-            : inTeam
-              ? "外す"
-              : state.team.length >= 3 && projectedGain > 0
-                ? `+${formatAttackPower(projectedGain)}`
-                : state.team.length >= 3
-                  ? "入替"
-                  : "編成";
+          const effectChanged = projectedBonus && projectedBonus.name !== teamBonus.name;
+          const actionLabel = inTeam
+            ? "外す"
+            : state.team.length >= 3 && projectedGain > 0
+              ? `+${formatAttackPower(projectedGain)}`
+              : state.team.length >= 3
+                ? "入替"
+                : "編成";
           return (
-            <article key={monster.id} className={`mini-card team-candidate-card pixel-panel ${inTeam ? "selected" : ""} ${owned ? "owned" : "locked-row"}`}>
+            <article key={monster.id} className={`mini-card team-candidate-card pixel-panel ${inTeam ? "selected" : ""} ${projectedGain > 0 ? "gain-positive" : ""} ${effectChanged ? "effect-change" : ""}`}>
               <MonsterArt monster={monster} />
               <div className="team-candidate-body">
                 <div className="team-candidate-title">
                   <h3>{monster.name}</h3>
-                  <em>{inTeam ? "編成中" : owned ? "所持" : monster.rarity}</em>
+                  <em>{inTeam ? "編成中" : projectedGain > 0 ? "攻撃UP" : effectChanged ? "効果" : "所持"}</em>
                 </div>
                 <small className="stock-code-chip">{monster.ticker} / {monster.companyAlias}</small>
-                <p>{owned ? `${owned.shares}株 / 攻撃力 ${attack.toLocaleString("ja-JP")}` : `${monster.companyAlias} / 未所持`}</p>
+                <p>{owned.shares}株 / 攻撃力 {attack.toLocaleString("ja-JP")}</p>
                 <span>{monster.effect.name} / {monster.dividendType}</span>
                 {owned && !inTeam && (
                   <small className={projectedGain > 0 ? "positive" : ""}>
@@ -1986,10 +2332,10 @@ function TeamPanel({
                 )}
               </div>
               <div className="mini-actions">
-                <button disabled={!owned} onClick={() => onToggle(monster.id)}>
+                <button onClick={() => onToggle(monster.id)}>
                   {actionLabel}
                 </button>
-                <button disabled={!owned} onClick={() => onBuddy(monster.id)}>
+                <button onClick={() => onBuddy(monster.id)}>
                   相棒
                 </button>
               </div>
@@ -2053,12 +2399,30 @@ function DexPanel({
   const lockedCount = allDexRows.filter((row) => row.owned?.locked).length;
   const ignoredAssetCount = companyMonsterAssetDiagnostics.ignoredFiles.length;
   const duplicateAssetCount = companyMonsterAssetDiagnostics.duplicateTickers.length;
+  const buddyMonster = monsterById.get(state.buddyId);
+  const buddyOwned = buddyMonster ? state.owned[buddyMonster.id] : undefined;
+  const buddyAttack = buddyOwned ? getAttackPower(buddyOwned) : 0;
 
   return (
-    <div className="screen-content">
-      <section className="feature-panel pixel-panel">
+    <div className="screen-content dex-screen">
+      <section className="feature-panel pixel-panel dex-hero">
         <h2>株モン図鑑</h2>
         <p>登録済み株モンの所持状況を確認できます。</p>
+        {buddyMonster && (
+          <article className="dex-buddy-card">
+            <MonsterArt monster={buddyMonster} />
+            <div>
+              <span>現在の相棒</span>
+              <strong>{buddyMonster.name}</strong>
+              <p>{buddyMonster.ticker} / {buddyMonster.companyAlias}</p>
+              <small>
+                {buddyOwned
+                  ? `${buddyOwned.shares}株 ・ 攻撃力 ${formatAttackPower(buddyAttack)}`
+                  : "未所持"}
+              </small>
+            </div>
+          </article>
+        )}
         <div className="dex-summary-strip">
           <span>登録 {ownedCount}/{playableMonsters.length}</span>
           <span>画像 {companyMonsterAssetDiagnostics.usableFiles}</span>
@@ -2069,6 +2433,20 @@ function DexPanel({
           <span>対象外 {ignoredAssetCount}</span>
           <span>重複コード {duplicateAssetCount}</span>
           <span>上書き {companyDataOverrideCount}</span>
+        </div>
+        <div className="dex-asset-rule-panel">
+          <span>
+            <b>画像ルール</b>
+            public/monsters/コード-企業名.png / コード 企業名.png
+          </span>
+          <span>
+            <b>自動登録</b>
+            {companyMonsterAssetDiagnostics.usableFiles}体
+          </span>
+          <span className={duplicateAssetCount > 0 ? "negative" : "positive"}>
+            <b>重複コード</b>
+            {duplicateAssetCount}件
+          </span>
         </div>
         <ListTools
           query={query}
@@ -2093,18 +2471,30 @@ function DexPanel({
       </section>
       <section className="dex-list">
         {dexRows.length > 0 ? dexRows.map(({ monster, owned, isBuddy, attack, dropRate }) => {
+          const attackBreakdown = owned ? getAttackPowerBreakdown(owned) : null;
           return (
             <article key={monster.id} className={`dex-row pixel-panel ${owned ? "owned" : "locked-row"} ${isBuddy ? "is-buddy" : ""}`}>
               <MonsterArt monster={monster} />
               <div>
                 <div className="dex-row-title">
-                  <h3>{owned ? monster.name : "????"}</h3>
+                  <h3>{monster.name}</h3>
                   <em>{isBuddy ? "相棒" : owned ? `${owned.shares}株` : monster.rarity}</em>
                 </div>
-                <p className="stock-meta">{monster.ticker} / {monster.companyAlias} / 1株{monster.sharePrice.toLocaleString("ja-JP")}円 / {monster.rarity}</p>
-                <p className="effect-meta">発行株数 {formatIssuedShares(monster.issuedShares)} / {formatCompanyDataSource(monster.dataSource)}</p>
-                <p className="effect-meta">排出 {(dropRate * 100).toFixed(1)}% / 効果: {monster.effect.name}</p>
-                <p className="owned-meta">{owned ? `${owned.shares}株 攻撃力${formatAttackPower(attack)}${owned.locked ? " / ロック中" : ""}` : "未所持"}</p>
+                <div className="dex-metric-grid">
+                  <span><b>コード</b>{monster.ticker}</span>
+                  <span><b>企業</b>{monster.companyAlias}</span>
+                  <span><b>所持</b>{owned ? `${owned.shares}株` : "未所持"}</span>
+                  <span><b>攻撃力</b>{owned ? formatAttackPower(attack) : "-"}</span>
+                </div>
+                <div className="dex-effect-strip" title={monster.effect.description}>
+                  <span>{monster.effect.name}</span>
+                  <span>{monster.dividendType}</span>
+                  <span>{attackBreakdown ? `${attackBreakdown.dividendUnits}単元` : "0単元"}</span>
+                  <span>排出 {(dropRate * 100).toFixed(1)}%</span>
+                </div>
+                <p className="effect-meta">1株{monster.sharePrice.toLocaleString("ja-JP")}円 / 発行 {formatIssuedShares(monster.issuedShares)} / {formatCompanyDataSource(monster.dataSource)}</p>
+                <p className="asset-file-meta">画像: {monster.assetFile}</p>
+                <p className="owned-meta">{owned ? `${owned.locked ? "ロック中 / " : ""}配当ボーナス ${formatAttackPower(attackBreakdown?.dividendBonus ?? 0)}` : "未登録。ガチャは1株入手、マーケットは1株単位で購入できます。"}</p>
               </div>
               <div className="dex-actions">
                 <button disabled={!owned} onClick={() => onBuddy(monster.id)}>相棒</button>
@@ -2193,14 +2583,25 @@ function MarketPanel({
   const operationStatus = getDailyEventStatus(state);
   const operationMissingPower = Math.max(0, operationStatus.enemyAttack - operationStatus.teamPower);
   const operationBoostRows = getPurchaseUpgradeTargets(state, operationStatus);
+  const bestOperationRow = operationBoostRows[0] ?? null;
+  const bestOperationQuantity = bestOperationRow
+    ? operationStatus.won ? 1 : bestOperationRow.sharesNeeded
+    : 0;
+  const bestOperationCost = bestOperationRow
+    ? bestOperationRow.quote.buyPrice * bestOperationQuantity
+    : 0;
+  const bestOperationShortage = Math.max(0, bestOperationCost - state.kabuCoins);
+  const bestOperationUnitPlan = bestOperationRow
+    ? getNextDividendUnitPlan(bestOperationRow.monster, bestOperationRow.owned)
+    : null;
   const operationPanelTitle = operationStatus.won ? "作戦余力を伸ばす" : "作戦勝利まで買い増し";
   const operationPanelDetail = operationStatus.won
     ? `現在は勝利見込み。総合攻撃力の伸びが大きい順に表示しています。`
     : `不足 ${formatAttackPower(operationMissingPower)} を効果込みの総合攻撃力で試算しています。`;
 
   return (
-    <div className="screen-content">
-      <section className="feature-panel pixel-panel">
+    <div className="screen-content market-screen">
+      <section className="feature-panel pixel-panel market-hero">
         <h2>マーケット</h2>
         <p>カブコインで株モンを1株単位で購入できます。配当や配当ブーストは100株ごとに変化します。</p>
         <div className="market-price-note">
@@ -2247,6 +2648,7 @@ function MarketPanel({
       {targetRow && (
         <section className="market-target pixel-panel">
           <FrameCorners />
+          <MonsterArt monster={targetRow.monster} />
           <div>
             <span>{targetRow.affordable ? "次の購入" : "次の目標"}</span>
             <strong>{targetRow.monster.name}</strong>
@@ -2256,13 +2658,53 @@ function MarketPanel({
                 : `あと${formatCompactAmount(targetShortage)}で1株購入できます`}
             </p>
             <div className="market-target-stats">
+              <i>{targetRow.monster.ticker}</i>
               <i>所持 {formatCompactAmount(state.kabuCoins)}</i>
               <i>必要 {formatCompactAmount(targetRow.quote.buyPrice)}</i>
+              <i>100株 {formatAttackPower(targetRow.monster.sharePrice * 100)}</i>
             </div>
           </div>
           <div className="market-target-meter" aria-label="購入資金進捗">
             <span style={{ width: `${targetProgress}%` }} />
           </div>
+        </section>
+      )}
+      {bestOperationRow && bestOperationUnitPlan && (
+        <section className={`market-action-panel pixel-panel ${operationStatus.won ? "won" : "lost"}`}>
+          <div className="market-action-head">
+            <span>{operationStatus.won ? "勝利後の買い増し" : "作戦補強"}</span>
+            <strong>{bestOperationRow.monster.name}</strong>
+            <p>
+              {operationStatus.won
+                ? `1株で総合攻撃力 +${bestOperationRow.oneShareGain.toLocaleString("ja-JP")}`
+                : `${bestOperationQuantity}株で不足 ${formatAttackPower(operationMissingPower)} を補います`}
+            </p>
+          </div>
+          <div className="market-action-metrics">
+            <i>
+              <b>必要</b>
+              {bestOperationQuantity}株
+            </i>
+            <i>
+              <b>費用</b>
+              C{formatCompactAmount(bestOperationCost)}
+            </i>
+            <i className={bestOperationShortage === 0 ? "positive" : "negative"}>
+              <b>{bestOperationShortage === 0 ? "購入可" : "不足"}</b>
+              {bestOperationShortage === 0 ? "OK" : `C${formatCompactAmount(bestOperationShortage)}`}
+            </i>
+          </div>
+          <div className="market-action-unit">
+            <span>{bestOperationRow.owned.shares}株 → {bestOperationRow.owned.shares + bestOperationQuantity}株</span>
+            <small>次単元まで {bestOperationUnitPlan.sharesNeeded}株 / 配当は100株単元</small>
+          </div>
+          <button
+            type="button"
+            disabled={bestOperationShortage > 0}
+            onClick={() => onBuy(bestOperationRow.monster.id, bestOperationQuantity)}
+          >
+            {bestOperationShortage > 0 ? "コイン不足" : `${bestOperationQuantity}株買う`}
+          </button>
         </section>
       )}
       {operationBoostRows.length > 0 && (
@@ -2311,7 +2753,25 @@ function MarketPanel({
             quantity,
             totalPrice: quote.buyPrice * quantity,
             affordable: state.kabuCoins >= quote.buyPrice * quantity,
-            label: quantity === unitPlan.sharesNeeded && ![1, 10, 100].includes(quantity) ? "単元" : `${quantity}株`
+            label: quantity === unitPlan.sharesNeeded && ![1, 10, 100].includes(quantity)
+              ? "次単元"
+              : quantity === 100
+                ? "100株"
+                : `${quantity}株`,
+            note: quantity === 1
+              ? "1株単位"
+              : quantity === 10
+                ? "まとめ"
+                : quantity === 100
+                  ? "100株単元"
+                  : "単元到達",
+            kind: quantity === unitPlan.sharesNeeded && ![1, 10, 100].includes(quantity)
+              ? "unit"
+              : quantity === 100
+                ? "hundred"
+                : quantity === 1
+                  ? "single"
+                  : "bulk"
           }));
           const sellOptions = [1, 10].map((quantity) => ({
             quantity,
@@ -2344,8 +2804,13 @@ function MarketPanel({
                   <i aria-label={`${monster.name}の単元進捗`}>
                     <em style={{ width: `${unitPlan.progress}%` }} />
                   </i>
+                  <div className="market-unit-metrics">
+                    <span>現在 {unitPlan.currentUnits}単元</span>
+                    <span>次 {unitPlan.nextUnits}単元</span>
+                    <span>単元 +{unitPlan.dividendPerUnit}</span>
+                  </div>
                   <small>
-                    単元到達後 攻撃力 {formatAttackPower(unitPlan.projectedAttack)}
+                    到達後 配当+{unitPlan.projectedDividend} / 攻撃力 {formatAttackPower(unitPlan.projectedAttack)}
                   </small>
                 </div>
                 <div className="market-quote">
@@ -2368,15 +2833,21 @@ function MarketPanel({
                 <small title={`基準 ${quote.basePrice.toLocaleString("ja-JP")}コイン`}>
                   1株 / 基準 {formatCompactAmount(quote.basePrice)}
                 </small>
+                <div className="market-buy-rule">
+                  <span>購入は1株単位</span>
+                  <span>配当は100株単元</span>
+                </div>
                 <div className="market-buy-options" aria-label={`${monster.name}の購入数`}>
                   {buyOptions.map((option) => (
                     <button
                       key={option.quantity}
+                      className={`buy-option-${option.kind}`}
                       disabled={!option.affordable}
                       title={`${option.quantity}株 ${option.totalPrice.toLocaleString("ja-JP")}コイン`}
                       onClick={() => onBuy(monster.id, option.quantity)}
                     >
                       {option.label}
+                      <b>{option.note}</b>
                       <small>{formatCompactAmount(option.totalPrice)}</small>
                     </button>
                   ))}
@@ -2403,9 +2874,9 @@ function MarketPanel({
         }) : <EmptyListNotice label="条件に合う銘柄がありません" />}
       </section>
       <section className="feature-panel pixel-panel">
-        <h2>データ管理</h2>
-        <p>試作中の確認用に、localStorageのセーブデータを初期状態へ戻せます。</p>
-        <button className="danger-button full" onClick={onReset}>セーブ初期化</button>
+        <h2>セーブ管理</h2>
+        <p>現在のプレイデータを初期状態へ戻せます。</p>
+        <button className="danger-button full" onClick={onReset}>初期化</button>
       </section>
       <LegalNotice />
     </div>
@@ -2424,8 +2895,8 @@ function DailyInfoPanel({ state }: { state: GameState }) {
         <p>{knowledge}</p>
       </div>
       <div>
-        <strong>データ状態</strong>
-        <p>企業画像 {companyMonsterAssetDiagnostics.usableFiles}件 / 保存形式 v{SAVE_VERSION}</p>
+        <strong>運用データ</strong>
+        <p>企業画像 {companyMonsterAssetDiagnostics.usableFiles}件 / 調整データ {companyDataOverrideCount}件 / セーブ形式 {SAVE_VERSION}</p>
       </div>
       <div>
         <strong>画像チェック</strong>
@@ -2436,7 +2907,7 @@ function DailyInfoPanel({ state }: { state: GameState }) {
         <p>{marketSourceLabels[state.currentMarket.source]} / {state.currentMarket.note}</p>
       </div>
       <div>
-        <strong>v0.2バランス</strong>
+        <strong>ゲームバランス</strong>
         <p>ガチャ {balance.gachaCost.toLocaleString("ja-JP")}C / 育成 {balance.trainCost}D / 放置上限 {balance.offlineMaxHours}時間</p>
       </div>
     </section>
@@ -2501,11 +2972,11 @@ function MonsterMiniCard({
         <div className="gacha-card-meta">
           {typeof dropRate === "number" && <span>排出 {(dropRate * 100).toFixed(1)}%</span>}
           <span>発行 {formatIssuedShares(monster.issuedShares)}</span>
-          {typeof dropWeight === "number" && <span>補正 x{dropWeight.toFixed(1)}</span>}
+          {typeof dropWeight === "number" && <span>発行補正 x{dropWeight.toFixed(1)}</span>}
           <span>{formatCompanyDataSource(monster.dataSource)}</span>
           <span>{monster.dividendType}</span>
         </div>
-        <strong>{owned ? `攻撃力 ${getAttackPower(owned).toLocaleString("ja-JP")}` : `購入時 ${attackPerShare.toLocaleString("ja-JP")}`}</strong>
+        <strong>{owned ? `攻撃力 ${getAttackPower(owned).toLocaleString("ja-JP")}` : `入手時 ${attackPerShare.toLocaleString("ja-JP")}`}</strong>
       </div>
     </article>
   );
@@ -2546,6 +3017,10 @@ function getNextDividendUnitPlan(monster: MonsterMaster, owned: GameState["owned
   return {
     targetShares,
     sharesNeeded,
+    currentUnits: Math.floor(currentShares / 100),
+    nextUnits: Math.floor(projectedShares / 100),
+    dividendPerUnit: baseDividendPerUnit[monster.dividendType],
+    projectedDividend: Math.floor(baseDividendPerUnit[monster.dividendType] * Math.floor(projectedShares / 100)),
     progress: Math.min(100, Math.round((currentShares / targetShares) * 100)),
     projectedAttack: getAttackPower(projectedOwned)
   };
@@ -2597,23 +3072,38 @@ function getCompanyDataSourceCounts(monsterList: MonsterMaster[]) {
 
 function MonsterArt({ monster, large = false }: { monster: MonsterMaster; large?: boolean }) {
   const [failed, setFailed] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
   const showPlaceholder = !monster.assetReady || failed;
+  const imageSource = useFallback && monster.fallbackImage
+    ? monster.fallbackImage
+    : large ? monster.image : monster.icon;
+
+  useEffect(() => {
+    setFailed(false);
+    setUseFallback(false);
+  }, [monster.id]);
 
   return (
     <div className={`monster-art ${large ? "large" : ""} ${showPlaceholder ? "placeholder-art" : ""} monster-${monster.id}`}>
       {!showPlaceholder && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={large ? monster.image : monster.icon}
+          src={imageSource}
           alt={monster.name}
           loading={large ? "eager" : "lazy"}
           decoding="async"
           fetchPriority={large ? "high" : "auto"}
-          onError={() => setFailed(true)}
+          onError={() => {
+            if (!useFallback && monster.fallbackImage) {
+              setUseFallback(true);
+              return;
+            }
+            setFailed(true);
+          }}
         />
       )}
       {showPlaceholder && (
-        <div className="placeholder-creature" aria-label={`${monster.name}の仮画像`}>
+        <div className="placeholder-creature" aria-label={`${monster.name}の画像未登録`}>
           <i />
           <span>{monster.name.slice(0, 2)}</span>
           <small>準備中</small>
@@ -2669,8 +3159,9 @@ function ResultTile({ kind, label, value }: { kind?: string; label: string; valu
   );
 }
 
-function LogList({ state, compact = false }: { state: GameState; compact?: boolean }) {
-  const logs = compact ? state.logs.slice(0, 2) : state.logs.slice(0, 8);
+function LogList({ state, compact = false, limit }: { state: GameState; compact?: boolean; limit?: number }) {
+  const displayLimit = limit ?? (compact ? 2 : 8);
+  const logs = state.logs.slice(0, displayLimit);
   return (
     <section className="log-list">
       {logs.map((log) => <LogEntry key={log.id} log={log} framed />)}

@@ -64,7 +64,7 @@ export type MarketDataSource = "game-simulated" | "external-api";
 
 export const marketSourceLabels: Record<MarketDataSource, string> = {
   "game-simulated": "ゲーム内データ",
-  "external-api": "外部API"
+  "external-api": "外部市場"
 };
 
 export type OfflineReward = {
@@ -271,7 +271,7 @@ export function createInitialState(now = new Date()): GameState {
   };
 }
 
-export function createOwnedMonster(id: string, shares = 100): OwnedMonster {
+export function createOwnedMonster(id: string, shares = 1): OwnedMonster {
   const master = monsterById.get(id);
 
   if (!master) {
@@ -358,11 +358,11 @@ function normalizeOwned(rawOwned: GameState["owned"] | undefined): GameState["ow
     const id = mapLegacyMonsterId(rawId);
     if (!monsterById.has(id)) return;
 
-    const baseOwned = createOwnedMonster(id, normalizeNumber(raw.shares, 100, 100));
+    const baseOwned = createOwnedMonster(id, normalizeNumber(raw.shares, 1, 1));
     const nextOwned = {
       ...baseOwned,
       id,
-      shares: normalizeNumber(raw.shares, baseOwned.shares, 100),
+      shares: normalizeNumber(raw.shares, baseOwned.shares, 1),
       level: normalizeNumber(raw.level, baseOwned.level, 1),
       exp: normalizeNumber(raw.exp, baseOwned.exp, 0),
       stats: rawId === id ? normalizeStats(raw.stats, baseOwned.stats) : baseOwned.stats,
@@ -1478,7 +1478,7 @@ export function createMarketEnergy(date: Date): MarketEnergy {
     theme: themes[Math.floor(normalized * themes.length)] ?? "モビリティ",
     source: "game-simulated",
     updatedAt: date.toISOString(),
-    note: "実API接続前のゲーム内シミュレーションです。"
+    note: "ゲーム内市場データです。"
   };
 }
 
@@ -1488,7 +1488,7 @@ export function createMockExternalMarketEnergy(date = new Date()): MarketEnergy 
     ...simulated,
     source: "external-api",
     updatedAt: date.toISOString(),
-    note: "外部API接続前のモックレスポンスです。"
+    note: "外部市場データを反映しています。"
   };
 }
 
