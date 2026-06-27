@@ -12,10 +12,11 @@ import {
   type GameState,
   type MarketEnergy
 } from "@/lib/game";
+import { AppIcon, type AppIconName } from "@/components/layout/AppIcon";
 import { monsterById, type MonsterMaster } from "@/lib/monsters";
 import { withBasePath } from "@/lib/paths";
 
-type HomeNavigationTarget = "event" | "dex" | "policy" | "team";
+type HomeNavigationTarget = "event" | "dex" | "market" | "policy" | "team";
 
 type HomeTeamSlot = {
   id: string;
@@ -129,6 +130,7 @@ export function HomePanel({
         </section>
       )}
 
+      <HomeQuickActions onNavigate={onNavigate} />
     </div>
   );
 }
@@ -318,6 +320,36 @@ function HomeTeamOverview({
         </div>
       </div>
     </section>
+  );
+}
+
+function HomeQuickActions({
+  onNavigate
+}: {
+  onNavigate: (tab: HomeNavigationTarget) => void;
+}) {
+  const items: { label: string; icon: AppIconName; target: HomeNavigationTarget; alert?: boolean }[] = [
+    { label: "ログインボーナス", icon: "calendar", target: "event" },
+    { label: "ミッション", icon: "mission", target: "event", alert: true },
+    { label: "市場イベント", icon: "market", target: "market", alert: true },
+    { label: "株モン図鑑", icon: "dex", target: "dex" },
+    { label: "お知らせ", icon: "megaphone", target: "policy" }
+  ];
+
+  return (
+    <nav className="home-quick-grid" aria-label="ホームメニュー">
+      {items.map((item) => (
+        <button
+          key={item.label}
+          type="button"
+          className={item.alert ? "has-alert" : ""}
+          onClick={() => onNavigate(item.target)}
+        >
+          <AppIcon name={item.icon} />
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </nav>
   );
 }
 

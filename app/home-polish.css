@@ -2,10 +2,10 @@
 
 :root {
   --bottom-nav-height: 70px;
-  --home-gap: 7px;
-  --home-monster-height: 282px;
-  --home-market-height: 84px;
-  --home-team-height: 194px;
+  --home-gap: 6px;
+  --home-monster-height: 276px;
+  --home-market-height: 80px;
+  --home-team-height: 190px;
   --home-cyan: #35d8ff;
   --home-gold: #ffd56a;
   --home-panel-bg: rgba(3, 14, 36, 0.96);
@@ -190,7 +190,8 @@
 /* Shared home panel frame */
 .home-monster-card,
 .home-market-panel,
-.home-team-effect {
+.home-team-effect,
+.home-quick-grid {
   border: 1px solid var(--home-frame-line);
   border-radius: 0;
   background:
@@ -209,7 +210,8 @@
 
 .home-monster-card::before,
 .home-market-panel::before,
-.home-team-effect::before {
+.home-team-effect::before,
+.home-quick-grid::before {
   border-top-color: var(--home-corner-cyan);
   border-left-color: var(--home-corner-cyan);
   filter: drop-shadow(0 0 5px rgba(53, 205, 255, 0.42));
@@ -217,7 +219,8 @@
 
 .home-monster-card::after,
 .home-market-panel::after,
-.home-team-effect::after {
+.home-team-effect::after,
+.home-quick-grid::after {
   border-right-color: var(--home-corner-gold);
   border-bottom-color: var(--home-corner-gold);
   filter: drop-shadow(0 0 5px rgba(255, 205, 82, 0.28));
@@ -1019,6 +1022,101 @@
   font-size: 18px;
 }
 
+/* Home quick menu */
+.home-quick-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  min-height: 66px;
+  gap: 6px;
+  padding: 7px 8px;
+  background:
+    radial-gradient(ellipse at 16% 18%, rgba(60, 204, 255, 0.13), transparent 36%),
+    linear-gradient(180deg, rgba(7, 31, 72, 0.94), rgba(2, 9, 25, 0.98));
+}
+
+.home-quick-grid button {
+  position: relative;
+  display: grid;
+  grid-template-rows: 28px minmax(13px, auto);
+  place-items: center;
+  min-width: 0;
+  min-height: 50px;
+  gap: 2px;
+  padding: 4px 3px;
+  overflow: hidden;
+  border: 1px solid rgba(53, 184, 255, 0.5);
+  border-radius: 0;
+  color: #e9f7ff;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(79, 190, 255, 0.16), transparent 60%),
+    linear-gradient(180deg, rgba(8, 39, 86, 0.78), rgba(2, 10, 28, 0.96));
+  box-shadow:
+    inset 0 0 0 2px rgba(4, 16, 40, 0.82),
+    inset 0 0 10px rgba(56, 187, 255, 0.12);
+}
+
+.home-quick-grid button::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  width: 9px;
+  height: 9px;
+  border-left: 2px solid rgba(91, 219, 255, 0.62);
+  border-top: 2px solid rgba(91, 219, 255, 0.62);
+}
+
+.home-quick-grid button::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid rgba(255, 215, 94, 0.6);
+  border-bottom: 2px solid rgba(255, 215, 94, 0.6);
+}
+
+.home-quick-grid button.has-alert {
+  border-color: rgba(72, 214, 255, 0.72);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(76, 226, 136, 0.18), transparent 58%),
+    linear-gradient(180deg, rgba(12, 83, 67, 0.74), rgba(3, 28, 38, 0.96));
+}
+
+.home-quick-grid button.has-alert::after {
+  border-right-color: rgba(255, 215, 94, 0.9);
+  border-bottom-color: rgba(255, 215, 94, 0.9);
+}
+
+.home-quick-grid .app-icon {
+  width: 25px;
+  height: 25px;
+  color: #f3fbff;
+  stroke-width: 2.35;
+  filter:
+    drop-shadow(0 2px 0 rgba(0, 0, 0, 0.84))
+    drop-shadow(0 0 6px rgba(85, 203, 255, 0.34));
+}
+
+.home-quick-grid button.has-alert .app-icon {
+  color: #ffffff;
+}
+
+.home-quick-grid span {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: #eaf6ff;
+  font-size: clamp(7px, 2.2vw, 8.5px);
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.86);
+  white-space: nowrap;
+}
+
 .app-icon-accent {
   stroke: #62d5ff;
 }
@@ -1184,9 +1282,9 @@
   :root {
     --bottom-nav-height: 68px;
     --home-gap: 6px;
-    --home-monster-height: 264px;
-    --home-market-height: 76px;
-    --home-team-height: 178px;
+    --home-monster-height: 258px;
+    --home-market-height: 74px;
+    --home-team-height: 176px;
   }
 
   .phone-frame {
@@ -1450,6 +1548,27 @@
     min-width: 88px;
     min-height: 31px;
     font-size: 9.4px;
+  }
+
+  .home-quick-grid {
+    min-height: 62px;
+    gap: 5px;
+    padding: 6px 7px;
+  }
+
+  .home-quick-grid button {
+    grid-template-rows: 25px minmax(13px, auto);
+    min-height: 48px;
+    padding-inline: 2px;
+  }
+
+  .home-quick-grid .app-icon {
+    width: 23px;
+    height: 23px;
+  }
+
+  .home-quick-grid span {
+    font-size: clamp(6.8px, 2.25vw, 8px);
   }
 
   .bottom-nav {
