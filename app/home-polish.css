@@ -325,13 +325,13 @@
 }
 
 .home-monster-card .monster-art.large img {
-  width: 101%;
-  max-width: 101%;
-  height: 97%;
-  max-height: 97%;
+  width: 104%;
+  max-width: 104%;
+  height: 100%;
+  max-height: 100%;
   object-fit: contain;
-  object-position: 50% 54%;
-  transform: translateY(1.5%) scale(0.97);
+  object-position: 50% 53%;
+  transform: translateY(0.5%) scale(0.99);
   filter:
     drop-shadow(0 4px 0 rgba(0, 0, 0, 0.52))
     drop-shadow(0 0 13px rgba(62, 197, 255, 0.2));
@@ -845,7 +845,7 @@
 .home-team-cards article {
   position: relative;
   display: grid;
-  grid-template-rows: 48px 22px;
+  grid-template-rows: 50px 20px;
   height: 78px;
   min-width: 0;
   padding: 4px;
@@ -888,35 +888,39 @@
   display: grid;
   place-items: center;
   width: 100%;
-  height: 48px;
+  height: 50px;
   overflow: hidden;
+  isolation: isolate;
 }
 
 .home-team-cards .monster-art img {
   display: block !important;
-  width: 260% !important;
-  max-width: 260% !important;
-  height: 260% !important;
-  max-height: 260% !important;
+  width: 252% !important;
+  max-width: 252% !important;
+  height: 252% !important;
+  max-height: 252% !important;
   object-fit: contain !important;
-  object-position: 50% 54% !important;
-  transform: translateY(18%) scale(1.18) !important;
+  object-position: 50% 55% !important;
+  transform: translateY(15%) scale(1.14) !important;
   filter:
     drop-shadow(0 2px 0 rgba(0, 0, 0, 0.62))
     drop-shadow(0 0 8px rgba(70, 190, 255, 0.2));
 }
 
 .home-team-cards article div {
+  position: relative;
+  z-index: 2;
   display: grid;
-  grid-template-rows: 11px 9px;
+  grid-template-rows: 10px 8px;
   align-content: center;
   min-width: 0;
-  min-height: 22px;
+  min-height: 20px;
   margin-inline: -2px;
   padding: 2px 3px 1px;
+  border-top: 1px solid rgba(86, 204, 255, 0.28);
   background:
     linear-gradient(90deg, transparent, rgba(18, 82, 145, 0.58), transparent),
-    rgba(2, 10, 28, 0.62);
+    linear-gradient(180deg, rgba(6, 27, 65, 0.88), rgba(2, 8, 24, 0.94));
   text-align: center;
 }
 
@@ -945,7 +949,7 @@
   overflow: hidden;
   gap: 2px;
   color: #ffe188;
-  font-size: 7.2px;
+  font-size: 7px;
   line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1048,10 +1052,10 @@
   position: relative;
   min-width: 0;
   min-height: 58px;
-  grid-template-rows: 30px 16px;
+  grid-template-rows: 29px 17px;
   align-content: center;
   gap: 2px;
-  padding: 5px 3px;
+  padding: 5px 3px 4px;
   border: 1px solid rgba(48, 145, 230, 0.5);
   border-radius: 0;
   background:
@@ -1061,7 +1065,7 @@
     inset 0 0 0 2px var(--home-button-inner),
     inset 0 0 12px rgba(52, 170, 255, 0.1),
     0 0 5px rgba(21, 119, 223, 0.12);
-  opacity: 0.82;
+  opacity: 0.88;
 }
 
 .bottom-nav button::before {
@@ -1124,8 +1128,8 @@
 }
 
 .bottom-nav .app-icon {
-  width: 29px;
-  height: 29px;
+  width: 28px;
+  height: 28px;
   align-self: center;
   justify-self: center;
   color: #b8d8ed;
@@ -1136,8 +1140,8 @@
 }
 
 .bottom-nav button.active .app-icon {
-  width: 31px;
-  height: 31px;
+  width: 29px;
+  height: 29px;
   color: #ffffff;
   filter:
     drop-shadow(0 2px 0 rgba(0, 0, 0, 0.86))
@@ -1149,7 +1153,7 @@
   min-height: 16px;
   overflow: hidden;
   color: #b8d8ed;
-  font-size: clamp(8.6px, 2.72vw, 10.8px);
+  font-size: clamp(8.4px, 2.65vw, 10.4px);
   line-height: 16px;
   text-align: center;
   text-overflow: ellipsis;
@@ -1252,10 +1256,11 @@
   }
 
   .home-monster-card .monster-art.large img {
-    width: 98%;
-    max-width: 98%;
-    height: 96%;
-    max-height: 96%;
+    width: 101%;
+    max-width: 101%;
+    height: 98%;
+    max-height: 98%;
+    object-position: 50% 53%;
   }
 
   .home-monster-card .monster-info,
@@ -1393,21 +1398,21 @@
   }
 
   .home-team-cards article {
-    grid-template-rows: 44px 21px;
+    grid-template-rows: 46px 19px;
     height: 73px;
     padding: 4px;
   }
 
   .home-team-cards .monster-art {
-    height: 44px;
+    height: 46px;
   }
 
   .home-team-cards .monster-art img {
-    width: 245% !important;
-    max-width: 245% !important;
-    height: 245% !important;
-    max-height: 245% !important;
-    transform: translateY(17%) scale(1.16) !important;
+    width: 238% !important;
+    max-width: 238% !important;
+    height: 238% !important;
+    max-height: 238% !important;
+    transform: translateY(15%) scale(1.13) !important;
   }
 
   .home-team-cards b {

@@ -106,11 +106,58 @@
 .market-action-panel,
 .market-operation-panel,
 .dex-row {
+  position: relative;
+  overflow: hidden;
   border-radius: 0;
   border-color: rgba(53, 163, 240, 0.58);
   background:
     radial-gradient(ellipse at 50% 0%, rgba(56, 194, 255, 0.12), transparent 50%),
     linear-gradient(180deg, rgba(5, 27, 65, 0.94), rgba(2, 9, 25, 0.98));
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 13, 34, 0.78),
+    inset 0 0 14px rgba(49, 187, 255, 0.1);
+}
+
+.gacha-focus-card::before,
+.team-slot-card::before,
+.team-candidate-card::before,
+.team-recommend-list article::before,
+.team-recipe-list article::before,
+.market-row::before,
+.market-target::before,
+.market-action-panel::before,
+.market-operation-panel::before,
+.dex-row::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-left: 2px solid rgba(91, 219, 255, 0.45);
+  border-top: 2px solid rgba(91, 219, 255, 0.45);
+  pointer-events: none;
+}
+
+.gacha-focus-card::after,
+.team-slot-card::after,
+.team-candidate-card::after,
+.team-recommend-list article::after,
+.team-recipe-list article::after,
+.market-row::after,
+.market-target::after,
+.market-action-panel::after,
+.market-operation-panel::after,
+.dex-row::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid rgba(255, 215, 94, 0.42);
+  border-bottom: 2px solid rgba(255, 215, 94, 0.42);
+  pointer-events: none;
 }
 
 .gacha-focus-card .monster-art,
@@ -121,9 +168,13 @@
 .market-target .monster-art,
 .dex-row .monster-art {
   border-radius: 0;
+  border: 1px solid rgba(70, 181, 255, 0.24);
   background:
     radial-gradient(ellipse at 50% 84%, rgba(44, 189, 255, 0.22), transparent 48%),
-    rgba(1, 8, 24, 0.72);
+    linear-gradient(180deg, rgba(7, 32, 74, 0.72), rgba(1, 8, 24, 0.9));
+  box-shadow:
+    inset 0 0 0 1px rgba(2, 10, 27, 0.84),
+    inset 0 0 12px rgba(53, 191, 255, 0.1);
 }
 
 .market-screen .market-target {
@@ -191,8 +242,8 @@
 }
 
 .gacha-screen .gacha-card .monster-art img {
-  width: 96%;
-  height: 96%;
+  width: 104%;
+  height: 104%;
   object-fit: contain;
   object-position: 50% 52%;
   transform: none;
@@ -239,14 +290,14 @@
 }
 
 .team-screen .team-slot-card {
-  min-height: 124px;
-  grid-template-rows: 58px minmax(0, 1fr);
+  min-height: 128px;
+  grid-template-rows: 64px minmax(0, 1fr);
   padding: 7px;
 }
 
 .team-screen .team-slot-card .monster-art {
-  width: 58px;
-  height: 58px;
+  width: 64px;
+  height: 64px;
   justify-self: center;
 }
 
@@ -273,6 +324,16 @@
   height: 62px;
 }
 
+.team-screen .team-slot-card .monster-art img,
+.team-screen .team-candidate-card .monster-art img,
+.market-screen .market-row .monster-art img,
+.dex-screen .dex-row .monster-art img {
+  width: 104%;
+  height: 104%;
+  object-fit: contain;
+  object-position: 50% 53%;
+}
+
 .team-screen .team-candidate-card .mini-actions {
   display: grid;
   gap: 5px;
@@ -296,9 +357,6 @@
 }
 
 .market-screen .market-row .monster-art img {
-  width: 96%;
-  height: 96%;
-  object-fit: contain;
   transform: none;
 }
 
