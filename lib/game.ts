@@ -31,9 +31,13 @@ export type GrowthLog = {
 export type GameState = {
   saveVersion: number;
   playerName: string;
+  accountProfile: AccountProfile;
   traderLevel: number;
   traderExp: number;
   gachaTickets: number;
+  userBattleTickets: number;
+  userBattleDate: string | null;
+  userBattleCountToday: number;
   kabuCoins: number;
   dividendCoins: number;
   owned: Record<string, OwnedMonster>;
@@ -43,10 +47,17 @@ export type GameState = {
   dailyCheckinDate: string | null;
   loginStreak: number;
   dailyCheckinCount: number;
+  dailyTaskDate: string | null;
+  claimedDailyTaskIds: string[];
+  weeklyTaskKey: string | null;
+  claimedWeeklyTaskIds: string[];
+  weeklyStats: WeeklyStats;
   dailyEventDate: string | null;
   eventCount: number;
+  battleSnapshotPublishCount: number;
   currentMarket: MarketEnergy;
   logs: GrowthLog[];
+  battleHistory: BattleHistoryEntry[];
   offlinePending: OfflineReward | null;
   claimedMissionIds: string[];
 };
@@ -58,6 +69,17 @@ export type MarketEnergy = {
   source: MarketDataSource;
   updatedAt: string;
   note: string;
+};
+
+export type AccountProvider = "guest" | "google" | "email";
+
+export type AccountProfile = {
+  guestId: string;
+  displayName: string;
+  provider: AccountProvider;
+  cloudStatus: "local" | "ready" | "linked";
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type MarketDataSource = "game-simulated" | "external-api";
@@ -108,6 +130,109 @@ export type DailyEventResult = {
   ok: boolean;
   message: string;
   status: DailyEventStatus;
+};
+
+export type BattlePreview = {
+  mode: "cpu";
+  title: string;
+  opponentType: "computer";
+  playerName: string;
+  opponentName: string;
+  playerBaseAttack: number;
+  playerTotalAttack: number;
+  playerBonusName: string;
+  playerBonusMultiplier: number;
+  opponentBaseAttack: number;
+  opponentTotalAttack: number;
+  opponentBonusName: string;
+  opponentBonusMultiplier: number;
+  difference: number;
+  won: boolean;
+  reward: {
+    kabuCoins: number;
+    dividendCoins: number;
+    exp: number;
+  };
+  status: DailyEventStatus;
+};
+
+export type BattleHistoryEntry = {
+  id: string;
+  date: string;
+  mode: "cpu" | "user";
+  opponentName: string;
+  playerAttack: number;
+  opponentAttack: number;
+  won: boolean;
+  rank: DailyEventStatus["rank"];
+  kabuCoins: number;
+  dividendCoins: number;
+  exp: number;
+  gachaTickets: number;
+};
+
+export type UserBattlePreview = {
+  mode: "user";
+  source: "saved" | "generated";
+  opponentCode: string;
+  opponentName: string;
+  playerName: string;
+  playerAttack: number;
+  opponentAttack: number;
+  opponentMembers: CpuTeamMember[];
+  opponentBonusName: string;
+  opponentBonusMultiplier: number;
+  difference: number;
+  won: boolean;
+  rank: DailyEventStatus["rank"];
+  reward: {
+    kabuCoins: number;
+    dividendCoins: number;
+    exp: number;
+    gachaTickets: number;
+    label: string;
+    policyLabel: string;
+    dailyMultiplier: number;
+  };
+};
+
+export type UserBattleResult = {
+  state: GameState;
+  ok: boolean;
+  message: string;
+  preview: UserBattlePreview | null;
+};
+
+export type UserBattleTicketStatus = {
+  todayKey: string;
+  tickets: number;
+  countToday: number;
+  dailyRefill: number;
+  maxTickets: number;
+  canBattle: boolean;
+};
+
+export type TeamSnapshotMember = {
+  id: string;
+  name: string;
+  ticker: string;
+  shares: number;
+  attack: number;
+  effectName: string;
+};
+
+export type TeamBattleSnapshot = {
+  snapshotId: string;
+  syncCode: string;
+  ownerGuestId: string;
+  ownerName: string;
+  createdAt: string;
+  traderLevel: number;
+  teamBonusName: string;
+  teamBonusMultiplier: number;
+  baseAttack: number;
+  totalAttack: number;
+  members: TeamSnapshotMember[];
 };
 
 export type TrainResult = {
@@ -161,6 +286,7 @@ export type CpuTeamMember = {
 export type MissionReward = {
   kabuCoins: number;
   dividendCoins: number;
+  gachaTickets?: number;
 };
 
 export type Mission = {
@@ -174,6 +300,18 @@ export type Mission = {
   reward: MissionReward;
 };
 
+export type DailyTask = Mission;
+export type WeeklyTask = Mission;
+
+export type WeeklyStats = {
+  checkins: number;
+  offlineClaims: number;
+  marketRefreshes: number;
+  cpuBattles: number;
+  userBattles: number;
+  dailyTaskClaims: number;
+};
+
 export type MarketQuote = {
   basePrice: number;
   buyPrice: number;
@@ -185,7 +323,7 @@ export type MarketQuote = {
 };
 
 export const STORAGE_KEY = "kabumon:v0.1";
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 11;
 
 export const balance = {
   gachaCost: 50000,
@@ -200,8 +338,11 @@ export const balance = {
   dailyStreakKabuBonus: 900,
   dailyStreakDividendBonus: 12,
   eventTargetScore: 820,
+  userBattleDailyTickets: 3,
+  userBattleMaxTickets: 6,
   logLimit: 30,
-  visibleLogLimit: 20
+  visibleLogLimit: 20,
+  battleHistoryLimit: 30
 };
 
 export const marketPrices: Record<Rarity, number> = {
@@ -235,13 +376,18 @@ export function createInitialState(now = new Date()): GameState {
   const starterOwned = Object.fromEntries(
     starterTeamIds.map((id) => [id, createOwnedMonster(id, 100)])
   );
+  const playerName = "トレーダーくん";
 
   return {
     saveVersion: SAVE_VERSION,
-    playerName: "トレーダーくん",
+    playerName,
+    accountProfile: createGuestAccountProfile(playerName, now),
     traderLevel: 1,
     traderExp: 0,
     gachaTickets: 0,
+    userBattleTickets: balance.userBattleDailyTickets,
+    userBattleDate: getLocalDateKey(now),
+    userBattleCountToday: 0,
     kabuCoins: 80000,
     dividendCoins: 240,
     owned: starterOwned,
@@ -251,10 +397,17 @@ export function createInitialState(now = new Date()): GameState {
     dailyCheckinDate: null,
     loginStreak: 0,
     dailyCheckinCount: 0,
+    dailyTaskDate: null,
+    claimedDailyTaskIds: [],
+    weeklyTaskKey: null,
+    claimedWeeklyTaskIds: [],
+    weeklyStats: createEmptyWeeklyStats(),
     dailyEventDate: null,
     eventCount: 0,
+    battleSnapshotPublishCount: 0,
     currentMarket: createMarketEnergy(now),
     claimedMissionIds: [],
+    battleHistory: [],
     logs: [
       {
         id: cryptoId(),
@@ -305,7 +458,11 @@ export function serializeState(state: GameState): string {
     ...state,
     saveVersion: SAVE_VERSION,
     logs: state.logs.slice(0, balance.logLimit),
-    claimedMissionIds: uniqueStrings(state.claimedMissionIds)
+    battleHistory: state.battleHistory.slice(0, balance.battleHistoryLimit),
+    claimedMissionIds: uniqueStrings(state.claimedMissionIds),
+    claimedDailyTaskIds: uniqueStrings(state.claimedDailyTaskIds),
+    claimedWeeklyTaskIds: uniqueStrings(state.claimedWeeklyTaskIds),
+    weeklyStats: state.weeklyStats
   });
 }
 
@@ -320,17 +477,36 @@ function migrateState(parsed: Partial<GameState>, now: Date): GameState {
   const buddyId = migratedBuddyId && normalizedOwned[migratedBuddyId]
     ? migratedBuddyId
     : team[0] ?? starterTeamIds[0] ?? monsters[0].id;
+  const playerName = typeof parsed.playerName === "string" && parsed.playerName.trim()
+    ? normalizePlayerName(parsed.playerName)
+    : base.playerName;
+  const accountProfile = normalizeAccountProfile(parsed.accountProfile, playerName, now);
+  const todayKey = getLocalDateKey(now);
+  const dailyTaskDate = typeof parsed.dailyTaskDate === "string" ? parsed.dailyTaskDate : null;
+  const currentWeekKey = getLocalWeekKey(now);
+  const weeklyTaskKey = typeof parsed.weeklyTaskKey === "string" ? parsed.weeklyTaskKey : null;
+  const userBattleDate = typeof parsed.userBattleDate === "string" ? parsed.userBattleDate : todayKey;
+  const sameUserBattleDate = userBattleDate === todayKey;
+  const storedUserBattleTickets = normalizeNumber(
+    parsed.userBattleTickets,
+    balance.userBattleDailyTickets,
+    0
+  );
 
   return {
     ...base,
     ...parsed,
     saveVersion: SAVE_VERSION,
-    playerName: typeof parsed.playerName === "string" && parsed.playerName.trim()
-      ? parsed.playerName
-      : base.playerName,
+    playerName: accountProfile.displayName,
+    accountProfile,
     traderLevel: normalizeNumber(parsed.traderLevel, base.traderLevel, 1),
     traderExp: normalizeNumber(parsed.traderExp, base.traderExp, 0),
     gachaTickets: normalizeNumber(parsed.gachaTickets, base.gachaTickets, 0),
+    userBattleTickets: sameUserBattleDate
+      ? Math.min(balance.userBattleMaxTickets, storedUserBattleTickets)
+      : Math.min(balance.userBattleMaxTickets, storedUserBattleTickets + balance.userBattleDailyTickets),
+    userBattleDate: todayKey,
+    userBattleCountToday: sameUserBattleDate ? normalizeNumber(parsed.userBattleCountToday, 0, 0) : 0,
     kabuCoins: normalizeNumber(parsed.kabuCoins, base.kabuCoins, 0) + marketRebalanceGrant,
     dividendCoins: normalizeNumber(parsed.dividendCoins, base.dividendCoins, 0),
     owned: normalizedOwned,
@@ -340,10 +516,17 @@ function migrateState(parsed: Partial<GameState>, now: Date): GameState {
     dailyCheckinDate: typeof parsed.dailyCheckinDate === "string" ? parsed.dailyCheckinDate : null,
     loginStreak: normalizeNumber(parsed.loginStreak, 0, 0),
     dailyCheckinCount: normalizeNumber(parsed.dailyCheckinCount, 0, 0),
+    dailyTaskDate,
+    claimedDailyTaskIds: dailyTaskDate === todayKey ? uniqueStrings(parsed.claimedDailyTaskIds) : [],
+    weeklyTaskKey,
+    claimedWeeklyTaskIds: weeklyTaskKey === currentWeekKey ? uniqueStrings(parsed.claimedWeeklyTaskIds) : [],
+    weeklyStats: weeklyTaskKey === currentWeekKey ? normalizeWeeklyStats(parsed.weeklyStats) : createEmptyWeeklyStats(),
     dailyEventDate: typeof parsed.dailyEventDate === "string" ? parsed.dailyEventDate : null,
     eventCount: normalizeNumber(parsed.eventCount, 0, 0),
+    battleSnapshotPublishCount: normalizeNumber(parsed.battleSnapshotPublishCount, 0, 0),
     currentMarket: normalizeMarketEnergy(parsed.currentMarket, now),
     logs: normalizeLogs(parsed.logs, base.logs),
+    battleHistory: normalizeBattleHistory(parsed.battleHistory),
     offlinePending: null,
     claimedMissionIds: uniqueStrings(parsed.claimedMissionIds)
   };
@@ -442,6 +625,52 @@ function normalizeStats(rawStats: MonsterStats | undefined, fallback: MonsterSta
   };
 }
 
+function createGuestAccountProfile(displayName: string, now = new Date()): AccountProfile {
+  const date = now.toISOString();
+  return {
+    guestId: `guest-${cryptoId()}`,
+    displayName: normalizePlayerName(displayName),
+    provider: "guest",
+    cloudStatus: "local",
+    createdAt: date,
+    updatedAt: date
+  };
+}
+
+function normalizeAccountProfile(
+  rawProfile: AccountProfile | undefined,
+  fallbackName: string,
+  now = new Date()
+): AccountProfile {
+  const base = createGuestAccountProfile(fallbackName, now);
+  if (!rawProfile || typeof rawProfile !== "object") return base;
+
+  const provider: AccountProvider = rawProfile.provider === "google" || rawProfile.provider === "email"
+    ? rawProfile.provider
+    : "guest";
+  const cloudStatus = rawProfile.cloudStatus === "linked"
+    ? "linked"
+    : rawProfile.cloudStatus === "ready"
+      ? "ready"
+      : "local";
+
+  return {
+    guestId: typeof rawProfile.guestId === "string" && rawProfile.guestId.trim()
+      ? rawProfile.guestId
+      : base.guestId,
+    displayName: normalizePlayerName(rawProfile.displayName || fallbackName),
+    provider,
+    cloudStatus,
+    createdAt: normalizeDateString(rawProfile.createdAt, base.createdAt),
+    updatedAt: normalizeDateString(rawProfile.updatedAt, base.updatedAt)
+  };
+}
+
+function normalizePlayerName(name: string): string {
+  const trimmed = name.trim().replace(/\s+/g, " ");
+  return trimmed ? trimmed.slice(0, 16) : "トレーダーくん";
+}
+
 function normalizeTeam(rawTeam: string[] | undefined, owned: GameState["owned"]): string[] {
   const team = uniqueStrings(rawTeam).map(mapLegacyMonsterId)
     .filter((id) => Boolean(owned[id]))
@@ -491,6 +720,50 @@ function normalizeLogs(rawLogs: GrowthLog[] | undefined, fallback: GrowthLog[]):
       marketChange: normalizeFiniteNumber(log.marketChange, 0)
     }))
     .slice(0, balance.logLimit);
+}
+
+function createEmptyWeeklyStats(): WeeklyStats {
+  return {
+    checkins: 0,
+    offlineClaims: 0,
+    marketRefreshes: 0,
+    cpuBattles: 0,
+    userBattles: 0,
+    dailyTaskClaims: 0
+  };
+}
+
+function normalizeWeeklyStats(rawStats: WeeklyStats | undefined): WeeklyStats {
+  return {
+    checkins: normalizeNumber(rawStats?.checkins, 0, 0),
+    offlineClaims: normalizeNumber(rawStats?.offlineClaims, 0, 0),
+    marketRefreshes: normalizeNumber(rawStats?.marketRefreshes, 0, 0),
+    cpuBattles: normalizeNumber(rawStats?.cpuBattles, 0, 0),
+    userBattles: normalizeNumber(rawStats?.userBattles, 0, 0),
+    dailyTaskClaims: normalizeNumber(rawStats?.dailyTaskClaims, 0, 0)
+  };
+}
+
+function normalizeBattleHistory(rawHistory: BattleHistoryEntry[] | undefined): BattleHistoryEntry[] {
+  if (!Array.isArray(rawHistory)) return [];
+
+  return rawHistory
+    .filter((entry) => entry && typeof entry.opponentName === "string")
+    .map((entry) => ({
+      id: typeof entry.id === "string" ? entry.id : cryptoId(),
+      date: normalizeDateString(entry.date, new Date().toISOString()),
+      mode: (entry.mode === "user" ? "user" : "cpu") as BattleHistoryEntry["mode"],
+      opponentName: entry.opponentName || "CPUマーケット隊",
+      playerAttack: normalizeFiniteNumber(entry.playerAttack, 0),
+      opponentAttack: normalizeFiniteNumber(entry.opponentAttack, 0),
+      won: Boolean(entry.won),
+      rank: ["S", "A", "B", "C"].includes(entry.rank) ? entry.rank : "C",
+      kabuCoins: normalizeFiniteNumber(entry.kabuCoins, 0),
+      dividendCoins: normalizeFiniteNumber(entry.dividendCoins, 0),
+      exp: normalizeFiniteNumber(entry.exp, 0),
+      gachaTickets: normalizeFiniteNumber(entry.gachaTickets, 0)
+    }))
+    .slice(0, balance.battleHistoryLimit);
 }
 
 export function applyOfflineReward(state: GameState, now = new Date()): GameState {
@@ -561,23 +834,26 @@ export function claimOfflineReward(state: GameState): GameState {
   const reward = state.offlinePending;
   const trader = addTraderExp(state, reward.exp);
 
-  return {
-    ...trader,
-    kabuCoins: trader.kabuCoins + reward.kabuCoins,
-    dividendCoins: trader.dividendCoins + reward.dividendCoins,
-    offlinePending: null,
-    logs: [
-      createLog(
-        "オフライン報酬",
-        `${reward.hours}時間分の報酬を受け取りました。`,
-        reward.kabuCoins,
-        reward.dividendCoins,
-        reward.exp,
-        state.currentMarket.change
-      ),
-      ...state.logs
-    ].slice(0, balance.visibleLogLimit)
-  };
+  return incrementWeeklyStat(
+    {
+      ...trader,
+      kabuCoins: trader.kabuCoins + reward.kabuCoins,
+      dividendCoins: trader.dividendCoins + reward.dividendCoins,
+      offlinePending: null,
+      logs: [
+        createLog(
+          "オフライン報酬",
+          `${reward.hours}時間分の報酬を受け取りました。`,
+          reward.kabuCoins,
+          reward.dividendCoins,
+          reward.exp,
+          state.currentMarket.change
+        ),
+        ...state.logs
+      ].slice(0, balance.visibleLogLimit)
+    },
+    "offlineClaims"
+  );
 }
 
 export function getDailyCheckinStatus(state: GameState, now = new Date()): DailyCheckinStatus {
@@ -613,25 +889,29 @@ export function claimDailyCheckin(state: GameState, now = new Date()): { state: 
   return {
     ok: true,
     message,
-    state: {
-      ...state,
-      kabuCoins: state.kabuCoins + status.kabuCoins,
-      dividendCoins: state.dividendCoins + status.dividendCoins,
-      dailyCheckinDate: status.todayKey,
-      loginStreak: status.nextStreak,
-      dailyCheckinCount: state.dailyCheckinCount + 1,
-      logs: [
-        createLog(
-          "ログインボーナス",
-          message,
-          status.kabuCoins,
-          status.dividendCoins,
-          0,
-          state.currentMarket.change
-        ),
-        ...state.logs
-      ].slice(0, balance.visibleLogLimit)
-    }
+    state: incrementWeeklyStat(
+      {
+        ...state,
+        kabuCoins: state.kabuCoins + status.kabuCoins,
+        dividendCoins: state.dividendCoins + status.dividendCoins,
+        dailyCheckinDate: status.todayKey,
+        loginStreak: status.nextStreak,
+        dailyCheckinCount: state.dailyCheckinCount + 1,
+        logs: [
+          createLog(
+            "ログインボーナス",
+            message,
+            status.kabuCoins,
+            status.dividendCoins,
+            0,
+            state.currentMarket.change
+          ),
+          ...state.logs
+        ].slice(0, balance.visibleLogLimit)
+      },
+      "checkins",
+      now
+    )
   };
 }
 
@@ -671,6 +951,275 @@ export function getDailyEventStatus(state: GameState, now = new Date()): DailyEv
   };
 }
 
+export function getCpuBattlePreview(state: GameState, now = new Date()): BattlePreview {
+  const status = getDailyEventStatus(state, now);
+  const playerSummary = getTeamAttackSummary(state);
+  const playerBonus = getTeamBonus(state);
+  const opponentBaseAttack = status.enemyTeam.reduce((sum, member) => sum + member.attack, 0);
+
+  return {
+    mode: "cpu",
+    title: "CPU非同期バトル",
+    opponentType: "computer",
+    playerName: state.playerName,
+    opponentName: status.enemyTeamName,
+    playerBaseAttack: playerSummary.baseAttack,
+    playerTotalAttack: status.teamPower,
+    playerBonusName: playerBonus.name,
+    playerBonusMultiplier: playerSummary.multiplier,
+    opponentBaseAttack,
+    opponentTotalAttack: status.enemyAttack,
+    opponentBonusName: status.enemyBonusName,
+    opponentBonusMultiplier: status.enemyBonusMultiplier,
+    difference: Math.abs(status.teamPower - status.enemyAttack),
+    won: status.won,
+    reward: {
+      kabuCoins: status.kabuCoins,
+      dividendCoins: status.dividendCoins,
+      exp: status.exp
+    },
+    status
+  };
+}
+
+export function getUserBattleTicketStatus(state: GameState, now = new Date()): UserBattleTicketStatus {
+  const refreshed = refreshUserBattleTickets(state, now);
+
+  return {
+    todayKey: getLocalDateKey(now),
+    tickets: refreshed.userBattleTickets,
+    countToday: refreshed.userBattleCountToday,
+    dailyRefill: balance.userBattleDailyTickets,
+    maxTickets: balance.userBattleMaxTickets,
+    canBattle: refreshed.userBattleTickets > 0
+  };
+}
+
+export function getUserBattlePreview(state: GameState, opponentCode: string): UserBattlePreview | null {
+  const normalizedCode = normalizeBattleCode(opponentCode);
+  if (!normalizedCode) return null;
+
+  const seed = hashTextToNumber(normalizedCode);
+  const opponentMembers = createUserBattleOpponentTeam(state, seed);
+  const opponentBonus = getTeamBonusByIds(opponentMembers.map((member) => member.id));
+  const opponentBaseAttack = opponentMembers.reduce((sum, member) => sum + member.attack, 0);
+  const opponentAttack = roundToUnit(opponentBaseAttack * opponentBonus.multiplier, 100);
+
+  return createUserBattlePreviewFromValues({
+    state,
+    source: "generated",
+    opponentCode: normalizedCode,
+    opponentName: `トレーダー${normalizedCode.slice(-3)}`,
+    opponentAttack,
+    opponentMembers,
+    opponentBonusName: opponentBonus.name,
+    opponentBonusMultiplier: opponentBonus.multiplier
+  });
+}
+
+export function getUserBattlePreviewFromSnapshot(state: GameState, snapshot: TeamBattleSnapshot): UserBattlePreview {
+  return createUserBattlePreviewFromValues({
+    state,
+    source: "saved",
+    opponentCode: snapshot.syncCode,
+    opponentName: snapshot.ownerName,
+    opponentAttack: snapshot.totalAttack,
+    opponentMembers: snapshot.members.map((member) => ({
+      id: member.id,
+      name: member.name,
+      effectName: member.effectName,
+      attack: member.attack
+    })),
+    opponentBonusName: snapshot.teamBonusName,
+    opponentBonusMultiplier: snapshot.teamBonusMultiplier
+  });
+}
+
+function createUserBattlePreviewFromValues({
+  state,
+  source,
+  opponentCode,
+  opponentName,
+  opponentAttack,
+  opponentMembers,
+  opponentBonusName,
+  opponentBonusMultiplier
+}: {
+  state: GameState;
+  source: UserBattlePreview["source"];
+  opponentCode: string;
+  opponentName: string;
+  opponentAttack: number;
+  opponentMembers: CpuTeamMember[];
+  opponentBonusName: string;
+  opponentBonusMultiplier: number;
+}): UserBattlePreview {
+  const playerAttack = getTeamAttackSummary(state).totalAttack;
+  const won = playerAttack >= opponentAttack;
+  const ratio = opponentAttack > 0 ? playerAttack / opponentAttack : 1;
+  const rank: DailyEventStatus["rank"] = ratio >= 1.35 ? "S" : ratio >= 1.1 ? "A" : ratio >= 0.92 ? "B" : "C";
+  const rankMultiplier = rank === "S" ? 1.45 : rank === "A" ? 1.18 : rank === "B" ? 0.92 : 0.58;
+  const challengeMultiplier = clamp(opponentAttack / Math.max(1, playerAttack), 0.72, 1.7);
+  const sourceMultiplier = source === "saved" ? 1.12 : 1;
+  const resultMultiplier = won ? 1 : ratio >= 0.82 ? 0.48 : 0.32;
+  const rewardPolicy = getUserBattleRewardPolicy(state);
+  const rewardMultiplier = rankMultiplier * challengeMultiplier * sourceMultiplier * resultMultiplier * rewardPolicy.multiplier;
+  const gachaTickets = rewardPolicy.gachaEligible && won && rank === "S"
+    ? 1
+    : rewardPolicy.gachaEligible && !won && ratio >= 0.82
+      ? 1
+      : 0;
+  const rewardLabel = won
+    ? challengeMultiplier >= 1.08
+      ? "格上撃破報酬"
+      : "勝利報酬"
+    : gachaTickets > 0
+      ? "惜敗強化報酬"
+      : "挑戦報酬";
+
+  return {
+    mode: "user",
+    source,
+    opponentCode: formatBattleCode(opponentCode),
+    opponentName,
+    playerName: state.accountProfile.displayName || state.playerName,
+    playerAttack,
+    opponentAttack,
+    opponentMembers,
+    opponentBonusName,
+    opponentBonusMultiplier,
+    difference: Math.abs(playerAttack - opponentAttack),
+    won,
+    rank,
+    reward: {
+      kabuCoins: roundToUnit((won ? 3600 : 1200) * rewardMultiplier, 10),
+      dividendCoins: Math.max(won ? 8 : 2, Math.floor((won ? 18 : 7) * rewardMultiplier)),
+      exp: Math.max(won ? 10 : 4, Math.floor((won ? 20 : 9) * rewardMultiplier)),
+      gachaTickets,
+      label: rewardLabel,
+      policyLabel: rewardPolicy.label,
+      dailyMultiplier: rewardPolicy.multiplier
+    }
+  };
+}
+
+function createBattleHistoryEntry(status: DailyEventStatus, now = new Date()): BattleHistoryEntry {
+  return {
+    id: cryptoId(),
+    date: now.toISOString(),
+    mode: "cpu",
+    opponentName: status.enemyTeamName,
+    playerAttack: status.teamPower,
+    opponentAttack: status.enemyAttack,
+    won: status.won,
+    rank: status.rank,
+    kabuCoins: status.kabuCoins,
+    dividendCoins: status.dividendCoins,
+    exp: status.exp,
+    gachaTickets: 0
+  };
+}
+
+export function runUserBattle(
+  state: GameState,
+  opponentCode: string,
+  now = new Date(),
+  opponentSnapshot?: TeamBattleSnapshot | null
+): UserBattleResult {
+  const battleReadyState = refreshUserBattleTickets(state, now);
+  const ownCode = normalizeBattleCode(createTeamBattleSnapshot(battleReadyState, now).syncCode);
+  const normalizedCode = normalizeBattleCode(opponentCode);
+
+  if (!normalizedCode) {
+    return {
+      state: battleReadyState,
+      ok: false,
+      message: "対戦コードを入力してください。",
+      preview: null
+    };
+  }
+
+  if (battleReadyState.userBattleTickets <= 0) {
+    return {
+      state: battleReadyState,
+      ok: false,
+      message: "本日の対戦券がありません。明日3枚補充されます。",
+      preview: null
+    };
+  }
+
+  if (normalizedCode === ownCode) {
+    return {
+      state: battleReadyState,
+      ok: false,
+      message: "自分の対戦コードとは戦えません。別のコードを入力してください。",
+      preview: null
+    };
+  }
+
+  const preview = opponentSnapshot
+    ? getUserBattlePreviewFromSnapshot(battleReadyState, opponentSnapshot)
+    : getUserBattlePreview(battleReadyState, normalizedCode);
+  if (!preview) {
+    return {
+      state: battleReadyState,
+      ok: false,
+      message: "対戦コードを読み取れませんでした。",
+      preview: null
+    };
+  }
+
+  const trader = addTraderExp(battleReadyState, preview.reward.exp);
+  const message = `${preview.opponentName}との対戦${preview.won ? "勝利" : "敗北"}。味方${preview.playerAttack.toLocaleString("ja-JP")} vs 相手${preview.opponentAttack.toLocaleString("ja-JP")}。`;
+
+  return {
+    ok: true,
+    message,
+    preview,
+    state: incrementWeeklyStat(
+      {
+        ...trader,
+        kabuCoins: trader.kabuCoins + preview.reward.kabuCoins,
+        dividendCoins: trader.dividendCoins + preview.reward.dividendCoins,
+        gachaTickets: trader.gachaTickets + preview.reward.gachaTickets,
+        userBattleTickets: Math.max(0, trader.userBattleTickets - 1),
+        userBattleDate: getLocalDateKey(now),
+        userBattleCountToday: trader.userBattleCountToday + 1,
+        battleHistory: [
+          {
+            id: cryptoId(),
+            date: now.toISOString(),
+            mode: "user" as const,
+            opponentName: preview.opponentName,
+            playerAttack: preview.playerAttack,
+            opponentAttack: preview.opponentAttack,
+            won: preview.won,
+            rank: preview.rank,
+            kabuCoins: preview.reward.kabuCoins,
+            dividendCoins: preview.reward.dividendCoins,
+            exp: preview.reward.exp,
+            gachaTickets: preview.reward.gachaTickets
+          },
+          ...battleReadyState.battleHistory
+        ].slice(0, balance.battleHistoryLimit),
+        logs: [
+          createLog(
+            "ユーザー対戦",
+            message,
+            preview.reward.kabuCoins,
+            preview.reward.dividendCoins,
+            preview.reward.exp,
+            battleReadyState.currentMarket.change
+          ),
+          ...battleReadyState.logs
+        ].slice(0, balance.visibleLogLimit)
+      },
+      "userBattles",
+      now
+    )
+  };
+}
+
 export function runDailyEvent(state: GameState, now = new Date()): DailyEventResult {
   const status = getDailyEventStatus(state, now);
 
@@ -684,6 +1233,7 @@ export function runDailyEvent(state: GameState, now = new Date()): DailyEventRes
   }
 
   const trader = addTraderExp(state, status.exp);
+  const battleHistoryEntry = createBattleHistoryEntry(status, now);
 
   const message = `市場作戦${status.won ? "勝利" : "敗北"}。味方${status.teamPower.toLocaleString("ja-JP")} vs 相手${status.enemyAttack.toLocaleString("ja-JP")}。ランク${status.rank}で報酬を獲得しました。`;
 
@@ -691,19 +1241,274 @@ export function runDailyEvent(state: GameState, now = new Date()): DailyEventRes
     ok: true,
     message,
     status,
+    state: incrementWeeklyStat(
+      {
+        ...trader,
+        kabuCoins: trader.kabuCoins + status.kabuCoins,
+        dividendCoins: trader.dividendCoins + status.dividendCoins,
+        dailyEventDate: status.todayKey,
+        eventCount: state.eventCount + 1,
+        battleHistory: [
+          battleHistoryEntry,
+          ...state.battleHistory
+        ].slice(0, balance.battleHistoryLimit),
+        logs: [
+          createLog(
+            "市場作戦",
+            message,
+            status.kabuCoins,
+            status.dividendCoins,
+            status.exp,
+            state.currentMarket.change
+          ),
+          ...state.logs
+        ].slice(0, balance.visibleLogLimit)
+      },
+      "cpuBattles",
+      now
+    )
+  };
+}
+
+export function getDailyTasks(state: GameState, now = new Date()): DailyTask[] {
+  const todayKey = getLocalDateKey(now);
+  const claimedIds = state.dailyTaskDate === todayKey ? state.claimedDailyTaskIds : [];
+  const logsToday = state.logs.filter((log) => getLocalDateKey(new Date(log.date)) === todayKey);
+  const userBattlesToday = state.battleHistory.filter((battle) => {
+    return battle.mode === "user" && getLocalDateKey(new Date(battle.date)) === todayKey;
+  });
+  const marketUpdatedToday = logsToday.some((log) => log.title === "市場データ更新");
+  const loginClaimedToday = state.dailyCheckinDate === todayKey;
+  const offlineClaimedToday = logsToday.some((log) => log.title === "オフライン報酬");
+  const eventClearedToday = state.dailyEventDate === todayKey;
+
+  const baseTasks: DailyTask[] = [
+    createDailyTask(claimedIds, {
+      id: "daily-task-login",
+      title: "ログインを受け取る",
+      detail: "本日のログインボーナスを受け取る",
+      progress: loginClaimedToday ? 1 : 0,
+      target: 1,
+      reward: { kabuCoins: 3000, dividendCoins: 20 }
+    }),
+    createDailyTask(claimedIds, {
+      id: "daily-task-market",
+      title: "市場を確認",
+      detail: "市場データを1回更新する",
+      progress: marketUpdatedToday ? 1 : 0,
+      target: 1,
+      reward: { kabuCoins: 3500, dividendCoins: 15 }
+    }),
+    createDailyTask(claimedIds, {
+      id: "daily-task-offline",
+      title: "放置報酬を回収",
+      detail: "放置報酬を1回受け取る",
+      progress: offlineClaimedToday ? 1 : 0,
+      target: 1,
+      reward: { kabuCoins: 4500, dividendCoins: 25 }
+    }),
+    createDailyTask(claimedIds, {
+      id: "daily-task-operation",
+      title: "市場作戦に出る",
+      detail: "CPU市場作戦を1回行う",
+      progress: eventClearedToday ? 1 : 0,
+      target: 1,
+      reward: { kabuCoins: 6000, dividendCoins: 35 }
+    }),
+    createDailyTask(claimedIds, {
+      id: "daily-task-user-battle",
+      title: "ユーザー対戦",
+      detail: "対戦コードでユーザー対戦を1回行う",
+      progress: userBattlesToday.length,
+      target: 1,
+      reward: { kabuCoins: 7000, dividendCoins: 40, gachaTickets: 1 }
+    })
+  ];
+  const completedBaseCount = baseTasks.filter((task) => task.completed).length;
+
+  return [
+    ...baseTasks,
+    createDailyTask(claimedIds, {
+      id: "daily-task-three",
+      title: "日課3件達成",
+      detail: "本日のデイリー任務を3件達成する",
+      progress: completedBaseCount,
+      target: 3,
+      reward: { kabuCoins: 10000, dividendCoins: 70, gachaTickets: 1 }
+    })
+  ];
+}
+
+export function claimDailyTaskReward(
+  state: GameState,
+  taskId: string,
+  now = new Date()
+): { state: GameState; ok: boolean; message: string } {
+  const todayKey = getLocalDateKey(now);
+  const claimedIds = state.dailyTaskDate === todayKey ? uniqueStrings(state.claimedDailyTaskIds) : [];
+  const task = getDailyTasks(
+    {
+      ...state,
+      dailyTaskDate: todayKey,
+      claimedDailyTaskIds: claimedIds
+    },
+    now
+  ).find((item) => item.id === taskId);
+
+  if (!task) {
+    return { state, ok: false, message: "デイリー任務が見つかりません。" };
+  }
+
+  if (!task.completed) {
+    return { state, ok: false, message: "まだ達成していません。" };
+  }
+
+  if (task.claimed) {
+    return { state, ok: false, message: "本日の報酬は受け取り済みです。" };
+  }
+
+  return {
+    ok: true,
+    message: `${task.title}のデイリー報酬を受け取りました。`,
+    state: incrementWeeklyStat(
+      {
+        ...state,
+        kabuCoins: state.kabuCoins + task.reward.kabuCoins,
+        dividendCoins: state.dividendCoins + task.reward.dividendCoins,
+        gachaTickets: state.gachaTickets + (task.reward.gachaTickets ?? 0),
+        dailyTaskDate: todayKey,
+        claimedDailyTaskIds: uniqueStrings([...claimedIds, task.id]),
+        logs: [
+          createLog(
+            "デイリー任務",
+            `${task.title}を達成しました。`,
+            task.reward.kabuCoins,
+            task.reward.dividendCoins,
+            0,
+            state.currentMarket.change
+          ),
+          ...state.logs
+        ].slice(0, balance.visibleLogLimit)
+      },
+      "dailyTaskClaims",
+      now
+    )
+  };
+}
+
+export function getWeeklyTasks(state: GameState, now = new Date()): WeeklyTask[] {
+  const weekKey = getLocalWeekKey(now);
+  const sameWeek = state.weeklyTaskKey === weekKey;
+  const claimedIds = sameWeek ? uniqueStrings(state.claimedWeeklyTaskIds) : [];
+  const stats = sameWeek ? normalizeWeeklyStats(state.weeklyStats) : createEmptyWeeklyStats();
+  const completedRoutineCount = [
+    stats.checkins >= 3,
+    stats.marketRefreshes >= 5,
+    stats.cpuBattles >= 3,
+    stats.userBattles >= 5,
+    stats.dailyTaskClaims >= 5
+  ].filter(Boolean).length;
+
+  return [
+    createWeeklyTask(claimedIds, {
+      id: "weekly-checkin-three",
+      title: "週3ログイン",
+      detail: "今週ログインボーナスを3回受け取る",
+      progress: stats.checkins,
+      target: 3,
+      reward: { kabuCoins: 20000, dividendCoins: 120, gachaTickets: 1 }
+    }),
+    createWeeklyTask(claimedIds, {
+      id: "weekly-market-five",
+      title: "市場を5回確認",
+      detail: "今週、市場データを5回更新する",
+      progress: stats.marketRefreshes,
+      target: 5,
+      reward: { kabuCoins: 18000, dividendCoins: 100 }
+    }),
+    createWeeklyTask(claimedIds, {
+      id: "weekly-operation-three",
+      title: "市場作戦3回",
+      detail: "今週、CPU市場作戦を3回行う",
+      progress: stats.cpuBattles,
+      target: 3,
+      reward: { kabuCoins: 30000, dividendCoins: 160, gachaTickets: 1 }
+    }),
+    createWeeklyTask(claimedIds, {
+      id: "weekly-user-battle-five",
+      title: "ユーザー対戦5回",
+      detail: "今週、対戦コードで5回戦う",
+      progress: stats.userBattles,
+      target: 5,
+      reward: { kabuCoins: 42000, dividendCoins: 220, gachaTickets: 2 }
+    }),
+    createWeeklyTask(claimedIds, {
+      id: "weekly-daily-five",
+      title: "日課報酬5回",
+      detail: "今週、デイリー任務報酬を5回受け取る",
+      progress: stats.dailyTaskClaims,
+      target: 5,
+      reward: { kabuCoins: 25000, dividendCoins: 150, gachaTickets: 1 }
+    }),
+    createWeeklyTask(claimedIds, {
+      id: "weekly-routine-three",
+      title: "週次ルーティン3種",
+      detail: "今週のウィークリー任務を3種類達成する",
+      progress: completedRoutineCount,
+      target: 3,
+      reward: { kabuCoins: 50000, dividendCoins: 300, gachaTickets: 3 }
+    })
+  ];
+}
+
+export function claimWeeklyTaskReward(
+  state: GameState,
+  taskId: string,
+  now = new Date()
+): { state: GameState; ok: boolean; message: string } {
+  const weekKey = getLocalWeekKey(now);
+  const claimedIds = state.weeklyTaskKey === weekKey ? uniqueStrings(state.claimedWeeklyTaskIds) : [];
+  const stats = state.weeklyTaskKey === weekKey ? normalizeWeeklyStats(state.weeklyStats) : createEmptyWeeklyStats();
+  const task = getWeeklyTasks(
+    {
+      ...state,
+      weeklyTaskKey: weekKey,
+      weeklyStats: stats,
+      claimedWeeklyTaskIds: claimedIds
+    },
+    now
+  ).find((item) => item.id === taskId);
+
+  if (!task) {
+    return { state, ok: false, message: "ウィークリー任務が見つかりません。" };
+  }
+
+  if (!task.completed) {
+    return { state, ok: false, message: "まだ達成していません。" };
+  }
+
+  if (task.claimed) {
+    return { state, ok: false, message: "今週の報酬は受け取り済みです。" };
+  }
+
+  return {
+    ok: true,
+    message: `${task.title}のウィークリー報酬を受け取りました。`,
     state: {
-      ...trader,
-      kabuCoins: trader.kabuCoins + status.kabuCoins,
-      dividendCoins: trader.dividendCoins + status.dividendCoins,
-      dailyEventDate: status.todayKey,
-      eventCount: state.eventCount + 1,
+      ...state,
+      kabuCoins: state.kabuCoins + task.reward.kabuCoins,
+      dividendCoins: state.dividendCoins + task.reward.dividendCoins,
+      gachaTickets: state.gachaTickets + (task.reward.gachaTickets ?? 0),
+      weeklyTaskKey: weekKey,
+      weeklyStats: stats,
+      claimedWeeklyTaskIds: uniqueStrings([...claimedIds, task.id]),
       logs: [
         createLog(
-          "市場作戦",
-          message,
-          status.kabuCoins,
-          status.dividendCoins,
-          status.exp,
+          "ウィークリー任務",
+          `${task.title}を達成しました。`,
+          task.reward.kabuCoins,
+          task.reward.dividendCoins,
+          0,
           state.currentMarket.change
         ),
         ...state.logs
@@ -869,17 +1674,60 @@ export function refreshMarketEnergy(
 
   return {
     message,
+    state: incrementWeeklyStat(
+      {
+        ...state,
+        currentMarket: market,
+        logs: [
+          createLog(
+            "市場データ更新",
+            `${market.indexName} ${formatSigned(market.change)}% / ${market.theme}`,
+            0,
+            0,
+            0,
+            market.change
+          ),
+          ...state.logs
+        ].slice(0, balance.visibleLogLimit)
+      },
+      "marketRefreshes",
+      now
+    )
+  };
+}
+
+export function updateAccountProfile(
+  state: GameState,
+  displayName: string,
+  now = new Date()
+): { state: GameState; ok: boolean; message: string } {
+  const normalizedName = normalizePlayerName(displayName);
+  const previousName = state.accountProfile.displayName || state.playerName;
+
+  if (normalizedName === previousName) {
+    return { state, ok: false, message: "表示名は変更されていません。" };
+  }
+
+  return {
+    ok: true,
+    message: `表示名を${normalizedName}に変更しました。`,
     state: {
       ...state,
-      currentMarket: market,
+      playerName: normalizedName,
+      accountProfile: {
+        ...state.accountProfile,
+        displayName: normalizedName,
+        cloudStatus: state.accountProfile.cloudStatus === "linked" ? "linked" : "ready",
+        updatedAt: now.toISOString()
+      },
       logs: [
         createLog(
-          "市場データ更新",
-          `${market.indexName} ${formatSigned(market.change)}% / ${market.theme}`,
+          "プロフィール更新",
+          `表示名を${normalizedName}に変更しました。`,
           0,
           0,
           0,
-          market.change
+          state.currentMarket.change
         ),
         ...state.logs
       ].slice(0, balance.visibleLogLimit)
@@ -910,6 +1758,9 @@ export function getMissions(state: GameState): Mission[] {
   const gachaUsed = state.logs.some((log) => log.title === "新規入手" || log.title === "持ち株追加");
   const offlineClaimed = state.logs.some((log) => log.title === "オフライン報酬");
   const teamBonus = getTeamBonus(state);
+  const userBattles = state.battleHistory.filter((battle) => battle.mode === "user");
+  const userWins = userBattles.filter((battle) => battle.won);
+  const battleTickets = state.battleHistory.reduce((sum, battle) => sum + battle.gachaTickets, 0);
 
   return [
     createMission(state, {
@@ -969,6 +1820,46 @@ export function getMissions(state: GameState): Mission[] {
       reward: { kabuCoins: 12000, dividendCoins: 90 }
     }),
     createMission(state, {
+      id: "publish-battle-team",
+      title: "対戦チームを登録",
+      detail: "アカウント画面で対戦用チームデータを登録する",
+      progress: state.battleSnapshotPublishCount,
+      target: 1,
+      reward: { kabuCoins: 10000, dividendCoins: 60 }
+    }),
+    createMission(state, {
+      id: "first-user-battle",
+      title: "ユーザー対戦に挑戦",
+      detail: "対戦コードまたはランキングからユーザー対戦を1回行う",
+      progress: userBattles.length,
+      target: 1,
+      reward: { kabuCoins: 14000, dividendCoins: 80, gachaTickets: 1 }
+    }),
+    createMission(state, {
+      id: "first-user-win",
+      title: "ユーザー対戦で勝利",
+      detail: "保存済みまたは仮想チームとのユーザー対戦で1勝する",
+      progress: userWins.length,
+      target: 1,
+      reward: { kabuCoins: 24000, dividendCoins: 120, gachaTickets: 1 }
+    }),
+    createMission(state, {
+      id: "battle-three",
+      title: "対戦を3回行う",
+      detail: "CPU戦またはユーザー対戦を合計3回行う",
+      progress: state.battleHistory.length,
+      target: 3,
+      reward: { kabuCoins: 22000, dividendCoins: 100 }
+    }),
+    createMission(state, {
+      id: "battle-ticket",
+      title: "対戦でガチャ券獲得",
+      detail: "S勝利または惜敗強化報酬でガチャ券を獲得する",
+      progress: battleTickets,
+      target: 1,
+      reward: { kabuCoins: 0, dividendCoins: 80, gachaTickets: 1 }
+    }),
+    createMission(state, {
       id: "shares-500",
       title: "持ち株500株",
       detail: "全株モンの合計持ち株を500株にする",
@@ -1017,6 +1908,7 @@ export function claimMissionReward(state: GameState, missionId: string): { state
       ...state,
       kabuCoins: state.kabuCoins + mission.reward.kabuCoins,
       dividendCoins: state.dividendCoins + mission.reward.dividendCoins,
+      gachaTickets: state.gachaTickets + (mission.reward.gachaTickets ?? 0),
       claimedMissionIds: [...state.claimedMissionIds, mission.id],
       logs: [
         createLog(
@@ -1287,6 +2179,76 @@ export function getTeamAttackSummaryForIds(state: GameState, ids: string[]): Tea
   };
 }
 
+export function createTeamBattleSnapshot(state: GameState, now = new Date()): TeamBattleSnapshot {
+  const teamSummary = getTeamAttackSummary(state);
+  const teamBonus = getTeamBonus(state);
+  const members = state.team.slice(0, 3).flatMap((id) => {
+    const owned = state.owned[id];
+    const monster = monsterById.get(id);
+    if (!owned || !monster) return [];
+
+    return [{
+      id,
+      name: monster.name,
+      ticker: monster.ticker,
+      shares: owned.shares,
+      attack: getAttackPower(owned),
+      effectName: monster.effect.name
+    }];
+  });
+  const snapshotSignature = [
+    state.accountProfile.guestId,
+    state.accountProfile.displayName,
+    state.traderLevel,
+    state.team.slice(0, 3).join(","),
+    members.map((member) => `${member.id}:${member.shares}:${member.attack}`).join(","),
+    teamSummary.totalAttack
+  ].join("|");
+  const stableKey = hashTextToBase36(snapshotSignature);
+
+  return {
+    snapshotId: `team-${stableKey}`,
+    syncCode: `KBM-${stableKey.slice(0, 3)}-${stableKey.slice(3, 6)}`,
+    ownerGuestId: state.accountProfile.guestId,
+    ownerName: state.accountProfile.displayName || state.playerName,
+    createdAt: state.accountProfile.updatedAt || now.toISOString(),
+    traderLevel: state.traderLevel,
+    teamBonusName: teamBonus.name,
+    teamBonusMultiplier: teamSummary.multiplier,
+    baseAttack: teamSummary.baseAttack,
+    totalAttack: teamSummary.totalAttack,
+    members
+  };
+}
+
+function hashTextToBase36(text: string): string {
+  return hashTextToNumber(text).toString(36).toUpperCase().padStart(6, "0");
+}
+
+function hashTextToNumber(text: string): number {
+  let hash = 2166136261;
+
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+}
+
+function normalizeBattleCode(code: string): string {
+  return code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+}
+
+function formatBattleCode(code: string): string {
+  const normalized = normalizeBattleCode(code);
+  if (!normalized) return "";
+  if (normalized.startsWith("KBM") && normalized.length >= 9) {
+    return `${normalized.slice(0, 3)}-${normalized.slice(3, 6)}-${normalized.slice(6, 9)}`;
+  }
+  return normalized.match(/.{1,3}/g)?.join("-") ?? normalized;
+}
+
 function createCpuTeam(state: GameState): CpuTeamMember[] {
   const preferred = playableMonsters
     .filter((monster) => monster.tags.includes(state.currentMarket.theme))
@@ -1312,6 +2274,43 @@ function createCpuTeam(state: GameState): CpuTeamMember[] {
       name: monster?.name ?? "CPUモン",
       effectName: monster?.effect.name ?? "通常攻撃",
       attack: roundToUnit(baseAttack * scale, 100)
+    };
+  });
+}
+
+function createUserBattleOpponentTeam(state: GameState, seed: number): CpuTeamMember[] {
+  const roster = playableMonsters.length > 0 ? playableMonsters : monsters;
+  const chosenIds: string[] = [];
+  const step = (seed % 7) + 3;
+  let cursor = seed % roster.length;
+
+  while (chosenIds.length < 3 && chosenIds.length < roster.length) {
+    const id = roster[cursor]?.id;
+    if (id && !chosenIds.includes(id)) {
+      chosenIds.push(id);
+    }
+    cursor = (cursor + step) % roster.length;
+  }
+
+  const playerAttack = Math.max(300000, getTeamAttackSummary(state).totalAttack);
+  const pressure = 0.78 + ((seed >>> 3) % 58) / 100;
+  const targetTotal = Math.max(250000, Math.floor(playerAttack * pressure));
+  const baseTotal = chosenIds.reduce((sum, id) => {
+    const monster = monsterById.get(id);
+    return sum + ((monster?.sharePrice ?? 1000) * 100);
+  }, 0);
+  const scale = baseTotal > 0 ? targetTotal / baseTotal : 1;
+
+  return chosenIds.map((id, index) => {
+    const monster = monsterById.get(id);
+    const variance = 0.92 + (((seed >>> (index + 1)) % 18) / 100);
+    const baseAttack = (monster?.sharePrice ?? 1000) * 100;
+
+    return {
+      id,
+      name: monster?.name ?? "ユーザーモン",
+      effectName: monster?.effect.name ?? "通常攻撃",
+      attack: roundToUnit(baseAttack * scale * variance, 100)
     };
   });
 }
@@ -1556,6 +2555,78 @@ function getLocalDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function getLocalWeekKey(date: Date): string {
+  const start = new Date(date);
+  const day = start.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  start.setDate(start.getDate() + diff);
+  return getLocalDateKey(start);
+}
+
+function incrementWeeklyStat(
+  state: GameState,
+  stat: keyof WeeklyStats,
+  now = new Date()
+): GameState {
+  const weekKey = getLocalWeekKey(now);
+  const sameWeek = state.weeklyTaskKey === weekKey;
+  const stats = sameWeek ? normalizeWeeklyStats(state.weeklyStats) : createEmptyWeeklyStats();
+
+  return {
+    ...state,
+    weeklyTaskKey: weekKey,
+    claimedWeeklyTaskIds: sameWeek ? uniqueStrings(state.claimedWeeklyTaskIds) : [],
+    weeklyStats: {
+      ...stats,
+      [stat]: stats[stat] + 1
+    }
+  };
+}
+
+function refreshUserBattleTickets(state: GameState, now = new Date()): GameState {
+  const todayKey = getLocalDateKey(now);
+  const sameDay = state.userBattleDate === todayKey;
+  const currentTickets = normalizeNumber(
+    state.userBattleTickets,
+    balance.userBattleDailyTickets,
+    0
+  );
+
+  if (sameDay) {
+    return {
+      ...state,
+      userBattleDate: todayKey,
+      userBattleTickets: Math.min(balance.userBattleMaxTickets, currentTickets),
+      userBattleCountToday: normalizeNumber(state.userBattleCountToday, 0, 0)
+    };
+  }
+
+  return {
+    ...state,
+    userBattleDate: todayKey,
+    userBattleTickets: Math.min(
+      balance.userBattleMaxTickets,
+      currentTickets + balance.userBattleDailyTickets
+    ),
+    userBattleCountToday: 0
+  };
+}
+
+function getUserBattleRewardPolicy(state: GameState): { multiplier: number; label: string; gachaEligible: boolean } {
+  const ticketState = refreshUserBattleTickets(state);
+  const countToday = ticketState.userBattleCountToday;
+
+  if (countToday === 0) {
+    return { multiplier: 1.15, label: "初戦ボーナス x1.15", gachaEligible: true };
+  }
+
+  if (countToday < balance.userBattleDailyTickets) {
+    return { multiplier: 1, label: "通常報酬 x1.00", gachaEligible: true };
+  }
+
+  return { multiplier: 0.72, label: "連戦調整 x0.72", gachaEligible: false };
+}
+
 function addDays(date: Date, days: number): Date {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
@@ -1596,6 +2667,32 @@ function createMission(
     progress: Math.min(mission.progress, mission.target),
     completed,
     claimed: state.claimedMissionIds.includes(mission.id)
+  };
+}
+
+function createDailyTask(
+  claimedIds: string[],
+  task: Omit<DailyTask, "completed" | "claimed">
+): DailyTask {
+  const completed = task.progress >= task.target;
+  return {
+    ...task,
+    progress: Math.min(task.progress, task.target),
+    completed,
+    claimed: claimedIds.includes(task.id)
+  };
+}
+
+function createWeeklyTask(
+  claimedIds: string[],
+  task: Omit<WeeklyTask, "completed" | "claimed">
+): WeeklyTask {
+  const completed = task.progress >= task.target;
+  return {
+    ...task,
+    progress: Math.min(task.progress, task.target),
+    completed,
+    claimed: claimedIds.includes(task.id)
   };
 }
 

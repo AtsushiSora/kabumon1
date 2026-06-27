@@ -199,6 +199,41 @@ MARKET_API_CACHE_SECONDS=300
 TWELVE_DATA_API_KEY=取得したAPIキー
 ```
 
+## 広告設定
+
+初期状態では本物の広告コードを読み込まず、ガチャ、図鑑、マーケットに審査前のプレースホルダー枠だけを表示します。
+
+```bash
+NEXT_PUBLIC_KABUMON_AD_MODE=placeholder
+```
+
+広告を完全に非表示にしたい場合:
+
+```bash
+NEXT_PUBLIC_KABUMON_AD_MODE=disabled
+```
+
+AdSense審査後に本番広告へ切り替える場合は、`.env.local` またはデプロイ環境の環境変数に以下を設定します。
+
+```bash
+NEXT_PUBLIC_KABUMON_AD_MODE=production
+NEXT_PUBLIC_ADSENSE_CLIENT_ID=ca-pub-xxxxxxxxxxxxxxxx
+NEXT_PUBLIC_ADSENSE_SLOT_GACHA=ガチャ枠のslot ID
+NEXT_PUBLIC_ADSENSE_SLOT_DEX=図鑑枠のslot ID
+NEXT_PUBLIC_ADSENSE_SLOT_MARKET=マーケット枠のslot ID
+```
+
+`production` でも `client ID` または `slot ID` が空の場合は、本物の広告タグを描画せず「広告設定未完了」と表示します。誤タップを避けるため、広告枠は下部ナビ付近や主要操作ボタン直下には置かない方針です。
+
+公開前の確認:
+
+```bash
+npm run verify
+npm run build:pages
+```
+
+公開直前の確認項目は [docs/release_checklist.md](/Users/soratokushi/Desktop/株モン/docs/release_checklist.md) にまとめています。
+
 ## 注意
 
 このアプリは株価や企業を題材にしたゲームです。特定の銘柄の売買をすすめるものではありません。ゲーム内のレア度・能力・価格・配当・利回りは、実際の企業価値や投資判断を示すものではありません。

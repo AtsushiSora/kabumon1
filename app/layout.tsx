@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+import { adClientId, adMode, adScriptSrc } from "@/lib/adConfig";
 import { withBasePath } from "@/lib/paths";
 import "./globals.css";
+import "./home-polish.css";
+import "./tab-polish.css";
 
 export const metadata: Metadata = {
   applicationName: "株モン",
@@ -42,7 +46,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        {adMode === "production" && adClientId && adScriptSrc && (
+          <Script
+            id="kabumon-adsense"
+            async
+            src={adScriptSrc}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
+        {children}
+      </body>
     </html>
   );
 }

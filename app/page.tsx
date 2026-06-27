@@ -6,14 +6,19 @@ import {
   balance,
   buyMonsterFromMarket,
   claimDailyCheckin,
+  claimDailyTaskReward,
   claimMissionReward,
   claimOfflineReward,
+  claimWeeklyTaskReward,
   createInitialState,
+  createTeamBattleSnapshot,
   formatSigned,
   getDailyCheckinStatus,
   getDailyEventStatus,
+  getDailyTasks,
   getAttackPower,
   getAttackPowerBreakdown,
+  getCpuBattlePreview,
   getDisplayStats,
   getGachaDropRates,
   getGachaWeight,
@@ -23,11 +28,16 @@ import {
   getTeamAttackSummary,
   getTeamAttackSummaryForIds,
   getTeamBonus,
+  getUserBattlePreview,
+  getUserBattlePreviewFromSnapshot,
+  getUserBattleTicketStatus,
+  getWeeklyTasks,
   hydrateState,
   marketSourceLabels,
   refreshMarketEnergy,
   rollGacha,
   runDailyEvent,
+  runUserBattle,
   sellMonsterUnit,
   serializeState,
   setBuddy,
@@ -36,18 +46,36 @@ import {
   toggleTeamMember,
   toggleMonsterLock,
   trainBuddy,
+  updateAccountProfile,
   type GrowthLog,
   type GameState,
+  type DailyTask,
+  type WeeklyTask,
   type DailyEventResult,
   type MarketEnergy,
+  type TeamBattleSnapshot,
   type TrainResult
 } from "@/lib/game";
 import { companyMonsterAssetDiagnostics } from "@/lib/companyMonsterAssets";
 import { companyDataOverrideCount } from "@/lib/companyDataOverrides";
+import { HomePanel } from "@/components/home/HomePanel";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { BottomNav, type AppTab } from "@/components/layout/BottomNav";
+import {
+  buildBattleSnapshotPayload,
+  buildPlayerProfilePayload,
+  fetchBattleSnapshotLeaderboard,
+  fetchBattleSnapshotFromCloud,
+  getCloudSyncStatus,
+  publishBattleSnapshotToCloud,
+  publishPlayerProfileToCloud,
+  runCloudSyncDiagnostics
+} from "@/lib/cloudSync";
+import { adClientId, getAdDisplayStatus, getAdSlotConfig, type AdSlotKey } from "@/lib/adConfig";
 import { baseDividendPerUnit, monsterById, monsters, playableMonsters, type MonsterMaster, type MonsterStats } from "@/lib/monsters";
 import { withBasePath } from "@/lib/paths";
 
-type Tab = "home" | "gacha" | "train" | "event" | "team" | "dex" | "market";
+type Tab = AppTab;
 
 type ResultToast = {
   title: string;
@@ -82,13 +110,7 @@ type CollectionSort = "recommended" | "ticker" | "attack" | "price";
 type GachaSort = CollectionSort | "rate";
 type MarketSort = "recommended" | "priceAsc" | "priceDesc" | "attack" | "ticker";
 
-const navItems: { id: Tab; label: string; icon: string }[] = [
-  { id: "home", label: "ホーム", icon: "home" },
-  { id: "gacha", label: "ガチャ", icon: "gacha" },
-  { id: "team", label: "チーム", icon: "team" },
-  { id: "dex", label: "図鑑", icon: "dex" },
-  { id: "market", label: "マーケット", icon: "market" }
-];
+const BATTLE_SNAPSHOT_STORAGE_KEY = "kabumon:battle-snapshots:v1";
 
 const teamRecipes = [
   {
@@ -250,9 +272,12 @@ export default function KabumonApp() {
   const [marketMessage, setMarketMessage] = useState("");
   const [missionMessage, setMissionMessage] = useState("");
   const [dailyMessage, setDailyMessage] = useState("");
+  const [accountMessage, setAccountMessage] = useState("");
   const [trainResult, setTrainResult] = useState<TrainResult | null>(null);
   const [eventResult, setEventResult] = useState<DailyEventResult | null>(null);
   const [resultToast, setResultToast] = useState<ResultToast | null>(null);
+  const [battleSnapshots, setBattleSnapshots] = useState<TeamBattleSnapshot[]>([]);
+  const [cloudBattleSnapshots, setCloudBattleSnapshots] = useState<TeamBattleSnapshot[]>([]);
 
   useEffect(() => {
     let savedState: string | null = null;
@@ -262,6 +287,10 @@ export default function KabumonApp() {
       savedState = null;
     }
     setState(hydrateState(savedState));
+    setBattleSnapshots(loadBattleSnapshots());
+    fetchBattleSnapshotLeaderboard(20)
+      .then((snapshots) => setCloudBattleSnapshots(snapshots))
+      .catch(() => setCloudBattleSnapshots([]));
   }, []);
 
   useEffect(() => {
@@ -319,9 +348,19 @@ export default function KabumonApp() {
     };
   }, []);
 
-  const buddy = state ? state.owned[state.buddyId] : null;
+  const fallbackBuddyId = state
+    ? Object.keys(state.owned).find((id) => monsterById.has(id))
+    : undefined;
+  const resolvedBuddyId = state && state.owned[state.buddyId] && monsterById.has(state.buddyId)
+    ? state.buddyId
+    : fallbackBuddyId;
+  const buddy = state && resolvedBuddyId ? state.owned[resolvedBuddyId] : null;
   const buddyMaster = buddy ? monsterById.get(buddy.id) : undefined;
   const teamBonus = useMemo(() => (state ? getTeamBonus(state) : null), [state]);
+  const battleLeaderboard = useMemo(
+    () => mergeBattleSnapshots([...battleSnapshots, ...cloudBattleSnapshots]).slice(0, 10),
+    [battleSnapshots, cloudBattleSnapshots]
+  );
 
   if (!state || !buddy || !buddyMaster || !teamBonus) {
     return (
@@ -454,6 +493,142 @@ export default function KabumonApp() {
     });
   }
 
+  async function handleUserBattle(opponentCode: string) {
+    const localSnapshot = findBattleSnapshot(battleSnapshots, opponentCode);
+    const cloudSnapshot = localSnapshot ? null : await fetchBattleSnapshotFromCloud(opponentCode);
+    const opponentSnapshot = localSnapshot ?? cloudSnapshot;
+    if (cloudSnapshot) {
+      setBattleSnapshots(saveBattleSnapshot(cloudSnapshot, battleSnapshots));
+    }
+    const result = runUserBattle(state!, opponentCode, new Date(), opponentSnapshot);
+    setMissionMessage(result.message);
+
+    if (!result.ok || !result.preview) {
+      update(result.state);
+      setResultToast({
+        title: "ユーザー対戦",
+        detail: result.message,
+        tone: "blue",
+        metrics: [
+          result.state.userBattleTickets <= 0 ? "対戦券 0" : "コード確認",
+          `本日 ${result.state.userBattleCountToday}戦`
+        ]
+      });
+      return;
+    }
+
+    update(result.state);
+    setResultToast({
+      title: `ユーザー対戦 ${result.preview.won ? "勝利" : "敗北"}`,
+      detail: result.message,
+      tone: result.preview.won ? "green" : "blue",
+      rank: result.preview.rank,
+      metrics: [
+        `味方 ${result.preview.playerAttack.toLocaleString("ja-JP")}`,
+        `相手 ${result.preview.opponentAttack.toLocaleString("ja-JP")}`,
+        result.preview.reward.label,
+        result.preview.reward.policyLabel,
+        `C +${result.preview.reward.kabuCoins.toLocaleString("ja-JP")}`,
+        `D +${result.preview.reward.dividendCoins}`,
+        `EXP +${result.preview.reward.exp}`,
+        result.preview.reward.gachaTickets > 0 ? `ガチャ券 +${result.preview.reward.gachaTickets}` : "ガチャ券 +0",
+        `対戦券 残り${result.state.userBattleTickets}`
+      ],
+      action: {
+        label: result.preview.won ? "履歴を見る" : "強化する",
+        tab: result.preview.won ? "event" : "market"
+      }
+    });
+  }
+
+  async function handlePublishBattleSnapshot() {
+    const snapshot = createTeamBattleSnapshot(state!);
+    const nextSnapshots = saveBattleSnapshot(snapshot, battleSnapshots);
+    const cloudResult = await publishBattleSnapshotToCloud(state!, snapshot);
+    const nextProfile = cloudResult.ok && !cloudResult.skipped
+      ? {
+          ...state!.accountProfile,
+          cloudStatus: "linked" as const,
+          updatedAt: new Date().toISOString()
+        }
+      : state!.accountProfile;
+    update({
+      ...state!,
+      accountProfile: nextProfile,
+      battleSnapshotPublishCount: state!.battleSnapshotPublishCount + 1
+    });
+    if (cloudResult.ok && !cloudResult.skipped) {
+      fetchBattleSnapshotLeaderboard(20)
+        .then((snapshots) => setCloudBattleSnapshots(snapshots))
+        .catch(() => undefined);
+    }
+    setBattleSnapshots(nextSnapshots);
+    setAccountMessage(`対戦チームを登録しました。コード: ${snapshot.syncCode} / ${cloudResult.message}`);
+    setResultToast({
+      title: "対戦チーム登録",
+      detail: cloudResult.ok
+        ? `${snapshot.ownerName}のチームを登録しました。${cloudResult.skipped ? "ローカル保存です。" : "クラウド同期済みです。"}`
+        : `ローカル登録は完了しました。${cloudResult.message}`,
+      tone: cloudResult.ok ? "green" : "blue",
+      metrics: [
+        snapshot.syncCode,
+        `総攻撃力 ${snapshot.totalAttack.toLocaleString("ja-JP")}`,
+        `${snapshot.members.length}体編成`,
+        cloudResult.skipped ? "Local" : cloudResult.ok ? "Cloud OK" : "Cloud未完了"
+      ],
+      action: {
+        label: "対戦へ",
+        tab: "event"
+      }
+    });
+  }
+
+  async function handleSyncPlayerProfile() {
+    const cloudResult = await publishPlayerProfileToCloud(state!);
+    const nextProfile = cloudResult.ok && !cloudResult.skipped
+      ? {
+          ...state!.accountProfile,
+          cloudStatus: "linked" as const,
+          updatedAt: new Date().toISOString()
+        }
+      : state!.accountProfile;
+    update({
+      ...state!,
+      accountProfile: nextProfile
+    });
+    setAccountMessage(cloudResult.message);
+    setResultToast({
+      title: "プロフィール同期",
+      detail: cloudResult.message,
+      tone: cloudResult.ok ? "green" : "blue",
+      metrics: [
+        state!.accountProfile.guestId,
+        state!.accountProfile.displayName,
+        cloudResult.skipped ? "Local" : cloudResult.ok ? "Cloud OK" : "Cloud未完了"
+      ]
+    });
+  }
+
+  async function handleCheckCloudSync() {
+    const result = await runCloudSyncDiagnostics();
+    if (result.ok && !result.skipped) {
+      fetchBattleSnapshotLeaderboard(20)
+        .then((snapshots) => setCloudBattleSnapshots(snapshots))
+        .catch(() => undefined);
+    }
+    setAccountMessage(result.message);
+    setResultToast({
+      title: "クラウド接続チェック",
+      detail: result.message,
+      tone: result.ok ? "green" : "blue",
+      metrics: [
+        result.provider,
+        result.configured ? "設定済み" : "未設定",
+        `ランキング ${result.leaderboardCount}件`
+      ]
+    });
+  }
+
   async function handleRefreshMarket() {
     const market = await fetchMarketEnergy();
     const result = market
@@ -479,22 +654,13 @@ export default function KabumonApp() {
         className="phone-frame"
         style={{
           "--ideal-market-icon": `url(${withBasePath("/ui/ideal-market-icon.png")})`,
-          "--ideal-chip-frame": `url(${withBasePath("/ui/ideal-chip-frame.png")})`,
-          "--ideal-nav-frame": `url(${withBasePath("/ui/ideal-nav-frame.png")})`,
-          "--ideal-nav-active-frame": `url(${withBasePath("/ui/ideal-nav-active-frame.png")})`,
-          "--nav-icon-home": `url(${withBasePath("/ui/nav-home.png")})`,
-          "--nav-icon-gacha": `url(${withBasePath("/ui/nav-gacha.png")})`,
-          "--nav-icon-train": `url(${withBasePath("/ui/nav-train.png")})`,
-          "--nav-icon-event": `url(${withBasePath("/ui/nav-event.png")})`,
-          "--nav-icon-team": `url(${withBasePath("/ui/nav-team.png")})`,
-          "--nav-icon-dex": `url(${withBasePath("/ui/nav-dex.png")})`,
-          "--nav-icon-market": `url(${withBasePath("/ui/nav-market.png")})`,
+          "--kabumon-logo": `url(${withBasePath("/ui/kabumon-logo-header-v2.png")})`,
           "--header-icon-coin": `url(${withBasePath("/ui/header-coin.png")})`,
           "--header-icon-gem": `url(${withBasePath("/ui/header-gem.png")})`,
           "--header-icon-avatar": `url(${withBasePath("/ui/header-avatar.png")})`
         } as CSSProperties}
       >
-        <Header state={state} />
+        <AppHeader state={state} />
 
         {activeTab === "home" && (
           <HomePanel
@@ -504,8 +670,6 @@ export default function KabumonApp() {
             teamBonus={teamBonus}
             onRefreshMarket={handleRefreshMarket}
             onClaimOffline={handleClaim}
-            onDailyCheckin={handleDailyCheckin}
-            onRunEvent={handleDailyEvent}
             onNavigate={setActiveTab}
           />
         )}
@@ -535,7 +699,46 @@ export default function KabumonApp() {
             message={missionMessage}
             result={eventResult}
             onRun={handleDailyEvent}
+            onRunUserBattle={handleUserBattle}
+            battleSnapshots={battleSnapshots}
+            battleLeaderboard={battleLeaderboard}
             onNavigate={setActiveTab}
+            onClaimDailyTask={(id) => {
+              const task = getDailyTasks(state).find((item) => item.id === id);
+              const result = claimDailyTaskReward(state, id);
+              setMissionMessage(result.message);
+              update(result.state);
+              if (result.ok) {
+                setResultToast({
+                  title: "デイリー任務",
+                  detail: result.message,
+                  tone: "green",
+                  metrics: [
+                    `カブコイン +${(task?.reward.kabuCoins ?? 0).toLocaleString("ja-JP")}`,
+                    `配当 +${task?.reward.dividendCoins ?? 0}`,
+                    ...(task?.reward.gachaTickets ? [`ガチャ券 +${task.reward.gachaTickets}`] : [])
+                  ]
+                });
+              }
+            }}
+            onClaimWeeklyTask={(id) => {
+              const task = getWeeklyTasks(state).find((item) => item.id === id);
+              const result = claimWeeklyTaskReward(state, id);
+              setMissionMessage(result.message);
+              update(result.state);
+              if (result.ok) {
+                setResultToast({
+                  title: "ウィークリー任務",
+                  detail: result.message,
+                  tone: "gold",
+                  metrics: [
+                    `カブコイン +${(task?.reward.kabuCoins ?? 0).toLocaleString("ja-JP")}`,
+                    `配当 +${task?.reward.dividendCoins ?? 0}`,
+                    ...(task?.reward.gachaTickets ? [`ガチャ券 +${task.reward.gachaTickets}`] : [])
+                  ]
+                });
+              }
+            }}
             onClaimMission={(id) => {
               const mission = getMissions(state).find((item) => item.id === id);
               const result = claimMissionReward(state, id);
@@ -548,7 +751,8 @@ export default function KabumonApp() {
                   tone: "gold",
                   metrics: [
                     `カブコイン +${(mission?.reward.kabuCoins ?? 0).toLocaleString("ja-JP")}`,
-                    `配当 +${mission?.reward.dividendCoins ?? 0}`
+                    `配当 +${mission?.reward.dividendCoins ?? 0}`,
+                    ...(mission?.reward.gachaTickets ? [`ガチャ券 +${mission.reward.gachaTickets}`] : [])
                   ]
                 });
               }
@@ -631,6 +835,7 @@ export default function KabumonApp() {
                 setMarketMessage("");
                 setMissionMessage("");
                 setDailyMessage("");
+                setAccountMessage("");
                 setTrainResult(null);
                 setEventResult(null);
                 setResultToast(null);
@@ -639,6 +844,38 @@ export default function KabumonApp() {
               }
             }}
           />
+        )}
+
+        {activeTab === "account" && (
+          <AccountPanel
+            state={state}
+            message={accountMessage}
+            battleSnapshots={battleSnapshots}
+            onPublishBattleSnapshot={handlePublishBattleSnapshot}
+            onSyncPlayerProfile={handleSyncPlayerProfile}
+            onCheckCloudSync={handleCheckCloudSync}
+            onSaveName={(name) => {
+              const result = updateAccountProfile(state, name);
+              setAccountMessage(result.message);
+              update(result.state);
+              if (result.ok) {
+                setResultToast({
+                  title: "プロフィール更新",
+                  detail: result.message,
+                  tone: "blue",
+                  metrics: [
+                    result.state.accountProfile.cloudStatus === "linked" ? "クラウド連携済み" : "連携準備中",
+                    result.state.accountProfile.provider === "guest" ? "ゲスト" : result.state.accountProfile.provider
+                  ]
+                });
+              }
+            }}
+            onNavigate={setActiveTab}
+          />
+        )}
+
+        {activeTab === "policy" && (
+          <PolicyPanel onNavigate={setActiveTab} />
         )}
 
         <BottomNav activeTab={activeTab} onChange={setActiveTab} />
@@ -657,47 +894,6 @@ export default function KabumonApp() {
         )}
       </section>
     </main>
-  );
-}
-
-function Header({ state }: { state: GameState }) {
-  const traderExpRequired = getRequiredExp(state.traderLevel);
-  const traderExpPercent = Math.min(100, (state.traderExp / traderExpRequired) * 100);
-
-  return (
-    <header className="top-header">
-      <div className="brand-mark">
-        <span className="market-icon">↗</span>
-        <h1>株モン</h1>
-      </div>
-      <div className="trainer-chip">
-        <span className="avatar-pixel" aria-hidden="true" />
-        <div className="trainer-chip-info">
-          <div className="trainer-chip-title">
-            <span>トレーダー Lv.{state.traderLevel}</span>
-            <b>{state.traderExp.toLocaleString("ja-JP")} / {traderExpRequired.toLocaleString("ja-JP")}</b>
-          </div>
-          <div className="trainer-exp-row">
-            <em>EXP</em>
-            <div className="trainer-exp-bar" aria-label="トレーダー経験値">
-              <i style={{ width: `${traderExpPercent}%` }} />
-            </div>
-          </div>
-        </div>
-      </div>
-      <CurrencyChip kind="coin" value={state.kabuCoins} />
-      <CurrencyChip kind="gem" value={state.dividendCoins} />
-    </header>
-  );
-}
-
-function CurrencyChip({ kind, value }: { kind: "coin" | "gem"; value: number }) {
-  return (
-    <div className={`currency-chip currency-${kind}`}>
-      <span aria-hidden="true" />
-      <strong>{value.toLocaleString("ja-JP")}</strong>
-      <b>+</b>
-    </div>
   );
 }
 
@@ -754,244 +950,145 @@ function ResultToastOverlay({
     </div>
   );
 }
-
-function HomePanel({
+function DailyTaskPanel({
   state,
-  buddy,
-  buddyMaster,
-  teamBonus,
-  onRefreshMarket,
-  onClaimOffline,
-  onDailyCheckin,
-  onRunEvent,
-  onNavigate
+  onClaim,
+  limit = 6
 }: {
   state: GameState;
-  buddy: NonNullable<GameState["owned"][string]>;
-  buddyMaster: MonsterMaster;
-  teamBonus: ReturnType<typeof getTeamBonus>;
-  onRefreshMarket: () => void;
-  onClaimOffline: () => void;
-  onDailyCheckin: () => void;
-  onRunEvent: () => void;
-  onNavigate: (tab: Tab) => void;
+  onClaim: (id: string) => void;
+  limit?: number;
 }) {
-  const attackPower = getAttackPower(buddy);
-  const attackBreakdown = getAttackPowerBreakdown(buddy);
-  const teamSlots = Array.from({ length: 3 }, (_, index) => {
-    const id = state.team[index];
-    const owned = id ? state.owned[id] : undefined;
-    const master = id ? monsterById.get(id) : undefined;
-    if (!owned || !master) {
-      return null;
-    }
-    return {
-      id,
-      name: master.name,
-      master,
-      attack: getAttackPower(owned)
-    };
-  });
-  const teamAttackSummary = getTeamAttackSummary(state);
-  const offlineReward = state.offlinePending;
-  const offlineProgress = offlineReward
-    ? Math.min(100, (offlineReward.hours / balance.offlineMaxHours) * 100)
-    : 0;
-  const offlineAtCap = offlineProgress >= 100;
-  const eventStatus = getDailyEventStatus(state);
-  const dailyStatus = getDailyCheckinStatus(state);
-  const missions = getMissions(state);
-  const claimableMissionCount = missions.filter((mission) => mission.completed && !mission.claimed).length;
-  const activeMissionCount = missions.filter((mission) => !mission.completed).length;
-  const ownedMonsterCount = Object.keys(state.owned).length;
-  const canTrainTrader = state.dividendCoins >= balance.trainCost;
-  const sourceLabel = formatCompanyDataSource(buddyMaster.dataSource);
-  const unitAttack = buddyMaster.sharePrice * 100;
+  const allTasks = getDailyTasks(state);
+  const tasks = [...allTasks]
+    .sort((a, b) => {
+      const priority = (task: DailyTask) => {
+        if (task.completed && !task.claimed) return 0;
+        if (!task.completed) return 1;
+        return 2;
+      };
+      const priorityDiff = priority(a) - priority(b);
+      if (priorityDiff !== 0) return priorityDiff;
+      return (b.progress / b.target) - (a.progress / a.target);
+    })
+    .slice(0, limit);
+  const claimableCount = allTasks.filter((task) => task.completed && !task.claimed).length;
+  const completedCount = allTasks.filter((task) => task.completed).length;
 
   return (
-    <div
-      className={`screen-content home-screen ${offlineReward ? "has-offline-reward" : ""}`}
-      style={{
-        "--home-stage-bg": `url(${withBasePath("/ui/pixel-stage-bg.png")})`,
-        "--home-hud-texture": `url(${withBasePath("/ui/home-pixel-hud.png")})`,
-        "--frame-corner-tl": `url(${withBasePath("/ui/frame-corner-tl.png")})`,
-        "--frame-corner-tr": `url(${withBasePath("/ui/frame-corner-tr.png")})`,
-        "--frame-corner-bl": `url(${withBasePath("/ui/frame-corner-bl.png")})`,
-        "--frame-corner-br": `url(${withBasePath("/ui/frame-corner-br.png")})`,
-        "--frame-edge-side": `url(${withBasePath("/ui/frame-edge-vertical.png")})`,
-        "--frame-edge-horizontal": `url(${withBasePath("/ui/frame-edge-horizontal.png")})`,
-        "--ideal-market-frame": `url(${withBasePath("/ui/ideal-market-frame.png")})`,
-        "--ideal-monster-frame": `url(${withBasePath("/ui/ideal-monster-frame.png")})`,
-        "--ideal-team-frame": `url(${withBasePath("/ui/ideal-team-frame.png")})`,
-        "--ideal-market-graph": `url(${withBasePath("/ui/ideal-market-graph.png")})`,
-        "--ideal-inner-texture": `url(${withBasePath("/ui/ideal-inner-texture.png")})`,
-        "--info-icon-company": `url(${withBasePath("/ui/info-company.png")})`,
-        "--info-icon-shares": `url(${withBasePath("/ui/info-shares.png")})`,
-        "--info-icon-attr": `url(${withBasePath("/ui/info-attr.png")})`,
-        "--info-icon-trend": `url(${withBasePath("/ui/info-trend.png")})`,
-        "--shortcut-icon-login": `url(${withBasePath("/ui/nav-event.png")})`,
-        "--shortcut-icon-mission": `url(${withBasePath("/ui/nav-train.png")})`,
-        "--shortcut-icon-event": `url(${withBasePath("/ui/nav-market.png")})`,
-        "--shortcut-icon-dex": `url(${withBasePath("/ui/nav-dex.png")})`,
-        "--shortcut-icon-train": `url(${withBasePath("/ui/nav-train.png")})`
-      } as CSSProperties}
-    >
-      <section
-        className="monster-card home-monster-card pixel-panel"
-      >
-        <FrameCorners />
-        <div className="monster-stage">
-          <MonsterArt monster={buddyMaster} large />
-          <div className="home-rarity-strip">
-            <span>レアリティ</span>
-            <strong>★★★★★</strong>
-          </div>
+    <section className="mission-panel daily-task-panel pixel-panel">
+      <div className="mission-header">
+        <div>
+          <strong>デイリー任務</strong>
+          <p>毎日リセットされる日課報酬</p>
         </div>
-        <div className="monster-info">
-          <h2>{buddyMaster.name}<span className="home-rarity-badge">{buddyMaster.rarity}</span></h2>
-          <div className="home-monster-summary" aria-label="銘柄データ">
-            <span>{buddyMaster.ticker}</span>
-            <span>{sourceLabel}</span>
-            <span>{buddyMaster.dividendType}</span>
-          </div>
-          <p className="monster-line stock-line">銘柄コード: {buddyMaster.ticker}</p>
-          <p className="monster-line stock-line">{buddyMaster.companyAlias}</p>
-          <p className="monster-line shares-line">持ち株: <strong>{buddy.shares}</strong> 株</p>
-          <p className="monster-line attr-line power-line">攻撃力: {attackPower.toLocaleString("ja-JP")}</p>
-          <p className="monster-line attr-line calc-line">100株攻撃: {unitAttack.toLocaleString("ja-JP")}</p>
-          <p className="monster-line attr-line effect-line">
-            配当効果: {attackBreakdown.effectName} / {attackBreakdown.dividendUnits}単元
-            {attackBreakdown.dividendBonus > 0 && ` +${attackBreakdown.dividendBonus.toLocaleString("ja-JP")}`}
-          </p>
-          <p className="monster-line trend-line">
-            データ出典: {sourceLabel}
-          </p>
-          <p className="monster-line trend-line home-trend-line">
-            今日:
-            <strong className={state.currentMarket.change >= 0 ? "positive" : "negative"}>
-              {" "}{formatSigned(state.currentMarket.change)}%
-            </strong>
-          </p>
-          <button className="monster-detail-button" onClick={() => onNavigate("dex")}>
-            モンスター詳細
-            <span aria-hidden="true">›</span>
-          </button>
-        </div>
-      </section>
+        <span>{claimableCount}件受取可</span>
+      </div>
+      <div className="mission-summary-strip">
+        <i>受取可 <b>{claimableCount}</b></i>
+        <i>達成 <b>{completedCount}</b></i>
+        <i>全任務 <b>{allTasks.length}</b></i>
+      </div>
+      <div className="mission-list">
+        {tasks.map((task) => {
+          const progressPercent = Math.min(100, Math.round((task.progress / task.target) * 100));
+          const rowState = task.claimed ? "claimed" : task.completed ? "completed" : "active";
 
-      <section className="market-panel home-market-panel pixel-panel">
-        <FrameCorners />
-        <div className="market-graph">
-          <span>↗</span>
-        </div>
-        <div>
-          <p>今日の市場</p>
-          <h2>
-            {state.currentMarket.indexName}
-            <strong className={state.currentMarket.change >= 0 ? "positive" : "negative"}>
-              {formatSigned(state.currentMarket.change)}%
-            </strong>
-          </h2>
-        </div>
-        <div className="divider" />
-        <div>
-          <p>テーマ</p>
-          <h2><span className="theme-pixel-icon" aria-hidden="true">▰</span>{state.currentMarket.theme}</h2>
-        </div>
-        <div className="market-source-row">
-          <small>{marketSourceLabels[state.currentMarket.source]} / {formatLogTime(state.currentMarket.updatedAt)}</small>
-          <button className="market-refresh-button" onClick={onRefreshMarket}>更新</button>
-        </div>
-      </section>
-
-      <section className="team-effect home-team-effect pixel-panel">
-        <FrameCorners />
-        <span>⚙</span>
-        <div>
-          <div className="home-team-heading">
-            <strong>チーム効果</strong>
-            <em>チーム総攻撃力 <b>{teamAttackSummary.totalAttack.toLocaleString("ja-JP")}</b></em>
-          </div>
-          <div className="home-team-cards">
-            {teamSlots.map((member, index) => (
-              <article key={member?.id ?? `empty-${index}`} className={!member ? "empty" : ""}>
-                {member ? <MonsterArt monster={member.master} /> : <span className="team-empty-art">+</span>}
-                <div>
-                  <b>{member?.name ?? `空き枠 ${index + 1}`}</b>
-                  <small>{member ? `攻撃 ${member.attack.toLocaleString("ja-JP")}` : "編成待ち"}</small>
+          return (
+            <article key={task.id} className={`mission-row ${rowState}`}>
+              <div>
+                <div className="mission-title-line">
+                  <strong>{task.title}</strong>
+                  <span>{task.claimed ? "受取済" : task.completed ? "達成" : `${progressPercent}%`}</span>
                 </div>
-              </article>
-            ))}
-          </div>
-          <p><b>チーム効果: {teamBonus.name}</b> {teamBonus.detail}</p>
-          <div className="team-effect-metrics">
-            <i>3体編成 {teamAttackSummary.memberCount}/3</i>
-            <i>補正 x{teamAttackSummary.multiplier.toFixed(2)}</i>
-            <i>{teamBonus.active ? "効果発動中" : "組み合わせ確認"}</i>
-          </div>
-          <button className="home-team-action" onClick={() => onNavigate("team")}>
-            チーム編成
-            <span aria-hidden="true">›</span>
-          </button>
+                <p>{task.detail}</p>
+                <div className="mission-progress" aria-label={`${task.title}の進捗`}>
+                  <i style={{ width: `${progressPercent}%` }} />
+                </div>
+                <small>{task.progress} / {task.target} ・ 報酬 {formatRewardText(task.reward)}</small>
+              </div>
+              <button
+                disabled={!task.completed || task.claimed}
+                onClick={() => onClaim(task.id)}
+              >
+                {task.claimed ? "済" : task.completed ? "受取" : "進行中"}
+              </button>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function WeeklyTaskPanel({
+  state,
+  onClaim,
+  limit = 6
+}: {
+  state: GameState;
+  onClaim: (id: string) => void;
+  limit?: number;
+}) {
+  const allTasks = getWeeklyTasks(state);
+  const tasks = [...allTasks]
+    .sort((a, b) => {
+      const priority = (task: WeeklyTask) => {
+        if (task.completed && !task.claimed) return 0;
+        if (!task.completed) return 1;
+        return 2;
+      };
+      const priorityDiff = priority(a) - priority(b);
+      if (priorityDiff !== 0) return priorityDiff;
+      return (b.progress / b.target) - (a.progress / a.target);
+    })
+    .slice(0, limit);
+  const claimableCount = allTasks.filter((task) => task.completed && !task.claimed).length;
+  const completedCount = allTasks.filter((task) => task.completed).length;
+
+  return (
+    <section className="mission-panel weekly-task-panel pixel-panel">
+      <div className="mission-header">
+        <div>
+          <strong>ウィークリー任務</strong>
+          <p>今週の継続プレイ報酬</p>
         </div>
-      </section>
+        <span>{claimableCount}件受取可</span>
+      </div>
+      <div className="mission-summary-strip">
+        <i>受取可 <b>{claimableCount}</b></i>
+        <i>達成 <b>{completedCount}</b></i>
+        <i>全任務 <b>{allTasks.length}</b></i>
+      </div>
+      <div className="mission-list">
+        {tasks.map((task) => {
+          const progressPercent = Math.min(100, Math.round((task.progress / task.target) * 100));
+          const rowState = task.claimed ? "claimed" : task.completed ? "completed" : "active";
 
-      {offlineReward && (
-        <section className={`home-offline-claim pixel-panel ${offlineAtCap ? "offline-max" : ""}`}>
-          <FrameCorners />
-          <em
-            className="offline-fill"
-            aria-hidden="true"
-            style={{ width: `${offlineProgress}%` }}
-          />
-          <span>{offlineAtCap ? "放置MAX" : "放置報酬"}</span>
-          <strong>{offlineAtCap ? `${balance.offlineMaxHours}h` : `${offlineReward.hours}h`}</strong>
-          <i>C+{offlineReward.kabuCoins.toLocaleString("ja-JP")} / D+{offlineReward.dividendCoins.toLocaleString("ja-JP")}</i>
-          <button onClick={onClaimOffline}>受取</button>
-        </section>
-      )}
-
-      <section className="home-alert-strip pixel-panel">
-        <FrameCorners />
-        <button
-          className={`home-alert-button home-shortcut-login ${dailyStatus.available ? "is-ready" : "is-done"}`}
-          onClick={dailyStatus.available ? onDailyCheckin : () => onNavigate("event")}
-        >
-          <i aria-hidden="true" />
-          <span>ログイン</span>
-          <strong>{dailyStatus.available ? "受取" : "済"}</strong>
-          <small>C+{dailyStatus.kabuCoins.toLocaleString("ja-JP")} / D+{dailyStatus.dividendCoins}</small>
-        </button>
-        <button className="home-alert-button home-shortcut-mission" onClick={() => onNavigate("event")}>
-          <i aria-hidden="true" />
-          <span>ミッション</span>
-          <strong>{claimableMissionCount > 0 ? `${claimableMissionCount}件` : "確認"}</strong>
-          <small>{claimableMissionCount > 0 ? "受取可" : `進行中 ${activeMissionCount}`}</small>
-        </button>
-        <button
-          className={`home-alert-button home-shortcut-event ${eventStatus.available ? "is-ready" : "is-done"}`}
-          onClick={eventStatus.available ? onRunEvent : () => onNavigate("event")}
-        >
-          <i aria-hidden="true" />
-          <span>市場イベント</span>
-          <strong>{eventStatus.available ? eventStatus.rank : "完了"}</strong>
-          <small>{eventStatus.available ? `${eventStatus.won ? "有利" : "不利"} / ${eventStatus.score}` : "本日完了"}</small>
-        </button>
-        <button className="home-alert-button home-shortcut-dex" onClick={() => onNavigate("dex")}>
-          <i aria-hidden="true" />
-          <span>株モン図鑑</span>
-          <strong>{ownedMonsterCount}</strong>
-          <small>全{playableMonsters.length}体</small>
-        </button>
-        <button className={`home-alert-button home-shortcut-train ${canTrainTrader ? "is-ready" : ""}`} onClick={() => onNavigate("train")}>
-          <i aria-hidden="true" />
-          <span>育成</span>
-          <strong>{canTrainTrader ? "可能" : "D不足"}</strong>
-          <small>D{state.dividendCoins.toLocaleString("ja-JP")} / 必要D{balance.trainCost}</small>
-        </button>
-      </section>
-
-    </div>
+          return (
+            <article key={task.id} className={`mission-row ${rowState}`}>
+              <div>
+                <div className="mission-title-line">
+                  <strong>{task.title}</strong>
+                  <span>{task.claimed ? "受取済" : task.completed ? "達成" : `${progressPercent}%`}</span>
+                </div>
+                <p>{task.detail}</p>
+                <div className="mission-progress" aria-label={`${task.title}の進捗`}>
+                  <i style={{ width: `${progressPercent}%` }} />
+                </div>
+                <small>{task.progress} / {task.target} ・ 報酬 {formatRewardText(task.reward)}</small>
+              </div>
+              <button
+                disabled={!task.completed || task.claimed}
+                onClick={() => onClaim(task.id)}
+              >
+                {task.claimed ? "済" : task.completed ? "受取" : "進行中"}
+              </button>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -1041,10 +1138,6 @@ function MissionPanel({
       <div className="mission-list">
         {missions.map((mission) => {
           const progressPercent = Math.min(100, Math.round((mission.progress / mission.target) * 100));
-          const rewardText = [
-            mission.reward.kabuCoins > 0 ? `C+${mission.reward.kabuCoins.toLocaleString("ja-JP")}` : "",
-            mission.reward.dividendCoins > 0 ? `D+${mission.reward.dividendCoins}` : ""
-          ].filter(Boolean).join(" / ");
           const rowState = mission.claimed ? "claimed" : mission.completed ? "completed" : "active";
 
           return (
@@ -1058,7 +1151,7 @@ function MissionPanel({
               <div className="mission-progress" aria-label={`${mission.title}の進捗`}>
                 <i style={{ width: `${progressPercent}%` }} />
               </div>
-              <small>{mission.progress} / {mission.target} ・ 報酬 {rewardText || "なし"}</small>
+              <small>{mission.progress} / {mission.target} ・ 報酬 {formatRewardText(mission.reward)}</small>
             </div>
             <button
               disabled={!mission.completed || mission.claimed}
@@ -1072,6 +1165,14 @@ function MissionPanel({
       </div>
     </section>
   );
+}
+
+function formatRewardText(reward: { kabuCoins: number; dividendCoins: number; gachaTickets?: number }): string {
+  return [
+    reward.kabuCoins > 0 ? `C+${reward.kabuCoins.toLocaleString("ja-JP")}` : "",
+    reward.dividendCoins > 0 ? `D+${reward.dividendCoins}` : "",
+    (reward.gachaTickets ?? 0) > 0 ? `券+${reward.gachaTickets}` : ""
+  ].filter(Boolean).join(" / ") || "なし";
 }
 
 function ListTools<T extends string, S extends string = string>({
@@ -1138,6 +1239,58 @@ function EmptyListNotice({ label }: { label: string }) {
       <strong>{label}</strong>
       <span>検索条件を変えてください</span>
     </div>
+  );
+}
+
+function AdSlot({ slotKey }: { slotKey: AdSlotKey }) {
+  const slot = getAdSlotConfig(slotKey);
+  const status = getAdDisplayStatus(slot);
+
+  useEffect(() => {
+    if (status.mode !== "production" || !status.ready) return;
+
+    try {
+      const adsWindow = window as unknown as { adsbygoogle?: unknown[] };
+      adsWindow.adsbygoogle = adsWindow.adsbygoogle ?? [];
+      adsWindow.adsbygoogle.push({});
+    } catch {
+      // Ad blockers or script timing can fail silently without affecting gameplay.
+    }
+  }, [status.mode, status.ready, slot.slotId]);
+
+  if (status.mode === "disabled") {
+    return null;
+  }
+
+  if (status.mode === "production" && status.ready) {
+    return (
+      <aside className="ad-slot pixel-panel ad-production ready ad-rendered" aria-label={slot.label}>
+        <div className="ad-slot-header">
+          <span>AD</span>
+          <div>
+            <strong>{slot.label}</strong>
+            <p>{slot.placement}</p>
+          </div>
+        </div>
+        <ins
+          className="adsbygoogle kabumon-adsense-unit"
+          data-ad-client={adClientId}
+          data-ad-format="auto"
+          data-ad-slot={slot.slotId}
+          data-full-width-responsive="true"
+        />
+      </aside>
+    );
+  }
+
+  return (
+    <aside className={`ad-slot pixel-panel ad-${status.mode} ${status.ready ? "ready" : "pending"}`} aria-label={slot.label}>
+      <span>AD</span>
+      <div>
+        <strong>{status.title}</strong>
+        <p>{status.detail}</p>
+      </div>
+    </aside>
   );
 }
 
@@ -1284,6 +1437,7 @@ function GachaPanel({
         <button className="gold-button full" onClick={onGacha}>1回まわす</button>
         {message && <div className="message-box">{message}</div>}
       </section>
+      <AdSlot slotKey="gacha" />
       <section className="grid-panel gacha-grid">
         <div className="gacha-list-header">
           <strong>排出リスト</strong>
@@ -1431,19 +1585,41 @@ function EventPanel({
   message,
   result,
   onRun,
+  onRunUserBattle,
+  battleSnapshots,
+  battleLeaderboard,
   onNavigate,
+  onClaimDailyTask,
+  onClaimWeeklyTask,
   onClaimMission
 }: {
   state: GameState;
   message: string;
   result: DailyEventResult | null;
   onRun: () => void;
+  onRunUserBattle: (opponentCode: string) => void;
+  battleSnapshots: TeamBattleSnapshot[];
+  battleLeaderboard: TeamBattleSnapshot[];
   onNavigate: (tab: Tab) => void;
+  onClaimDailyTask: (id: string) => void;
+  onClaimWeeklyTask: (id: string) => void;
   onClaimMission: (id: string) => void;
 }) {
+  const ownBattleSnapshot = createTeamBattleSnapshot(state);
+  const [opponentCode, setOpponentCode] = useState("");
+  const savedOpponentSnapshot = findBattleSnapshot(battleSnapshots, opponentCode);
   const status = getDailyEventStatus(state);
+  const battlePreview = getCpuBattlePreview(state);
+  const userBattlePreview = savedOpponentSnapshot
+    ? getUserBattlePreviewFromSnapshot(state, savedOpponentSnapshot)
+    : getUserBattlePreview(state, opponentCode);
+  const userBattleTicketStatus = getUserBattleTicketStatus(state);
   const teamBonus = getTeamBonus(state);
   const teamAttackSummary = getTeamAttackSummary(state);
+  const recentBattles = state.battleHistory.slice(0, 5);
+  const battleRecord = getBattleRecordSummary(state.battleHistory);
+  const ownLeaderboardRankIndex = battleLeaderboard.findIndex((snapshot) => normalizeBattleCodeInput(snapshot.syncCode) === normalizeBattleCodeInput(ownBattleSnapshot.syncCode));
+  const ownLeaderboardRank = ownLeaderboardRankIndex >= 0 ? `${ownLeaderboardRankIndex + 1}位` : "未登録";
   const scorePercent = Math.min(100, (status.score / status.target) * 100);
   const allyTeam = state.team.slice(0, 3).flatMap((id) => {
     const monster = monsterById.get(id);
@@ -1594,6 +1770,118 @@ function EventPanel({
           <small>
             味方 {formatCompactAmount(displayStatus.teamPower)} / CPU {formatCompactAmount(displayStatus.enemyAttack)}
           </small>
+        </div>
+        <div className={`event-mode-panel ${battlePreview.won ? "won" : "lost"}`}>
+          <span>{battlePreview.title}</span>
+          <strong>{battlePreview.playerName} vs {battlePreview.opponentName}</strong>
+          <p>
+            非同期対戦の土台です。将来はCPUの代わりに保存済みユーザーチームと戦います。
+          </p>
+          <small>
+            {battlePreview.playerBonusName} x{battlePreview.playerBonusMultiplier.toFixed(2)}
+            {" "} / 相手 {battlePreview.opponentBonusName} x{battlePreview.opponentBonusMultiplier.toFixed(2)}
+          </small>
+        </div>
+        <div className="user-battle-panel">
+          <div className="user-battle-header">
+            <span>ユーザー対戦</span>
+            <strong>{ownBattleSnapshot.syncCode}</strong>
+          </div>
+          <div className={`user-battle-ticket-strip ${userBattleTicketStatus.canBattle ? "ready" : "empty"}`}>
+            <span>対戦券</span>
+            <strong>{userBattleTicketStatus.tickets} / {userBattleTicketStatus.maxTickets}</strong>
+            <small>
+              本日 {userBattleTicketStatus.countToday}戦 / 毎日{userBattleTicketStatus.dailyRefill}枚補充
+            </small>
+          </div>
+          <div className={`user-battle-source ${savedOpponentSnapshot ? "saved" : "generated"}`}>
+            <span>{savedOpponentSnapshot ? "登録済みチーム" : "未登録コード"}</span>
+            <strong>{savedOpponentSnapshot ? savedOpponentSnapshot.ownerName : "仮想相手で予測"}</strong>
+            <small>{savedOpponentSnapshot ? `${formatLogTime(savedOpponentSnapshot.createdAt)} 登録` : "クラウド連携前はコードから相手を仮生成します"}</small>
+          </div>
+          <label className="user-battle-input">
+            <span>相手コード</span>
+            <input
+              value={opponentCode}
+              onChange={(event) => setOpponentCode(event.target.value.toUpperCase())}
+              placeholder="KBM-ABC-123"
+              inputMode="text"
+              maxLength={16}
+            />
+          </label>
+          {userBattlePreview ? (
+            <div className={`user-battle-preview ${userBattlePreview.won ? "won" : "lost"}`}>
+              <div className="user-battle-score">
+                <span>{userBattlePreview.opponentName}</span>
+                <strong>
+                  {formatAttackPower(userBattlePreview.playerAttack)}
+                  <b>vs</b>
+                  {formatAttackPower(userBattlePreview.opponentAttack)}
+                </strong>
+              </div>
+              <small>
+                {userBattlePreview.opponentBonusName} x{userBattlePreview.opponentBonusMultiplier.toFixed(2)}
+                {" "} / Rank {userBattlePreview.rank}
+              </small>
+              <div className="user-battle-reward-line">
+                <span>{userBattlePreview.reward.label}</span>
+                <span>{userBattlePreview.reward.policyLabel}</span>
+                <strong>C+{formatCompactAmount(userBattlePreview.reward.kabuCoins)}</strong>
+                <strong>D+{userBattlePreview.reward.dividendCoins}</strong>
+                <strong>EXP+{userBattlePreview.reward.exp}</strong>
+                {userBattlePreview.reward.gachaTickets > 0 && <strong>券+{userBattlePreview.reward.gachaTickets}</strong>}
+              </div>
+              <div className="user-battle-opponent-team">
+                {userBattlePreview.opponentMembers.map((member) => {
+                  const monster = monsterById.get(member.id);
+                  return (
+                    <article key={member.id}>
+                      {monster && <MonsterArt monster={monster} />}
+                      <div>
+                        <b>{member.name}</b>
+                        <span>{member.effectName}</span>
+                        <strong>{formatAttackPower(member.attack)}</strong>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <p className="user-battle-empty">相手の対戦コードを入れると勝敗予測を表示します。</p>
+          )}
+          <button
+            type="button"
+            disabled={!userBattleTicketStatus.canBattle}
+            onClick={() => onRunUserBattle(opponentCode)}
+          >
+            {userBattleTicketStatus.canBattle ? "対戦する" : "対戦券なし"}
+          </button>
+          <div className="user-battle-ranking">
+            <div className="user-battle-ranking-header">
+              <span>対戦ランキング</span>
+              <strong>{battleLeaderboard.length}チーム</strong>
+            </div>
+            {battleLeaderboard.length > 0 ? (
+              battleLeaderboard.map((snapshot, index) => (
+                <button
+                  key={snapshot.syncCode}
+                  type="button"
+                  className="user-battle-rank-row"
+                  onClick={() => setOpponentCode(snapshot.syncCode)}
+                >
+                  <span>{index + 1}</span>
+                  <div>
+                    <b>{snapshot.ownerName}</b>
+                    <small>{snapshot.syncCode} / {snapshot.teamBonusName}</small>
+                  </div>
+                  <strong>{formatAttackPower(snapshot.totalAttack)}</strong>
+                </button>
+              ))
+            ) : (
+              <p className="user-battle-empty">アカウント画面で対戦チームを登録するとランキングに表示されます。</p>
+            )}
+          </div>
         </div>
         <div className={`event-battle-formula ${displayStatus.won ? "won" : "lost"}`}>
           <span>
@@ -1845,6 +2133,72 @@ function EventPanel({
         )}
       </section>
 
+      <section className="event-record-panel pixel-panel">
+        <header>
+          <div>
+            <strong>対戦戦績</strong>
+            <p>ユーザー対戦とCPU戦の成績</p>
+          </div>
+          <span>{battleRecord.totalBattles}戦</span>
+        </header>
+        <div className="event-record-grid">
+          <div>
+            <span>勝率</span>
+            <strong>{battleRecord.winRate}%</strong>
+            <small>{battleRecord.totalWins}勝 / {battleRecord.totalLosses}敗</small>
+          </div>
+          <div>
+            <span>ユーザー戦</span>
+            <strong>{battleRecord.userWinRate}%</strong>
+            <small>{battleRecord.userWins}勝 / {battleRecord.userBattles}戦</small>
+          </div>
+          <div>
+            <span>最高Rank</span>
+            <strong>{battleRecord.bestRank}</strong>
+            <small>直近 {battleRecord.latestResult}</small>
+          </div>
+          <div>
+            <span>総攻撃力順位</span>
+            <strong>{ownLeaderboardRank}</strong>
+            <small>{ownBattleSnapshot.syncCode}</small>
+          </div>
+        </div>
+        <div className="event-record-rewards">
+          <span>C +{battleRecord.kabuCoins.toLocaleString("ja-JP")}</span>
+          <span>D +{battleRecord.dividendCoins.toLocaleString("ja-JP")}</span>
+          <span>EXP +{battleRecord.exp.toLocaleString("ja-JP")}</span>
+          <span>券 +{battleRecord.gachaTickets.toLocaleString("ja-JP")}</span>
+        </div>
+      </section>
+
+      {recentBattles.length > 0 && (
+        <section className="event-history-panel pixel-panel">
+          <header>
+            <div>
+              <strong>対戦履歴</strong>
+              <p>非同期対戦の保存データ</p>
+            </div>
+            <span>{recentBattles.length}件</span>
+          </header>
+          <div className="event-history-list">
+            {recentBattles.map((battle) => (
+              <article key={battle.id} className={battle.won ? "won" : "lost"}>
+                <span>{battle.mode === "cpu" ? "CPU" : "USER"}</span>
+                <div>
+                  <b>{battle.opponentName}</b>
+                  <small>{formatLogTime(battle.date)} / Rank {battle.rank}</small>
+                </div>
+                <strong>{battle.won ? "WIN" : "LOSE"}</strong>
+                <em>
+                  {formatCompactAmount(battle.playerAttack)} vs {formatCompactAmount(battle.opponentAttack)}
+                  {battle.gachaTickets > 0 ? ` / 券+${battle.gachaTickets}` : ""}
+                </em>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="grid-panel event-ally-grid">
         {state.team.map((id) => {
           const monster = monsterById.get(id);
@@ -1861,6 +2215,10 @@ function EventPanel({
           );
         })}
       </section>
+
+      <DailyTaskPanel state={state} onClaim={onClaimDailyTask} limit={4} />
+
+      <WeeklyTaskPanel state={state} onClaim={onClaimWeeklyTask} limit={4} />
 
       <MissionPanel state={state} message={message} onClaim={onClaimMission} limit={4} />
 
@@ -2456,6 +2814,7 @@ function DexPanel({
           onSort={(value) => setSort(value as CollectionSort)}
         />
       </section>
+      <AdSlot slotKey="dex" />
       <section className="dex-list">
         {dexRows.length > 0 ? dexRows.map(({ monster, owned, isBuddy, attack, dropRate }) => {
           const attackBreakdown = owned ? getAttackPowerBreakdown(owned) : null;
@@ -2730,6 +3089,7 @@ function MarketPanel({
           </div>
         </section>
       )}
+      <AdSlot slotKey="market" />
       <section className="market-list">
         {marketRows.length > 0 ? marketRows.map(({ monster, owned, quote, affordable, sellable, priceTier }) => {
           const unitPlan = getNextDividendUnitPlan(monster, owned);
@@ -2866,6 +3226,226 @@ function MarketPanel({
         <button className="danger-button full" onClick={onReset}>初期化</button>
       </section>
       <LegalNotice />
+    </div>
+  );
+}
+
+function AccountPanel({
+  state,
+  message,
+  battleSnapshots,
+  onPublishBattleSnapshot,
+  onSyncPlayerProfile,
+  onCheckCloudSync,
+  onSaveName,
+  onNavigate
+}: {
+  state: GameState;
+  message: string;
+  battleSnapshots: TeamBattleSnapshot[];
+  onPublishBattleSnapshot: () => void;
+  onSyncPlayerProfile: () => void;
+  onCheckCloudSync: () => void;
+  onSaveName: (name: string) => void;
+  onNavigate: (tab: Tab) => void;
+}) {
+  const [displayName, setDisplayName] = useState(state.accountProfile.displayName);
+  const teamAttack = getTeamAttackSummary(state);
+  const teamSnapshot = createTeamBattleSnapshot(state);
+  const publishedSnapshot = findBattleSnapshot(battleSnapshots, teamSnapshot.syncCode);
+  const cloudSync = getCloudSyncStatus();
+  const battlePayload = buildBattleSnapshotPayload(teamSnapshot);
+  const profilePayload = buildPlayerProfilePayload(state);
+  const winCount = state.battleHistory.filter((battle) => battle.won).length;
+  const battleCount = state.battleHistory.length;
+  const winRate = battleCount > 0 ? Math.round((winCount / battleCount) * 100) : 0;
+
+  useEffect(() => {
+    setDisplayName(state.accountProfile.displayName);
+  }, [state.accountProfile.displayName]);
+
+  return (
+    <div className="screen-content account-screen">
+      <section className="feature-panel pixel-panel account-hero">
+        <div className="account-avatar" aria-hidden="true" />
+        <div>
+          <h2>アカウント</h2>
+          <p>今はゲスト保存です。後からクラウド保存やユーザー対戦に接続できる形で管理します。</p>
+        </div>
+        <div className={`account-status ${state.accountProfile.cloudStatus}`}>
+          <span>{state.accountProfile.provider === "guest" ? "GUEST" : state.accountProfile.provider.toUpperCase()}</span>
+          <strong>{state.accountProfile.cloudStatus === "linked" ? "連携済み" : state.accountProfile.cloudStatus === "ready" ? "連携準備中" : "ローカル保存"}</strong>
+        </div>
+        {message && <div className="message-box compact">{message}</div>}
+      </section>
+
+      <section className="account-edit-panel pixel-panel">
+        <div>
+          <strong>プロフィール</strong>
+          <p>対戦時に表示する名前です。</p>
+        </div>
+        <label>
+          <span>表示名</span>
+          <input
+            value={displayName}
+            maxLength={16}
+            onChange={(event) => setDisplayName(event.target.value)}
+            placeholder="トレーダー名"
+          />
+        </label>
+        <button className="mini-gold-button" type="button" onClick={() => onSaveName(displayName)}>
+          保存する
+        </button>
+      </section>
+
+      <section className="account-data-panel pixel-panel">
+        <header>
+          <strong>プレイヤーデータ</strong>
+          <span>保存準備</span>
+        </header>
+        <div className="account-data-grid">
+          <span><b>ゲストID</b>{state.accountProfile.guestId}</span>
+          <span><b>トレーダーLv</b>{state.traderLevel}</span>
+          <span><b>チーム攻撃力</b>{formatAttackPower(teamAttack.totalAttack)}</span>
+          <span><b>対戦成績</b>{winCount}勝 / {battleCount}戦 / {winRate}%</span>
+          <span><b>作成</b>{formatLogTime(state.accountProfile.createdAt)}</span>
+          <span><b>更新</b>{formatLogTime(state.accountProfile.updatedAt)}</span>
+        </div>
+      </section>
+
+      <section className="account-snapshot-panel pixel-panel">
+        <header>
+          <strong>対戦用チームデータ</strong>
+          <span>同期準備</span>
+        </header>
+        <div className="account-sync-code">
+          <span>対戦コード</span>
+          <strong>{teamSnapshot.syncCode}</strong>
+          <small>{publishedSnapshot ? `${formatLogTime(publishedSnapshot.createdAt)} 登録済み` : "チーム・持ち株・攻撃力から作る固定コード"}</small>
+        </div>
+        <button className="account-publish-button" type="button" onClick={onPublishBattleSnapshot}>
+          {publishedSnapshot ? "対戦チームを更新" : "対戦チームを登録"}
+        </button>
+        <div className="account-snapshot-summary">
+          <span><b>共有ID</b>{teamSnapshot.snapshotId}</span>
+          <span><b>総攻撃力</b>{formatAttackPower(teamSnapshot.totalAttack)}</span>
+          <span><b>効果</b>{teamSnapshot.teamBonusName} x{teamSnapshot.teamBonusMultiplier.toFixed(2)}</span>
+          <span><b>登録名</b>{teamSnapshot.ownerName}</span>
+        </div>
+        <div className="account-snapshot-members">
+          {teamSnapshot.members.length > 0 ? teamSnapshot.members.map((member) => (
+            <article key={member.id}>
+              <b>{member.name}</b>
+              <span>{member.ticker} / {member.shares}株</span>
+              <strong>{formatAttackPower(member.attack)}</strong>
+            </article>
+          )) : (
+            <article className="empty">
+              <b>未編成</b>
+              <span>チームを3体にしてください</span>
+              <strong>0</strong>
+            </article>
+          )}
+        </div>
+      </section>
+
+      <section className="account-cloud-panel pixel-panel">
+        <header>
+          <strong>クラウド連携ロードマップ</strong>
+          <span>{cloudSync.label}</span>
+        </header>
+        <div className={`account-cloud-status ${cloudSync.provider} ${cloudSync.configured ? "configured" : "missing"}`}>
+          <strong>{cloudSync.provider === "supabase" ? "Supabase" : "Local"}</strong>
+          <p>{cloudSync.detail}</p>
+        </div>
+        <div className="account-cloud-payload">
+          <span><b>profile</b>{profilePayload.guest_id} / {profilePayload.display_name}</span>
+          <span><b>battle_snapshots</b>{battlePayload.sync_code} / {formatAttackPower(battlePayload.total_attack)}</span>
+        </div>
+        <div className="account-cloud-steps">
+          <span className="done"><b>1</b>ゲストID発行</span>
+          <span className={state.accountProfile.cloudStatus !== "local" ? "done" : ""}><b>2</b>表示名保存</span>
+          <span className={publishedSnapshot ? "done" : ""}><b>3</b>対戦チーム登録</span>
+          <span className={cloudSync.provider === "supabase" && cloudSync.configured ? "done" : ""}><b>4</b>クラウド設定</span>
+        </div>
+        <p>プロフィールと対戦チームをSupabaseへ保存し、他ユーザーの対戦コードから実チームを取得します。</p>
+        <div className="account-cloud-controls">
+          <button type="button" onClick={onSyncPlayerProfile}>プロフィール同期</button>
+          <button type="button" onClick={onCheckCloudSync}>接続チェック</button>
+        </div>
+        <div className="account-actions">
+          <button type="button" onClick={() => onNavigate("event")}>対戦へ</button>
+          <button type="button" onClick={() => onNavigate("team")}>チーム確認</button>
+          <button type="button" onClick={() => onNavigate("policy")}>ポリシー</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function PolicyPanel({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
+  return (
+    <div className="screen-content policy-screen">
+      <section className="feature-panel pixel-panel policy-hero">
+        <h2>ポリシー</h2>
+        <p>株モンの公開、広告審査、クラウド連携に備えた利用方針です。ゲーム内からいつでも確認できるようにしています。</p>
+      </section>
+
+      <section className="policy-panel pixel-panel">
+        <header>
+          <strong>投資に関する注意</strong>
+          <span>重要</span>
+        </header>
+        <p>
+          株モンは株式や企業を題材にした育成・放置ゲームです。ゲーム内の銘柄名、株価、攻撃力、配当、レア度、排出率は娯楽表現であり、特定銘柄の売買や投資判断をすすめるものではありません。
+        </p>
+      </section>
+
+      <section className="policy-panel pixel-panel">
+        <header>
+          <strong>保存データ</strong>
+          <span>Local</span>
+        </header>
+        <p>
+          プレイ状況、所持株数、チーム、対戦履歴、ミッション進捗、表示名などはブラウザ内に保存されます。端末やブラウザのデータを削除すると、保存データも消える場合があります。
+        </p>
+      </section>
+
+      <section className="policy-panel pixel-panel">
+        <header>
+          <strong>クラウド同期</strong>
+          <span>Optional</span>
+        </header>
+        <p>
+          Supabase設定を有効にした場合、ゲストID、表示名、トレーダーレベル、対戦コード、チーム攻撃力、編成メンバー情報を同期します。メールアドレスや決済情報は現在扱いません。
+        </p>
+      </section>
+
+      <section className="policy-panel pixel-panel">
+        <header>
+          <strong>広告表示方針</strong>
+          <span>Ads</span>
+        </header>
+        <p>
+          広告はガチャ、図鑑、マーケットなどの一覧前に表示する想定です。誤タップしやすい下部ナビ付近、主要操作ボタン直下、結果確認を妨げる位置には配置しません。審査前は本物の広告コードを挿入せず、プレースホルダーのみ表示します。
+        </p>
+      </section>
+
+      <section className="policy-panel pixel-panel">
+        <header>
+          <strong>課金と年齢配慮</strong>
+          <span>Safe</span>
+        </header>
+        <p>
+          現在のWeb版には課金機能はありません。ゲーム内のコイン、配当、ガチャ券は現金や金融商品に交換できません。将来アプリ化する場合は、ストア審査に合わせて広告、年齢区分、プライバシー表示を更新します。
+        </p>
+      </section>
+
+      <section className="policy-actions pixel-panel">
+        <a href={withBasePath("/about/")}>説明ページ</a>
+        <button type="button" onClick={() => onNavigate("account")}>アカウントへ戻る</button>
+        <button type="button" onClick={() => onNavigate("home")}>ホームへ</button>
+      </section>
     </div>
   );
 }
@@ -3027,6 +3607,110 @@ function formatAttackPower(value: number): string {
   return Math.floor(value).toLocaleString("ja-JP");
 }
 
+function loadBattleSnapshots(): TeamBattleSnapshot[] {
+  try {
+    const raw = window.localStorage?.getItem(BATTLE_SNAPSHOT_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isBattleSnapshot).slice(0, 20);
+  } catch {
+    return [];
+  }
+}
+
+function saveBattleSnapshot(snapshot: TeamBattleSnapshot, currentSnapshots: TeamBattleSnapshot[]): TeamBattleSnapshot[] {
+  const nextSnapshots = [
+    snapshot,
+    ...currentSnapshots.filter((item) => item.syncCode !== snapshot.syncCode)
+  ].slice(0, 20);
+
+  try {
+    window.localStorage?.setItem(BATTLE_SNAPSHOT_STORAGE_KEY, JSON.stringify(nextSnapshots));
+  } catch {
+    // 保存できない環境では、現在のセッション内だけで使います。
+  }
+
+  return nextSnapshots;
+}
+
+function mergeBattleSnapshots(snapshots: TeamBattleSnapshot[]): TeamBattleSnapshot[] {
+  const snapshotMap = new Map<string, TeamBattleSnapshot>();
+
+  snapshots.forEach((snapshot) => {
+    const key = normalizeBattleCodeInput(snapshot.syncCode);
+    const current = snapshotMap.get(key);
+    if (!current || snapshot.totalAttack >= current.totalAttack) {
+      snapshotMap.set(key, snapshot);
+    }
+  });
+
+  return Array.from(snapshotMap.values()).sort((a, b) => b.totalAttack - a.totalAttack);
+}
+
+function getBattleRecordSummary(history: GameState["battleHistory"]) {
+  const totalBattles = history.length;
+  const totalWins = history.filter((battle) => battle.won).length;
+  const totalLosses = totalBattles - totalWins;
+  const userBattles = history.filter((battle) => battle.mode === "user");
+  const userWins = userBattles.filter((battle) => battle.won).length;
+  const totals = history.reduce(
+    (sum, battle) => ({
+      kabuCoins: sum.kabuCoins + battle.kabuCoins,
+      dividendCoins: sum.dividendCoins + battle.dividendCoins,
+      exp: sum.exp + battle.exp,
+      gachaTickets: sum.gachaTickets + battle.gachaTickets
+    }),
+    { kabuCoins: 0, dividendCoins: 0, exp: 0, gachaTickets: 0 }
+  );
+  const bestRank = history
+    .map((battle) => battle.rank)
+    .sort((a, b) => getBattleRankScore(b) - getBattleRankScore(a))[0] ?? "-";
+  const latestBattle = history[0];
+
+  return {
+    totalBattles,
+    totalWins,
+    totalLosses,
+    userBattles: userBattles.length,
+    userWins,
+    winRate: totalBattles > 0 ? Math.round((totalWins / totalBattles) * 100) : 0,
+    userWinRate: userBattles.length > 0 ? Math.round((userWins / userBattles.length) * 100) : 0,
+    bestRank,
+    latestResult: latestBattle ? `${latestBattle.won ? "WIN" : "LOSE"} / ${latestBattle.rank}` : "未対戦",
+    ...totals
+  };
+}
+
+function getBattleRankScore(rank: string): number {
+  if (rank === "S") return 4;
+  if (rank === "A") return 3;
+  if (rank === "B") return 2;
+  if (rank === "C") return 1;
+  return 0;
+}
+
+function findBattleSnapshot(snapshots: TeamBattleSnapshot[], code: string): TeamBattleSnapshot | null {
+  const normalized = normalizeBattleCodeInput(code);
+  if (!normalized) return null;
+  return snapshots.find((snapshot) => normalizeBattleCodeInput(snapshot.syncCode) === normalized) ?? null;
+}
+
+function normalizeBattleCodeInput(code: string): string {
+  return code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function isBattleSnapshot(value: unknown): value is TeamBattleSnapshot {
+  if (!value || typeof value !== "object") return false;
+  const snapshot = value as Partial<TeamBattleSnapshot>;
+  return typeof snapshot.snapshotId === "string"
+    && typeof snapshot.syncCode === "string"
+    && typeof snapshot.ownerName === "string"
+    && typeof snapshot.createdAt === "string"
+    && typeof snapshot.totalAttack === "number"
+    && Array.isArray(snapshot.members);
+}
+
 function trimFixed(value: number): string {
   return value.toFixed(1).replace(/\.0$/, "");
 }
@@ -3183,30 +3867,6 @@ function ReportTile({ label, value }: { label: string; value: string }) {
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
-  );
-}
-
-function BottomNav({
-  activeTab,
-  onChange
-}: {
-  activeTab: Tab;
-  onChange: (tab: Tab) => void;
-}) {
-  return (
-    <nav className="bottom-nav">
-      {navItems.map((item) => (
-        <button
-          key={item.id}
-          className={activeTab === item.id ? "active" : ""}
-          style={{ "--nav-icon": `var(--nav-icon-${item.icon})` } as CSSProperties}
-          onClick={() => onChange(item.id)}
-        >
-          <span aria-hidden="true" />
-          {item.label}
-        </button>
-      ))}
-    </nav>
   );
 }
 
