@@ -68,7 +68,7 @@ export function HomePanel({
   const homeMarketIndexName = state.currentMarket.indexName === "マーケット225"
     ? "日経平均"
     : state.currentMarket.indexName;
-  const homeMarketThemeName = "モビリティ";
+  const homeMonsterCategoryName = buddyMaster.attribute;
 
   return (
     <div
@@ -82,7 +82,6 @@ export function HomePanel({
         "--frame-corner-br": `url(${withBasePath("/ui/frame-corner-br.png")})`,
         "--frame-edge-side": `url(${withBasePath("/ui/frame-edge-vertical.png")})`,
         "--frame-edge-horizontal": `url(${withBasePath("/ui/frame-edge-horizontal.png")})`,
-        "--ideal-market-graph": `url(${withBasePath("/ui/market-graph-v2.png")})`,
         "--ideal-inner-texture": `url(${withBasePath("/ui/ideal-inner-texture.png")})`,
         "--info-icon-company": `url(${withBasePath("/ui/info-company.png")})`,
         "--info-icon-shares": `url(${withBasePath("/ui/info-shares.png")})`,
@@ -104,7 +103,7 @@ export function HomePanel({
       <HomeMarketOverview
         market={state.currentMarket}
         indexName={homeMarketIndexName}
-        themeName={homeMarketThemeName}
+        categoryName={homeMonsterCategoryName}
         onRefresh={onRefreshMarket}
       />
 
@@ -227,20 +226,17 @@ function HomeMonsterOverview({
 function HomeMarketOverview({
   market,
   indexName,
-  themeName,
+  categoryName,
   onRefresh
 }: {
   market: MarketEnergy;
   indexName: string;
-  themeName: string;
+  categoryName: string;
   onRefresh: () => void;
 }) {
   return (
     <section className="market-panel home-market-panel pixel-panel">
       <FrameCorners />
-      <div className="market-graph">
-        <span>↗</span>
-      </div>
       <div className="home-market-main">
         <p>今日の市場</p>
         <h2>
@@ -255,8 +251,8 @@ function HomeMarketOverview({
       </div>
       <div className="divider" />
       <div className="home-market-theme">
-        <p>テーマ</p>
-        <h2><span className="theme-pixel-icon" aria-hidden="true">▰</span><span className="theme-name">{themeName}</span></h2>
+        <p>カテゴリ</p>
+        <h2><span className="theme-pixel-icon" aria-hidden="true">▰</span><span className="theme-name">{categoryName}</span></h2>
       </div>
       <div className="market-source-row">
         <small>{marketSourceLabels[market.source]} / {formatLogTime(market.updatedAt)}</small>

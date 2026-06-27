@@ -567,31 +567,16 @@
 /* Market card */
 .home-market-panel {
   display: grid;
-  grid-template-columns: minmax(72px, 0.72fr) minmax(84px, 0.78fr) minmax(58px, 0.56fr) 1px minmax(104px, 0.94fr);
+  grid-template-columns: minmax(114px, 0.98fr) minmax(80px, 0.64fr) 1px minmax(130px, 1fr);
   height: var(--home-market-height);
   min-height: var(--home-market-height);
-  gap: 9px;
+  gap: 10px;
   align-items: center;
-  padding: 8px 12px 8px 10px;
+  padding: 8px 14px 8px 14px;
   background:
     radial-gradient(ellipse at 8% 50%, rgba(48, 201, 255, 0.2), transparent 36%),
     radial-gradient(ellipse at 56% 46%, rgba(125, 244, 113, 0.13), transparent 34%),
     linear-gradient(180deg, rgba(7, 30, 70, 0.98), rgba(2, 8, 23, 0.98));
-}
-
-.home-market-panel .market-graph {
-  width: 100%;
-  min-width: 0;
-  height: 58px;
-  border: 0;
-  background: var(--ideal-market-graph) left center / 190px 58px no-repeat;
-  filter:
-    drop-shadow(0 0 10px rgba(72, 211, 255, 0.24))
-    drop-shadow(0 2px 0 rgba(0, 0, 0, 0.38));
-}
-
-.home-market-panel .market-graph span {
-  display: none;
 }
 
 .home-market-main,
@@ -628,7 +613,7 @@
 
 .home-market-main h2 strong {
   display: block;
-  font-size: clamp(20px, 5.25vw, 23px);
+  font-size: clamp(22px, 5.9vw, 27px);
   line-height: 1;
 }
 
@@ -685,7 +670,7 @@
 
 .home-market-theme {
   justify-content: stretch;
-  padding-left: 3px;
+  padding-left: 4px;
 }
 
 .home-market-theme h2 {
@@ -737,7 +722,7 @@
   min-width: 0;
   overflow: hidden;
   color: #ffffff;
-  font-size: clamp(14px, 3.55vw, 16px);
+  font-size: clamp(15px, 3.75vw, 17px);
   line-height: 1;
   text-overflow: ellipsis;
   text-shadow:
@@ -1336,13 +1321,8 @@
 
   .home-market-panel {
     gap: 7px;
-    grid-template-columns: minmax(62px, 0.66fr) minmax(76px, 0.72fr) minmax(48px, 0.5fr) 1px minmax(86px, 0.88fr);
-    padding-inline: 8px 9px;
-  }
-
-  .home-market-panel .market-graph {
-    height: 52px;
-    background-size: 188px 52px;
+    grid-template-columns: minmax(98px, 0.96fr) minmax(52px, 0.5fr) 1px minmax(88px, 0.9fr);
+    padding-inline: 10px 9px;
   }
 
   .home-market-main p,
@@ -1351,7 +1331,7 @@
   }
 
   .home-market-main h2 strong {
-    font-size: clamp(18px, 5.5vw, 22px);
+    font-size: clamp(20px, 6vw, 24px);
   }
 
   .home-market-sparkline {
@@ -1369,7 +1349,7 @@
   }
 
   .home-market-theme .theme-name {
-    font-size: clamp(12.5px, 3.45vw, 14.3px);
+    font-size: clamp(13px, 3.7vw, 15px);
   }
 
   .home-team-effect,
