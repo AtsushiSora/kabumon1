@@ -332,7 +332,6 @@ function HomeQuickActions({
     { label: "ログインボーナス", icon: "calendar", target: "event" },
     { label: "ミッション", icon: "mission", target: "event", alert: true },
     { label: "市場イベント", icon: "market", target: "market", alert: true },
-    { label: "株モン図鑑", icon: "dex", target: "dex" },
     { label: "お知らせ", icon: "megaphone", target: "policy" }
   ];
 

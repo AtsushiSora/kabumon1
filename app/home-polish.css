@@ -1026,7 +1026,7 @@
 .home-quick-grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   min-height: 66px;
   gap: 6px;
   padding: 7px 8px;
@@ -1091,8 +1091,8 @@
 }
 
 .home-quick-grid .app-icon {
-  width: 25px;
-  height: 25px;
+  width: 26px;
+  height: 26px;
   color: #f3fbff;
   stroke-width: 2.35;
   filter:
@@ -1109,7 +1109,7 @@
   max-width: 100%;
   overflow: hidden;
   color: #eaf6ff;
-  font-size: clamp(7px, 2.2vw, 8.5px);
+  font-size: clamp(7.4px, 2.35vw, 9px);
   line-height: 1.1;
   text-align: center;
   text-overflow: ellipsis;
@@ -1563,12 +1563,12 @@
   }
 
   .home-quick-grid .app-icon {
-    width: 23px;
-    height: 23px;
+    width: 24px;
+    height: 24px;
   }
 
   .home-quick-grid span {
-    font-size: clamp(6.8px, 2.25vw, 8px);
+    font-size: clamp(7px, 2.35vw, 8.5px);
   }
 
   .bottom-nav {
