@@ -36,7 +36,7 @@
   gap: var(--home-gap);
   overflow-x: hidden;
   overflow-y: auto;
-  padding-bottom: calc(var(--bottom-nav-height) + 16px + var(--safe-bottom));
+  padding-bottom: calc(var(--bottom-nav-height) + 14px + var(--safe-bottom));
   overscroll-behavior: contain;
   scroll-padding-bottom: calc(var(--bottom-nav-height) + 18px + var(--safe-bottom));
   -webkit-overflow-scrolling: touch;
@@ -54,7 +54,7 @@
   column-gap: 5px;
   row-gap: 5px;
   min-height: 102px;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .brand-mark {
@@ -1027,9 +1027,9 @@
   position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  min-height: 66px;
-  gap: 6px;
-  padding: 7px 8px;
+  min-height: 64px;
+  gap: 7px;
+  padding: 7px 9px;
   background:
     radial-gradient(ellipse at 16% 18%, rgba(60, 204, 255, 0.13), transparent 36%),
     linear-gradient(180deg, rgba(7, 31, 72, 0.94), rgba(2, 9, 25, 0.98));
@@ -1038,12 +1038,12 @@
 .home-quick-grid button {
   position: relative;
   display: grid;
-  grid-template-rows: 28px minmax(13px, auto);
+  grid-template-rows: 27px minmax(14px, auto);
   place-items: center;
   min-width: 0;
-  min-height: 50px;
+  min-height: 48px;
   gap: 2px;
-  padding: 4px 3px;
+  padding: 4px 5px;
   overflow: hidden;
   border: 1px solid rgba(53, 184, 255, 0.5);
   border-radius: 0;
@@ -1091,8 +1091,8 @@
 }
 
 .home-quick-grid .app-icon {
-  width: 26px;
-  height: 26px;
+  width: 25px;
+  height: 25px;
   color: #f3fbff;
   stroke-width: 2.35;
   filter:
@@ -1109,8 +1109,8 @@
   max-width: 100%;
   overflow: hidden;
   color: #eaf6ff;
-  font-size: clamp(7.4px, 2.35vw, 9px);
-  line-height: 1.1;
+  font-size: clamp(7.8px, 2.42vw, 9.4px);
+  line-height: 1.05;
   text-align: center;
   text-overflow: ellipsis;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.86);
@@ -1330,7 +1330,7 @@
   }
 
   .screen-content.home-screen {
-    padding-bottom: calc(var(--bottom-nav-height) + 14px + var(--safe-bottom));
+    padding-bottom: calc(var(--bottom-nav-height) + 12px + var(--safe-bottom));
   }
 
   .home-monster-card,
@@ -1551,24 +1551,24 @@
   }
 
   .home-quick-grid {
-    min-height: 62px;
+    min-height: 60px;
     gap: 5px;
     padding: 6px 7px;
   }
 
   .home-quick-grid button {
-    grid-template-rows: 25px minmax(13px, auto);
-    min-height: 48px;
+    grid-template-rows: 24px minmax(13px, auto);
+    min-height: 46px;
     padding-inline: 2px;
   }
 
   .home-quick-grid .app-icon {
-    width: 24px;
-    height: 24px;
+    width: 23px;
+    height: 23px;
   }
 
   .home-quick-grid span {
-    font-size: clamp(7px, 2.35vw, 8.5px);
+    font-size: clamp(7px, 2.35vw, 8.4px);
   }
 
   .bottom-nav {
