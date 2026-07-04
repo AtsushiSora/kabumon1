@@ -1599,3 +1599,395 @@
     line-height: 15px;
   }
 }
+
+@media (max-width: 500px) and (max-height: 820px) {
+  :root {
+    --bottom-nav-height: 64px;
+    --home-gap: 5px;
+    --home-monster-height: 214px;
+    --home-market-height: 62px;
+    --home-team-height: 124px;
+  }
+
+  .phone-frame {
+    padding: 5px 5px calc(var(--bottom-nav-height) + 3px + var(--safe-bottom));
+  }
+
+  .top-header {
+    grid-template-columns: minmax(0, 1fr) minmax(64px, 88px) minmax(54px, 70px);
+    grid-template-rows: 44px 34px;
+    column-gap: 4px;
+    row-gap: 4px;
+    min-height: 82px;
+    margin-bottom: 4px;
+  }
+
+  .brand-mark {
+    max-width: 150px;
+    height: 44px;
+  }
+
+  .currency-chip {
+    height: 31px;
+    min-height: 31px;
+    grid-template-columns: 19px minmax(0, 1fr) 11px;
+    padding: 4px 4px;
+  }
+
+  .currency-chip span {
+    width: 19px;
+    height: 19px;
+  }
+
+  .currency-chip strong {
+    font-size: 9px;
+  }
+
+  .trainer-chip {
+    height: 34px;
+    min-height: 34px;
+    padding: 3px 7px;
+  }
+
+  .trainer-chip .avatar-pixel {
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+  }
+
+  .trainer-chip-title span {
+    font-size: 10px;
+  }
+
+  .trainer-chip-title b {
+    font-size: 8px;
+  }
+
+  .trainer-exp-row em {
+    min-width: 28px;
+    min-height: 13px;
+    font-size: 8px;
+  }
+
+  .trainer-exp-bar {
+    height: 8px;
+  }
+
+  .screen-content.home-screen {
+    overflow: hidden;
+    padding-bottom: calc(var(--bottom-nav-height) + 4px + var(--safe-bottom));
+  }
+
+  .home-monster-card,
+  .home-screen.has-offline-reward .home-monster-card {
+    grid-template-columns: minmax(0, 60%) minmax(0, 40%);
+    padding: 6px;
+  }
+
+  .home-monster-card .monster-stage,
+  .home-screen.has-offline-reward .home-monster-card .monster-stage {
+    padding: 4px 3px 25px;
+  }
+
+  .home-monster-card .monster-stage::before {
+    bottom: 24px;
+    height: 28px;
+  }
+
+  .home-monster-card .monster-stage::after {
+    bottom: 27px;
+    height: 22px;
+  }
+
+  .home-monster-card .monster-art.large img {
+    width: 100%;
+    max-width: 100%;
+    height: 96%;
+    max-height: 96%;
+    object-position: 50% 52%;
+    transform: translateY(0) scale(0.96);
+  }
+
+  .home-rarity-strip {
+    left: 10px;
+    right: 10px;
+    bottom: 5px;
+    height: 23px;
+    padding: 3px 8px;
+  }
+
+  .home-rarity-strip span {
+    font-size: 8px;
+  }
+
+  .home-rarity-strip strong {
+    font-size: 10.5px;
+  }
+
+  .home-monster-card .monster-info,
+  .home-screen.has-offline-reward .home-monster-card .monster-info {
+    grid-template-rows: 29px 21px 21px 21px 25px 21px minmax(27px, 1fr);
+    padding: 6px 6px 5px;
+  }
+
+  .home-monster-card .monster-info h2,
+  .home-screen.has-offline-reward .home-monster-card .monster-info h2 {
+    grid-template-columns: minmax(0, 1fr) 23px;
+    min-height: 29px;
+  }
+
+  .home-monster-name {
+    font-size: clamp(13.2px, 3.8vw, 16px);
+  }
+
+  .home-rarity-badge {
+    width: 23px;
+    min-width: 23px;
+    height: 18px;
+    font-size: 8px;
+  }
+
+  .home-monster-card .monster-info p.monster-line,
+  .home-screen.has-offline-reward .home-monster-card .monster-info p.monster-line {
+    min-height: 21px;
+    height: 21px;
+    padding-left: 15px;
+    grid-template-columns: minmax(39px, 0.6fr) minmax(0, 1fr);
+    column-gap: 3px;
+  }
+
+  .home-monster-card .monster-line::before {
+    width: 12px;
+    height: 12px;
+  }
+
+  .home-monster-card .stat-label {
+    font-size: 6.6px;
+  }
+
+  .home-monster-card .stat-value,
+  .home-monster-card .company-line .stat-value {
+    font-size: clamp(7.6px, 2.2vw, 9px);
+  }
+
+  .home-monster-card .monster-info p.power-line,
+  .home-screen.has-offline-reward .home-monster-card .monster-info p.power-line {
+    min-height: 25px;
+    height: 25px;
+  }
+
+  .home-monster-card .power-line .stat-value {
+    font-size: clamp(10.8px, 3vw, 12.6px);
+  }
+
+  .home-monster-card .effect-line .stat-value {
+    font-size: clamp(9px, 2.65vw, 11px);
+  }
+
+  .monster-detail-button {
+    min-height: 27px;
+    margin-top: 3px;
+    padding: 4px 6px;
+    font-size: 9px;
+  }
+
+  .home-market-panel {
+    grid-template-columns: minmax(84px, 0.9fr) minmax(48px, 0.48fr) 1px minmax(80px, 0.82fr);
+    gap: 6px;
+    padding: 6px 9px;
+  }
+
+  .home-market-main,
+  .home-market-theme {
+    grid-template-rows: 14px minmax(0, 1fr);
+  }
+
+  .home-market-main p,
+  .home-market-theme p {
+    font-size: 9px;
+  }
+
+  .home-market-main h2 {
+    font-size: 10px;
+  }
+
+  .home-market-main h2 strong {
+    font-size: clamp(18px, 5.4vw, 22px);
+  }
+
+  .home-market-sparkline {
+    height: 40px;
+  }
+
+  .home-market-sparkline::before {
+    bottom: 5px;
+    height: 31px;
+  }
+
+  .home-market-sparkline i {
+    bottom: 7px;
+    height: 28px;
+  }
+
+  .home-market-panel .divider {
+    height: 48px;
+  }
+
+  .home-market-theme h2 {
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .home-market-theme h2 .theme-pixel-icon {
+    width: 22px;
+    height: 16px;
+  }
+
+  .home-market-theme .theme-name {
+    font-size: clamp(11px, 3.3vw, 13px);
+  }
+
+  .home-team-effect,
+  .home-screen.has-offline-reward .home-team-effect {
+    padding: 6px;
+  }
+
+  .home-team-effect > div {
+    grid-template-rows: 22px 57px 33px;
+    gap: 4px;
+  }
+
+  .home-team-heading {
+    grid-template-columns: 22px minmax(0, 1fr) minmax(92px, auto);
+    min-height: 22px;
+    gap: 5px;
+  }
+
+  .home-team-heading::before {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+  }
+
+  .home-team-heading strong {
+    font-size: 11px;
+  }
+
+  .home-team-heading em {
+    gap: 2px;
+    font-size: 6.8px;
+  }
+
+  .home-team-heading em::before {
+    font-size: 11px;
+  }
+
+  .home-team-heading em b {
+    font-size: 13px;
+  }
+
+  .home-team-cards {
+    height: 57px;
+    gap: 4px;
+  }
+
+  .home-team-cards article {
+    grid-template-rows: 39px 14px;
+    height: 57px;
+    padding: 3px;
+  }
+
+  .home-team-cards article::before,
+  .home-team-cards article::after {
+    width: 8px;
+    height: 8px;
+  }
+
+  .home-team-cards .monster-art {
+    height: 39px;
+  }
+
+  .home-team-cards .monster-art img {
+    width: 245% !important;
+    max-width: 245% !important;
+    height: 245% !important;
+    max-height: 245% !important;
+    transform: translateY(14%) scale(1.08) !important;
+  }
+
+  .home-team-cards article div {
+    grid-template-rows: 7px 6px;
+    min-height: 14px;
+    padding: 1px 2px 0;
+  }
+
+  .home-team-cards b,
+  .home-team-cards b.is-long,
+  .home-team-cards b.is-very-long {
+    font-size: 5.9px;
+  }
+
+  .home-team-cards small {
+    font-size: 5.6px;
+  }
+
+  .home-team-cards small::before {
+    font-size: 7px;
+  }
+
+  .home-team-footer {
+    grid-template-columns: minmax(0, 1fr) 74px;
+    gap: 5px;
+    min-height: 33px;
+  }
+
+  .home-team-footer p {
+    max-height: 28px;
+    padding: 1px 0;
+    font-size: 6.4px;
+    line-height: 1.18;
+    -webkit-line-clamp: 2;
+  }
+
+  .home-team-action {
+    width: 74px;
+    min-height: 25px;
+    padding-inline: 5px;
+    font-size: 7.8px;
+  }
+
+  .home-team-action span {
+    font-size: 13px;
+  }
+
+  .home-quick-grid {
+    display: none;
+  }
+
+  .bottom-nav {
+    gap: 4px;
+    padding: 4px 6px calc(4px + var(--safe-bottom));
+  }
+
+  .bottom-nav button {
+    min-height: 52px;
+    grid-template-rows: 26px 14px;
+    padding: 4px 2px;
+  }
+
+  .bottom-nav .app-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .bottom-nav button.active .app-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .bottom-nav .nav-label {
+    min-height: 14px;
+    font-size: clamp(7.6px, 2.55vw, 9.4px);
+    line-height: 14px;
+  }
+}
