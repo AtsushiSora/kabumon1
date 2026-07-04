@@ -801,27 +801,153 @@
   gap: 7px;
 }
 
-.dex-screen .dex-row {
-  grid-template-columns: 74px minmax(0, 1fr) minmax(72px, 0.32fr);
+.dex-screen .dex-hero {
+  gap: 7px;
+  padding: 10px;
+}
+
+.dex-screen .dex-hero h2 {
+  line-height: 1;
+}
+
+.dex-screen .dex-hero p {
+  margin: 0;
+  color: #c9d9ee;
+  font-size: 9px;
+}
+
+.dex-screen .dex-buddy-card {
+  min-height: 92px;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
   gap: 9px;
   align-items: center;
-  padding: 9px;
+  padding: 8px;
+  border-radius: 0;
+}
+
+.dex-screen .dex-buddy-card .monster-art {
+  width: 76px;
+  height: 76px;
+}
+
+.dex-screen .dex-buddy-card .monster-art img {
+  width: 112%;
+  height: 112%;
+  object-fit: contain;
+  object-position: 50% 53%;
+}
+
+.dex-screen .dex-buddy-card > div,
+.dex-screen .dex-buddy-card strong,
+.dex-screen .dex-buddy-card p,
+.dex-screen .dex-buddy-card small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dex-screen .dex-buddy-card strong {
+  color: #ffe17a;
+  font-size: 14px;
+  text-shadow:
+    1px 0 0 rgba(0, 0, 0, 0.88),
+    0 2px 0 rgba(0, 0, 0, 0.88);
+}
+
+.dex-screen .dex-summary-strip,
+.dex-screen .asset-check-strip,
+.dex-screen .dex-asset-rule-panel {
+  gap: 5px;
+}
+
+.dex-screen .dex-summary-strip span,
+.dex-screen .asset-check-strip span,
+.dex-screen .dex-asset-rule-panel span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dex-screen .dex-row {
+  grid-template-columns: 82px minmax(0, 1fr) minmax(78px, 0.3fr);
+  gap: 10px;
+  align-items: stretch;
+  padding: 10px;
 }
 
 .dex-screen .dex-row .monster-art {
-  width: 74px;
-  height: 74px;
+  width: 82px;
+  height: 82px;
+}
+
+.dex-screen .dex-row .monster-art img {
+  width: 112%;
+  height: 112%;
+  object-fit: contain;
+  object-position: 50% 53%;
+}
+
+.dex-screen .dex-row > div:not(.monster-art):not(.dex-actions) {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+}
+
+.dex-screen .dex-row-title h3 {
+  font-size: 12px;
+}
+
+.dex-screen .dex-row-title em {
+  min-width: 42px;
+  text-align: center;
+}
+
+.dex-screen .dex-metric-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dex-screen .dex-effect-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dex-screen .dex-metric-grid span,
+.dex-screen .dex-effect-strip span {
+  min-height: 24px;
+  padding: 4px 5px;
+}
+
+.dex-screen .dex-row p.asset-file-meta {
+  color: #7fa5c5;
+  font-size: 7.4px;
+}
+
+.dex-screen .dex-row.owned {
+  border-color: rgba(84, 213, 255, 0.72);
+}
+
+.dex-screen .dex-row.is-buddy {
+  border-color: rgba(255, 215, 94, 0.78);
 }
 
 .dex-screen .dex-actions {
   display: grid;
+  align-content: stretch;
   gap: 5px;
+  min-width: 0;
 }
 
 .dex-screen .dex-actions button {
-  min-height: 34px;
+  min-height: 38px;
   padding-inline: 6px;
   font-size: 9px;
+}
+
+.dex-screen .dex-actions button:disabled {
+  opacity: 0.46;
 }
 
 @media (max-width: 390px) {
@@ -904,6 +1030,21 @@
   .market-screen .market-buy,
   .dex-screen .dex-actions {
     grid-column: 1 / -1;
+  }
+
+  .dex-screen .dex-buddy-card {
+    grid-template-columns: 62px minmax(0, 1fr);
+    min-height: 78px;
+  }
+
+  .dex-screen .dex-buddy-card .monster-art {
+    width: 62px;
+    height: 62px;
+  }
+
+  .dex-screen .dex-metric-grid,
+  .dex-screen .dex-effect-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .market-screen .market-buy-options,
