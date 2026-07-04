@@ -298,25 +298,122 @@
   gap: 7px;
 }
 
-.gacha-screen .gacha-card {
-  min-height: 112px;
+.gacha-screen .gacha-hero {
+  gap: 7px;
+  padding: 10px;
+}
+
+.gacha-screen .gacha-hero > div:first-child {
   display: grid;
-  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 4px;
+}
+
+.gacha-screen .gacha-hero h2 {
+  line-height: 1;
+}
+
+.gacha-screen .gacha-hero p {
+  margin: 0;
+  color: #c9d9ee;
+  font-size: 9px;
+}
+
+.gacha-screen .gacha-resource {
+  min-height: 42px;
+  padding: 7px 9px;
+  border-radius: 0;
+  border-color: rgba(255, 210, 82, 0.48);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(255, 214, 91, 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(7, 38, 84, 0.88), rgba(2, 9, 26, 0.96));
+}
+
+.gacha-screen .gacha-resource strong {
+  color: #ffe17a;
+  font-size: clamp(15px, 4.6vw, 20px);
+  line-height: 1;
+  text-shadow:
+    1px 0 0 rgba(0, 0, 0, 0.88),
+    0 2px 0 rgba(0, 0, 0, 0.88);
+}
+
+.gacha-screen .gacha-summary-strip,
+.gacha-screen .gacha-data-strip,
+.gacha-screen .gacha-rule-panel {
+  gap: 5px;
+}
+
+.gacha-screen .gacha-summary-strip span,
+.gacha-screen .gacha-data-strip span,
+.gacha-screen .gacha-rule-panel span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gacha-screen .gacha-focus-card {
+  min-height: 92px;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  padding: 8px;
+}
+
+.gacha-screen .gacha-focus-card .monster-art {
+  width: 76px;
+  height: 76px;
+}
+
+.gacha-screen .gacha-focus-card .monster-art img {
+  width: 112%;
+  height: 112%;
+  object-fit: contain;
+  object-position: 50% 53%;
+}
+
+.gacha-screen .gacha-focus-card > div {
+  min-width: 0;
+}
+
+.gacha-screen .gacha-focus-card strong,
+.gacha-screen .gacha-focus-card p,
+.gacha-screen .gacha-focus-card small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gacha-screen .gold-button.full {
+  min-height: 42px;
+  border-color: rgba(255, 218, 95, 0.84);
+  font-size: 13px;
+  text-shadow:
+    1px 0 0 rgba(0, 0, 0, 0.82),
+    0 2px 0 rgba(0, 0, 0, 0.82);
+}
+
+.gacha-screen .gacha-card {
+  min-height: 116px;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
   gap: 8px;
   align-items: center;
   padding: 8px;
 }
 
 .gacha-screen .gacha-card .monster-art {
-  width: 74px;
-  height: 74px;
+  width: 78px;
+  height: 78px;
 }
 
 .gacha-screen .gacha-card .monster-art img {
-  width: 104%;
-  height: 104%;
+  width: 112%;
+  height: 112%;
   object-fit: contain;
-  object-position: 50% 52%;
+  object-position: 50% 53%;
   transform: none;
 }
 
@@ -326,6 +423,12 @@
 
 .gacha-screen .gacha-card-body {
   min-width: 0;
+}
+
+.gacha-screen .gacha-card-title span,
+.gacha-screen .gacha-card-title em {
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .gacha-screen .gacha-card-body p,
@@ -367,6 +470,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.gacha-screen .gacha-card > .gacha-card-body > strong {
+  color: #ffe17a;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.82);
 }
 
 .team-screen .team-slots-grid {
@@ -543,11 +651,21 @@
   }
 
   .gacha-screen .gacha-card {
-    grid-template-columns: 66px minmax(0, 1fr);
-    min-height: 106px;
+    grid-template-columns: 68px minmax(0, 1fr);
+    min-height: 108px;
   }
 
   .gacha-screen .gacha-card .monster-art {
+    width: 68px;
+    height: 68px;
+  }
+
+  .gacha-screen .gacha-focus-card {
+    grid-template-columns: 66px minmax(0, 1fr);
+    min-height: 82px;
+  }
+
+  .gacha-screen .gacha-focus-card .monster-art {
     width: 66px;
     height: 66px;
   }
