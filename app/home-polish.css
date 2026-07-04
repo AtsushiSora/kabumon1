@@ -3,9 +3,9 @@
 :root {
   --bottom-nav-height: 70px;
   --home-gap: 6px;
-  --home-monster-height: 276px;
-  --home-market-height: 80px;
-  --home-team-height: 190px;
+  --home-monster-height: 286px;
+  --home-market-height: 82px;
+  --home-team-height: 192px;
   --home-cyan: #35d8ff;
   --home-gold: #ffd56a;
   --home-panel-bg: rgba(3, 14, 36, 0.96);
@@ -230,11 +230,11 @@
 .home-monster-card,
 .home-screen.has-offline-reward .home-monster-card {
   display: grid;
-  grid-template-columns: minmax(0, 61%) minmax(0, 39%);
+  grid-template-columns: minmax(0, 62%) minmax(0, 38%);
   gap: 0;
   height: var(--home-monster-height);
   min-height: var(--home-monster-height);
-  padding: 9px 8px 10px;
+  padding: 8px 8px 9px;
 }
 
 .home-monster-card .monster-stage,
@@ -248,13 +248,14 @@
   padding: 5px 5px 35px;
   border-right: 1px solid rgba(50, 178, 255, 0.32);
   background:
+    radial-gradient(ellipse at 50% 20%, rgba(70, 184, 255, 0.12), transparent 46%),
     radial-gradient(ellipse at 50% 85%, rgba(53, 214, 255, 0.44), transparent 32%),
     radial-gradient(ellipse at 50% 94%, rgba(0, 126, 255, 0.35), transparent 46%),
     linear-gradient(rgba(73, 206, 255, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(73, 206, 255, 0.052) 1px, transparent 1px),
     radial-gradient(ellipse at 50% 18%, rgba(29, 108, 196, 0.16), transparent 46%),
     linear-gradient(180deg, rgba(1, 8, 25, 0.99), rgba(2, 17, 46, 0.97) 58%, rgba(0, 6, 20, 0.99));
-  background-size: auto, auto, 8px 8px, 8px 8px, auto, auto;
+  background-size: auto, auto, auto, 8px 8px, 8px 8px, auto, auto;
   box-shadow:
     inset -10px 0 18px rgba(1, 7, 20, 0.34),
     inset 0 -18px 28px rgba(30, 188, 255, 0.14),
@@ -266,8 +267,8 @@
   position: absolute;
   left: 6%;
   right: 6%;
-  bottom: 33px;
-  height: 40px;
+  bottom: 32px;
+  height: 42px;
   border: 2px solid rgba(48, 212, 255, 0.68);
   border-radius: 50%;
   background:
@@ -286,8 +287,8 @@
   position: absolute;
   left: 9%;
   right: 9%;
-  bottom: 36px;
-  height: 34px;
+  bottom: 35px;
+  height: 36px;
   border-top: 1px solid rgba(136, 238, 255, 0.42);
   border-radius: 50%;
   background: linear-gradient(
@@ -328,24 +329,24 @@
 }
 
 .home-monster-card .monster-art.large img {
-  width: 104%;
-  max-width: 104%;
-  height: 100%;
-  max-height: 100%;
+  width: 109%;
+  max-width: 109%;
+  height: 104%;
+  max-height: 104%;
   object-fit: contain;
-  object-position: 50% 53%;
-  transform: translateY(0.5%) scale(0.99);
+  object-position: 50% 52%;
+  transform: translateY(0.5%) scale(1.01);
   filter:
     drop-shadow(0 4px 0 rgba(0, 0, 0, 0.52))
     drop-shadow(0 0 13px rgba(62, 197, 255, 0.2));
 }
 
 .home-rarity-strip {
-  left: 16px;
-  right: 16px;
-  bottom: 8px;
+  left: 13px;
+  right: 13px;
+  bottom: 7px;
   z-index: 2;
-  height: 27px;
+  height: 29px;
   padding: 4px 10px;
   background:
     linear-gradient(180deg, rgba(8, 37, 82, 0.88), rgba(2, 10, 28, 0.94)),
@@ -357,24 +358,24 @@
 }
 
 .home-rarity-strip span {
-  font-size: 9px;
+  font-size: 9.5px;
 }
 
 .home-rarity-strip strong {
   color: var(--home-gold);
-  font-size: 12px;
+  font-size: 12.5px;
   letter-spacing: 0;
 }
 
 .home-monster-card .monster-info,
 .home-screen.has-offline-reward .home-monster-card .monster-info {
   display: grid;
-  grid-template-rows: 36px 27px 27px 27px 32px 27px 27px minmax(35px, 1fr);
+  grid-template-rows: 38px 28px 28px 28px 34px 28px 28px minmax(36px, 1fr);
   align-content: start;
   gap: 0;
   height: 100%;
   min-width: 0;
-  padding: 8px 8px 7px;
+  padding: 9px 9px 7px;
   overflow: hidden;
   background:
     radial-gradient(ellipse at 100% 10%, rgba(73, 177, 255, 0.12), transparent 42%),
@@ -390,7 +391,7 @@
   grid-template-columns: minmax(0, 1fr) 27px;
   align-items: center;
   gap: 5px;
-  min-height: 36px;
+  min-height: 38px;
   margin: 0;
   padding: 0 0 3px;
   border-bottom: 1px solid rgba(255, 215, 107, 0.24);
@@ -401,7 +402,7 @@
   max-width: 100%;
   overflow: hidden;
   color: #ffffff;
-  font-size: clamp(16.2px, 4.1vw, 21.4px);
+  font-size: clamp(16.8px, 4.25vw, 22.4px);
   line-height: 1;
   letter-spacing: 0;
   text-overflow: ellipsis;
@@ -454,8 +455,8 @@
 .home-screen.has-offline-reward .home-monster-card .monster-info p.monster-line {
   display: grid !important;
   align-items: center;
-  min-height: 27px;
-  height: 27px;
+  min-height: 28px;
+  height: 28px;
   margin: 0;
   padding: 0 0 0 19px;
   border-top: 1px solid rgba(141, 204, 255, 0.08);
@@ -473,8 +474,8 @@
 
 .home-monster-card .monster-info p.power-line,
 .home-screen.has-offline-reward .home-monster-card .monster-info p.power-line {
-  min-height: 32px;
-  height: 32px;
+  min-height: 34px;
+  height: 34px;
   border-top-color: rgba(255, 215, 107, 0.13);
   border-bottom-color: rgba(255, 215, 107, 0.08);
 }
@@ -491,7 +492,7 @@
 
 .home-monster-card .stat-label {
   color: #cfe6fa;
-  font-size: 7.8px;
+  font-size: 8px;
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
@@ -503,7 +504,7 @@
   max-width: 100%;
   overflow: hidden;
   color: #fffdf4;
-  font-size: clamp(9px, 2.35vw, 10.7px);
+  font-size: clamp(9.4px, 2.45vw, 11.2px);
   font-weight: 900;
   line-height: 1;
   text-align: right;
@@ -515,7 +516,7 @@
 
 .home-monster-card .power-line .stat-value {
   color: #ffffff;
-  font-size: clamp(13px, 3.18vw, 15.2px);
+  font-size: clamp(13.8px, 3.35vw, 16px);
   white-space: nowrap;
   text-shadow:
     1px 0 0 rgba(0, 0, 0, 0.9),
@@ -539,8 +540,8 @@
   align-items: center;
   justify-items: center;
   width: 100%;
-  min-height: 34px;
-  margin: 4px 0 0;
+  min-height: 36px;
+  margin: 5px 0 0;
   padding: 6px 9px;
   border: 1px solid rgba(255, 210, 82, 0.76);
   background:
@@ -572,12 +573,12 @@
 /* Market card */
 .home-market-panel {
   display: grid;
-  grid-template-columns: minmax(114px, 0.98fr) minmax(80px, 0.64fr) 1px minmax(130px, 1fr);
+  grid-template-columns: minmax(116px, 1fr) minmax(86px, 0.68fr) 1px minmax(124px, 0.96fr);
   height: var(--home-market-height);
   min-height: var(--home-market-height);
   gap: 10px;
   align-items: center;
-  padding: 8px 14px 8px 14px;
+  padding: 8px 13px;
   background:
     radial-gradient(ellipse at 8% 50%, rgba(48, 201, 255, 0.2), transparent 36%),
     radial-gradient(ellipse at 56% 46%, rgba(125, 244, 113, 0.13), transparent 34%),
@@ -618,7 +619,7 @@
 
 .home-market-main h2 strong {
   display: block;
-  font-size: clamp(22px, 5.9vw, 27px);
+  font-size: clamp(23px, 6vw, 28px);
   line-height: 1;
 }
 
@@ -669,7 +670,7 @@
 }
 
 .home-market-panel .divider {
-  height: 66px;
+  height: 64px;
   border-left: 1px dashed rgba(185, 221, 255, 0.46);
 }
 
@@ -746,7 +747,7 @@
 .home-screen.has-offline-reward .home-team-effect {
   height: var(--home-team-height);
   min-height: var(--home-team-height);
-  padding: 9px 9px;
+  padding: 9px;
   background:
     radial-gradient(ellipse at 15% 16%, rgba(52, 195, 255, 0.18), transparent 36%),
     radial-gradient(ellipse at 82% 20%, rgba(255, 214, 91, 0.12), transparent 32%),
@@ -804,7 +805,7 @@
   min-width: 0;
   overflow: hidden;
   color: #ffe17a;
-  font-size: 14.5px;
+  font-size: 15px;
   text-overflow: ellipsis;
   text-shadow:
     1px 0 0 rgba(0, 0, 0, 0.85),
@@ -834,7 +835,7 @@
 
 .home-team-heading em b {
   color: #ffe17a;
-  font-size: 19px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -856,7 +857,8 @@
   border: 1px solid var(--home-button-line);
   border-radius: 0;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(74, 205, 255, 0.18), transparent 58%),
+    radial-gradient(ellipse at 50% 0%, rgba(74, 205, 255, 0.2), transparent 58%),
+    radial-gradient(ellipse at 50% 76%, rgba(38, 190, 255, 0.14), transparent 48%),
     linear-gradient(180deg, rgba(7, 40, 88, 0.94), rgba(2, 10, 29, 0.99));
   box-shadow:
     inset 0 0 0 2px var(--home-button-inner),
@@ -1002,7 +1004,7 @@
   align-self: end;
   width: 104px;
   min-width: 0;
-  min-height: 34px;
+  min-height: 35px;
   padding-inline: 9px 7px;
   border: 1px solid rgba(102, 211, 255, 0.82);
   color: #ffffff;
