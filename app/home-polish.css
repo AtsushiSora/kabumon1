@@ -1604,9 +1604,9 @@
   :root {
     --bottom-nav-height: 58px;
     --home-gap: 4px;
-    --home-monster-height: 176px;
-    --home-market-height: 52px;
-    --home-team-height: 98px;
+    --home-monster-height: clamp(210px, 36dvh, 236px);
+    --home-market-height: 60px;
+    --home-team-height: 150px;
   }
 
   .phone-frame {
@@ -1680,47 +1680,82 @@
   }
 
   .screen-content.home-screen {
+    display: grid;
+    grid-template-rows:
+      var(--home-monster-height)
+      var(--home-market-height)
+      minmax(var(--home-team-height), 1fr);
+    align-content: stretch;
     overflow: hidden;
     gap: var(--home-gap);
     padding-bottom: 0;
   }
 
+  .screen-content.home-screen.has-offline-reward {
+    grid-template-rows:
+      var(--home-monster-height)
+      var(--home-market-height)
+      minmax(112px, 1fr)
+      28px;
+    padding-bottom: 0;
+  }
+
+  .home-offline-claim {
+    min-height: 28px;
+    padding: 3px 7px;
+    grid-template-columns: auto auto minmax(0, 1fr) 38px;
+  }
+
+  .home-offline-claim span,
+  .home-offline-claim strong,
+  .home-offline-claim i {
+    font-size: 7.6px;
+  }
+
+  .home-offline-claim button {
+    width: 36px;
+    min-height: 18px;
+    font-size: 8px;
+  }
+
   .home-monster-card,
   .home-screen.has-offline-reward .home-monster-card {
-    grid-template-columns: minmax(0, 59%) minmax(0, 41%);
-    padding: 5px;
+    grid-template-columns: minmax(0, 60%) minmax(0, 40%);
+    height: var(--home-monster-height);
+    min-height: var(--home-monster-height);
+    padding: 6px;
   }
 
   .home-monster-card .monster-stage,
   .home-screen.has-offline-reward .home-monster-card .monster-stage {
-    padding: 3px 3px 22px;
+    padding: 5px 5px 25px;
   }
 
   .home-monster-card .monster-stage::before {
-    bottom: 21px;
-    height: 24px;
+    bottom: 23px;
+    height: 28px;
   }
 
   .home-monster-card .monster-stage::after {
-    bottom: 24px;
-    height: 19px;
+    bottom: 26px;
+    height: 22px;
   }
 
   .home-monster-card .monster-art.large img {
-    width: 97%;
-    max-width: 97%;
-    height: 93%;
-    max-height: 93%;
+    width: 111%;
+    max-width: 111%;
+    height: 105%;
+    max-height: 105%;
     object-position: 50% 52%;
-    transform: translateY(1%) scale(0.94);
+    transform: translateY(0.5%) scale(1);
   }
 
   .home-rarity-strip {
     left: 9px;
     right: 9px;
-    bottom: 4px;
-    height: 20px;
-    padding: 2px 7px;
+    bottom: 5px;
+    height: 21px;
+    padding: 2px 8px;
   }
 
   .home-rarity-strip span {
@@ -1733,14 +1768,14 @@
 
   .home-monster-card .monster-info,
   .home-screen.has-offline-reward .home-monster-card .monster-info {
-    grid-template-rows: 24px repeat(3, 18px) 22px 18px 18px minmax(23px, 1fr);
+    grid-template-rows: 25px repeat(3, 18px) 23px 18px 18px minmax(24px, 1fr);
     padding: 5px 5px 4px;
   }
 
   .home-monster-card .monster-info h2,
   .home-screen.has-offline-reward .home-monster-card .monster-info h2 {
     grid-template-columns: minmax(0, 1fr) 21px;
-    min-height: 24px;
+    min-height: 25px;
     gap: 4px;
   }
 
@@ -1788,8 +1823,8 @@
 
   .home-monster-card .monster-info p.power-line,
   .home-screen.has-offline-reward .home-monster-card .monster-info p.power-line {
-    min-height: 22px;
-    height: 22px;
+    min-height: 23px;
+    height: 23px;
   }
 
   .home-monster-card .power-line .stat-value {
@@ -1808,9 +1843,11 @@
   }
 
   .home-market-panel {
-    grid-template-columns: minmax(82px, 0.95fr) minmax(42px, 0.42fr) 1px minmax(78px, 0.82fr);
-    gap: 5px;
-    padding: 5px 8px;
+    height: var(--home-market-height);
+    min-height: var(--home-market-height);
+    grid-template-columns: minmax(92px, 1fr) minmax(52px, 0.5fr) 1px minmax(86px, 0.82fr);
+    gap: 6px;
+    padding: 6px 9px;
   }
 
   .home-market-main,
@@ -1832,21 +1869,21 @@
   }
 
   .home-market-sparkline {
-    height: 34px;
+    height: 42px;
   }
 
   .home-market-sparkline::before {
-    bottom: 4px;
-    height: 27px;
+    bottom: 5px;
+    height: 33px;
   }
 
   .home-market-sparkline i {
-    bottom: 6px;
-    height: 23px;
+    bottom: 7px;
+    height: 29px;
   }
 
   .home-market-panel .divider {
-    height: 39px;
+    height: 47px;
   }
 
   .home-market-theme h2 {
@@ -1865,52 +1902,57 @@
 
   .home-team-effect,
   .home-screen.has-offline-reward .home-team-effect {
-    padding: 5px;
+    align-self: stretch;
+    height: 100%;
+    min-height: var(--home-team-height);
+    padding: 6px;
   }
 
   .home-team-effect > div {
-    grid-template-rows: 20px 47px 21px;
-    gap: 3px;
+    min-height: 0;
+    grid-template-rows: 24px minmax(82px, 1fr) 32px;
+    gap: 5px;
   }
 
   .home-team-heading {
-    grid-template-columns: 20px minmax(0, 1fr) minmax(88px, auto);
-    min-height: 20px;
+    grid-template-columns: 22px minmax(0, 1fr) minmax(104px, auto);
+    min-height: 23px;
     gap: 4px;
   }
 
   .home-team-heading::before {
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
   }
 
   .home-team-heading strong {
-    font-size: 10.2px;
+    font-size: 11px;
   }
 
   .home-team-heading em {
     gap: 2px;
-    font-size: 6.2px;
+    font-size: 7px;
   }
 
   .home-team-heading em::before {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .home-team-heading em b {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .home-team-cards {
-    height: 47px;
+    height: 100%;
+    min-height: 0;
     gap: 4px;
   }
 
   .home-team-cards article {
-    grid-template-rows: 31px 12px;
-    height: 47px;
-    padding: 2px;
+    grid-template-rows: minmax(0, 1fr) 17px;
+    height: 100%;
+    padding: 3px;
   }
 
   .home-team-cards article::before,
@@ -1920,60 +1962,61 @@
   }
 
   .home-team-cards .monster-art {
-    height: 31px;
+    height: 100%;
+    min-height: 0;
   }
 
   .home-team-cards .monster-art img {
-    width: 220% !important;
-    max-width: 220% !important;
-    height: 220% !important;
-    max-height: 220% !important;
-    transform: translateY(13%) scale(1.03) !important;
+    width: 285% !important;
+    max-width: 285% !important;
+    height: 285% !important;
+    max-height: 285% !important;
+    transform: translateY(16%) scale(1.12) !important;
   }
 
   .home-team-cards article div {
-    grid-template-rows: 6px 5px;
-    min-height: 12px;
+    grid-template-rows: 9px 7px;
+    min-height: 17px;
     padding: 1px 2px 0;
   }
 
   .home-team-cards b,
   .home-team-cards b.is-long,
   .home-team-cards b.is-very-long {
-    font-size: 5.2px;
+    font-size: 6.6px;
   }
 
   .home-team-cards small {
-    font-size: 5px;
+    font-size: 6.2px;
   }
 
   .home-team-cards small::before {
-    font-size: 6px;
+    font-size: 7px;
   }
 
   .home-team-footer {
-    grid-template-columns: minmax(0, 1fr) 68px;
-    gap: 4px;
-    min-height: 21px;
+    grid-template-columns: minmax(0, 1fr) 92px;
+    gap: 5px;
+    min-height: 32px;
   }
 
   .home-team-footer p {
-    max-height: 19px;
-    padding: 1px 0;
-    font-size: 5.9px;
-    line-height: 1.05;
+    max-height: 29px;
+    padding: 1px 0 1px 2px;
+    font-size: 7.5px;
+    line-height: 1.18;
     -webkit-line-clamp: 2;
   }
 
   .home-team-action {
-    width: 68px;
-    min-height: 20px;
+    width: 92px;
+    min-height: 30px;
     padding-inline: 5px;
-    font-size: 6.8px;
+    font-size: 8.8px;
   }
 
   .home-team-action span {
-    font-size: 11px;
+    font-size: 14px;
   }
 
   .home-quick-grid {
